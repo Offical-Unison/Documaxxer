@@ -63,10 +63,191 @@ function ExperienceEditor({ item, index, showErrors, onChange, onRemove }: { ite
   return <EntryCard title={item.role || item.employer || `Experience ${index + 1}`} onRemove={onRemove}><div className="grid gap-4 sm:grid-cols-2"><Field label="Company" required value={item.employer} onChange={(event) => update("employer", event.target.value)} error={showErrors && !item.employer.trim() ? "Company is required." : undefined} placeholder="Acme Inc." /><Field label="Job title" required value={item.role} onChange={(event) => update("role", event.target.value)} error={showErrors && !item.role.trim() ? "Job title is required." : undefined} placeholder="Software Developer" /><Field label="Location" required value={item.location} onChange={(event) => update("location", event.target.value)} error={showErrors && !item.location.trim() ? "Location is required." : undefined} placeholder="Cebu City, Philippines" /><div className="flex items-end"><label className="flex min-h-11 items-center gap-2 text-sm font-medium text-slate-700"><input type="checkbox" checked={item.current} onChange={(event) => onChange({ ...item, current: event.target.checked, endDate: event.target.checked ? "" : item.endDate })} />Current job</label></div><Field label="Start date" required type="month" value={item.startDate} onChange={(event) => update("startDate", event.target.value)} error={showErrors && !item.startDate ? "Start date is required." : undefined} /><Field label="End date" required={!item.current} type="month" disabled={item.current} value={item.endDate} onChange={(event) => update("endDate", event.target.value)} error={showErrors && !item.current && !item.endDate ? "End date is required." : undefined} /><Textarea label="Description" className="sm:col-span-2" value={item.description} onChange={(event) => update("description", event.target.value)} error={showErrors && !item.description.trim() ? "Description is required." : undefined} placeholder="Describe your responsibilities and achievements." /></div></EntryCard>;
 }
 
-function blankEducation(educationType: Education["educationType"]): Education { return { id: makeId(), educationType, institution: "", degree: "", fieldOfStudy: "", location: "", startDate: "", endDate: "", current: false, description: "" }; }
+function blankEducation(educationType: Education["educationType"]): Education {
+  return { id: makeId(), educationType, institution: "", degree: "", fieldOfStudy: "", location: "", startDate: "", endDate: "", current: false, description: "", awards: [] };
+}
 
 function EducationEditor({ item, index, showErrors, onChange, onRemove }: { item: Education; index: number; showErrors: boolean; onChange: (item: Education) => void; onRemove: () => void }) {
   const update = <K extends keyof Education>(key: K, value: Education[K]) => onChange({ ...item, [key]: value });
   const isCollege = item.educationType === "college";
-  return <EntryCard title={item.institution || `${isCollege ? "College / University" : "High School"} ${index + 1}`} onRemove={onRemove}><div className="grid gap-4 sm:grid-cols-2"><label className="block text-sm font-medium text-slate-700">Education level<select value={item.educationType} onChange={(event) => onChange({ ...item, educationType: event.target.value as Education["educationType"], fieldOfStudy: event.target.value === "highSchool" ? "" : item.fieldOfStudy })} className="mt-1.5 min-h-11 w-full rounded-xl border border-slate-200 bg-white/80 px-3 text-sm text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none"><option value="college">College / University</option><option value="highSchool">High School</option></select></label><Field label="School" required value={item.institution} onChange={(event) => update("institution", event.target.value)} error={showErrors && !item.institution.trim() ? "School is required." : undefined} placeholder={isCollege ? "University of San Carlos" : "Cebu City National Science High School"} /><Field label={isCollege ? "Degree" : "Strand / Program"} required value={item.degree} onChange={(event) => update("degree", event.target.value)} error={showErrors && !item.degree.trim() ? `${isCollege ? "Degree" : "Strand / Program"} is required.` : undefined} placeholder={isCollege ? "Bachelor of Science" : "STEM"} />{isCollege && <Field label="Field of study" required value={item.fieldOfStudy} onChange={(event) => update("fieldOfStudy", event.target.value)} error={showErrors && !item.fieldOfStudy.trim() ? "Field of study is required." : undefined} placeholder="Computer Science" />}<Field label="Start date" required type="month" value={item.startDate} onChange={(event) => update("startDate", event.target.value)} error={showErrors && !item.startDate ? "Start date is required." : undefined} /><div className="flex items-end"><label className="flex min-h-11 items-center gap-2 text-sm font-medium text-slate-700"><input type="checkbox" checked={item.current} onChange={(event) => onChange({ ...item, current: event.target.checked, endDate: event.target.checked ? "" : item.endDate })} />Currently studying</label></div><Field label="End date" required={!item.current} type="month" disabled={item.current} value={item.endDate} onChange={(event) => update("endDate", event.target.value)} error={showErrors && !item.current && !item.endDate ? "End date is required." : undefined} /></div></EntryCard>;
+  const addAward = () => update("awards", [...item.awards, { id: makeId(), name: "" }]);
+  const updateAward = (awardId: string, value: string) =>
+    update("awards", item.awards.map((award) => (award.id === awardId ? { ...award, name: value } : award)));
+  const removeAward = (awardId: string) => update("awards", item.awards.filter((award) => award.id !== awardId));
+
+  return (
+    <EntryCard title={item.institution || `${isCollege ? "College / University" : "High School"} ${index + 1}`} onRemove={onRemove}>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {/* Education Level Dropdown - Always Row 1 Left */}
+        <label className="block text-sm font-medium text-slate-700">
+          Education level
+          <select
+            value={item.educationType}
+            onChange={(event) =>
+              onChange({
+                ...item,
+                educationType: event.target.value as Education["educationType"],
+                fieldOfStudy: event.target.value === "highSchool" ? "" : item.fieldOfStudy,
+              })
+            }
+            className="mt-1.5 min-h-11 w-full rounded-xl border border-slate-200 bg-white/80 px-3 text-sm text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none"
+          >
+            <option value="college">College / University</option>
+            <option value="highSchool">High School</option>
+          </select>
+        </label>
+
+        {/* Institution / School Name Input - Always Row 1 Right */}
+        <Field
+          label="School"
+          required
+          value={item.institution}
+          onChange={(event) => update("institution", event.target.value)}
+          error={showErrors && !item.institution.trim() ? "School is required." : undefined}
+          placeholder={isCollege ? "University of San Carlos" : "Cebu City National Science High School"}
+        />
+
+        {/* Dynamic Layout Based on Education Type */}
+        {isCollege ? (
+          <>
+            {/* COLLEGE LAYOUT */}
+            <Field
+              label="Degree"
+              required
+              value={item.degree}
+              onChange={(event) => update("degree", event.target.value)}
+              error={showErrors && !item.degree.trim() ? "Degree is required." : undefined}
+              placeholder="Bachelor of Science"
+            />
+            <Field
+              label="Field of study"
+              required
+              value={item.fieldOfStudy}
+              onChange={(event) => update("fieldOfStudy", event.target.value)}
+              error={showErrors && !item.fieldOfStudy.trim() ? "Field of study is required." : undefined}
+              placeholder="Computer Science"
+            />
+            <Field
+              label="Start date"
+              required
+              type="month"
+              value={item.startDate}
+              onChange={(event) => update("startDate", event.target.value)}
+              error={showErrors && !item.startDate ? "Start date is required." : undefined}
+            />
+            <div className="flex items-end">
+              <label className="flex min-h-11 items-center gap-2 text-sm font-medium text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={item.current}
+                  onChange={(event) =>
+                    onChange({
+                      ...item,
+                      current: event.target.checked,
+                      endDate: event.target.checked ? "" : item.endDate,
+                    })
+                  }
+                />
+                Currently studying
+              </label>
+            </div>
+            <Field
+              label="End date"
+              required={!item.current}
+              type="month"
+              disabled={item.current}
+              value={item.endDate}
+              onChange={(event) => update("endDate", event.target.value)}
+              error={showErrors && !item.current && !item.endDate ? "End date is required." : undefined}
+            />
+          </>
+        ) : (
+          <>
+            {/* HIGH SCHOOL LAYOUT */}
+            
+            {/* Row 2 Left: Start Date */}
+            <Field
+              label="Start date"
+              required
+              type="month"
+              value={item.startDate}
+              onChange={(event) => update("startDate", event.target.value)}
+              error={showErrors && !item.startDate ? "Start date is required." : undefined}
+            />
+            
+            {/* Row 2 Right: Strand / Program */}
+            <Field
+              label="Strand / Program"
+              required
+              value={item.degree}
+              onChange={(event) => update("degree", event.target.value)}
+              error={showErrors && !item.degree.trim() ? "Strand / Program is required." : undefined}
+              placeholder="STEM"
+            />
+            
+            {/* Row 3 Left: End Date */}
+            <Field
+              label="End date"
+              required={!item.current}
+              type="month"
+              disabled={item.current}
+              value={item.endDate}
+              onChange={(event) => update("endDate", event.target.value)}
+              error={showErrors && !item.current && !item.endDate ? "End date is required." : undefined}
+            />
+            
+            {/* Row 3 Right: Currently Studying */}
+            <div className="flex items-end">
+              <label className="flex min-h-11 items-center gap-2 text-sm font-medium text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={item.current}
+                  onChange={(event) =>
+                    onChange({
+                      ...item,
+                      current: event.target.checked,
+                      endDate: event.target.checked ? "" : item.endDate,
+                    })
+                  }
+                />
+                Currently studying
+              </label>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Awards Section remains unchanged */}
+      <div className="mt-6 border-t border-slate-200/80 pt-5">
+        <h3 className="text-sm font-semibold text-slate-800">Awards & Achievements</h3>
+        <p className="mt-1 text-xs text-slate-500">Optional. Add academic honors specific to this entry (e.g. Dean&apos;s Lister, With Honors).</p>
+
+        {item.awards.length > 0 && (
+          <div className="mt-3 space-y-3">
+            {item.awards.map((award) => (
+              <div key={award.id} className="flex flex-col gap-3 rounded-xl border border-slate-200/90 bg-white/60 p-3 sm:flex-row sm:items-end">
+                <Field
+                  label="Award / Achievement"
+                  value={award.name}
+                  onChange={(event) => updateAward(award.id, event.target.value)}
+                  placeholder="Honors"
+                  className="flex-1"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeAward(award.id)}
+                  aria-label={`Remove ${award.name || "award"}`}
+                  className="min-h-11 shrink-0 rounded-xl border border-red-200 px-3 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <AddButton onClick={addAward}>+ Add award</AddButton>
+      </div>
+    </EntryCard>
+  );
 }

@@ -9,7 +9,8 @@ export interface ContactDetails {
 
 export interface PersonalDetails { firstName: string; lastName: string; headline: string; contact: ContactDetails; }
 export interface Experience { id: string; employer: string; role: string; location: string; startDate: string; endDate: string; current: boolean; description: string; highlights: string[]; }
-export interface Education { id: string; educationType: "college" | "highSchool"; institution: string; degree: string; fieldOfStudy: string; location: string; startDate: string; endDate: string; current: boolean; description: string; }
+export interface EducationAward { id: string; name: string; }
+export interface Education { id: string; educationType: "college" | "highSchool"; institution: string; degree: string; fieldOfStudy: string; location: string; startDate: string; endDate: string; current: boolean; description: string; awards: EducationAward[]; }
 export interface SkillGroup { id: string; name: string; skills: string[]; }
 export interface Project { id: string; name: string; role: string; url: string; githubUrl: string; technologies: string[]; startDate: string; endDate: string; description: string; highlights: string[]; }
 export interface Certification { id: string; name: string; issuer: string; issueDate: string; expiryDate: string; credentialUrl: string; }
