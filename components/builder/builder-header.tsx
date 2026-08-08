@@ -1,0 +1,2 @@
+import Link from "next/link";
+export function BuilderHeader() { return <header className="border-b border-white/70 bg-white/70 backdrop-blur"><div className="section-shell flex h-18 items-center justify-between"><Link href="/" className="text-lg font-bold tracking-tight text-slate-950">Resum<span className="text-blue-600">axxer</span></Link><span className="text-sm font-medium text-slate-500">Resume builder</span></div></header>; }

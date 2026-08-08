@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+:root { --ink: #111827; --canvas: #f5f7fa; }
+* { box-sizing: border-box; }
+html { background: var(--canvas); }
+body { margin: 0; background: radial-gradient(circle at top right, rgba(219, 234, 254, .65), transparent 32rem), var(--canvas); color: var(--ink); font-family: "Segoe UI", "Helvetica Neue", sans-serif; }
+button, a { -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
+.section-shell { width: min(100% - 2rem, 76rem); margin-inline: auto; }
+.eyebrow { color: #2563eb; font-size: .75rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }

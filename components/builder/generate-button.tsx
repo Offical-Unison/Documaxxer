@@ -1,0 +1,2 @@
+import { Button } from "@/components/ui/button";
+export function GenerateButton() { return <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><Button disabled aria-describedby="generate-description" className="w-full cursor-not-allowed bg-slate-300 text-slate-600 hover:bg-slate-300">Generate resume</Button><p id="generate-description" className="mt-2 text-center text-xs text-slate-500">Generation will be available in a later milestone.</p></div>; }
