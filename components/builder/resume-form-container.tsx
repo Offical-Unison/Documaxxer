@@ -3,8 +3,13 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { AddButton, EntryCard, Field, TagInput, Textarea } from "@/components/builder/form-controls";
+import { BulletListInput } from "@/components/builder/bullet-list";
+import { PartialDateField } from "@/components/builder/date-input";
+import { LinkListInput } from "@/components/builder/link-list";
+import { PhoneField } from "@/components/builder/phone-input";
 import { OptionalResumeSections } from "@/components/builder/optional-resume-sections";
 import { useResumeContext } from "@/context/resume-context";
+import { isValidPhoneNumber } from "@/lib/phone";
 import type { Education, Experience, PersonalDetails } from "@/types/resume";
 
 const makeId = () => crypto.randomUUID();
@@ -20,16 +25,20 @@ export function ResumeFormContainer() {
   const [currentStep, setCurrentStep] = useState(() => { const value = Number(state.activeSection); return value >= 1 && value <= 5 ? value : 1; });
   const [showErrors, setShowErrors] = useState(false);
   const personal = resume.personalDetails;
-  const skills = resume.skillGroups.find((group) => group.id === "primary")?.skills ?? [];
+  const primarySkills = resume.skillGroups[0]?.skills ?? [];
+  const secondaryGroup = resume.skillGroups[1];
+
   const updatePersonal = (update: Omit<Partial<PersonalDetails>, "contact"> & { contact?: Partial<PersonalDetails["contact"]> }) => {
     dispatch({ type: "UPDATE_PERSONAL_DETAILS", payload: { ...personal, ...update, contact: { ...personal.contact, ...update.contact } } });
   };
   const setExperience = (items: Experience[]) => dispatch({ type: "SET_EXPERIENCES", payload: items });
   const setEducation = (items: Education[]) => dispatch({ type: "SET_EDUCATION", payload: items });
-  const hasPersonalErrors = !personal.firstName.trim() || !personal.lastName.trim() || !personal.headline.trim() || !personal.contact.email.trim() || !personal.contact.phone.trim() || !personal.contact.location.trim() || !resume.professionalSummary.trim();
-  const hasExperienceErrors = resume.experiences.some((item) => !item.employer.trim() || !item.role.trim() || !item.location.trim() || !item.startDate || (!item.current && !item.endDate) || !item.description.trim());
+
+  const phoneValid = isValidPhoneNumber(personal.contact.phoneCountry, personal.contact.phoneNumber);
+  const hasPersonalErrors = !personal.firstName.trim() || !personal.lastName.trim() || !personal.contact.email.trim() || !personal.contact.phoneNumber.trim() || !phoneValid || !personal.contact.location.trim() || !resume.professionalSummary.trim();
+  const hasExperienceErrors = resume.experiences.some((item) => !item.employer.trim() || !item.role.trim() || !item.location.trim() || !item.startDate || (!item.current && !item.endDate) || !item.highlights.some((line) => line.trim()));
   const hasEducationErrors = resume.education.length === 0 || resume.education.some((item) => !item.institution.trim() || !item.degree.trim() || (item.educationType === "college" && !item.fieldOfStudy.trim()) || !item.startDate || (!item.current && !item.endDate));
-  const hasSkillsErrors = skills.length === 0;
+  const hasSkillsErrors = primarySkills.length === 0;
   const invalidStep = () => currentStep === 1 ? hasPersonalErrors : currentStep === 2 ? hasExperienceErrors : currentStep === 3 ? hasEducationErrors : currentStep === 4 ? hasSkillsErrors : false;
   const goTo = (nextStep: number) => { setCurrentStep(nextStep); setShowErrors(false); dispatch({ type: "SET_ACTIVE_SECTION", payload: String(nextStep) }); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const next = () => { if (invalidStep()) { setShowErrors(true); return; } if (currentStep < steps.length) goTo(currentStep + 1); };
@@ -41,17 +50,31 @@ export function ResumeFormContainer() {
       {currentStep === 1 && <Section title="Personal information" description="Start with the details recruiters use to contact you."><div className="grid gap-4 sm:grid-cols-2">
         <Field label="First name" required value={personal.firstName} onChange={(event) => updatePersonal({ firstName: event.target.value })} error={showErrors && !personal.firstName.trim() ? "First name is required." : undefined} placeholder="John" />
         <Field label="Last name" required value={personal.lastName} onChange={(event) => updatePersonal({ lastName: event.target.value })} error={showErrors && !personal.lastName.trim() ? "Last name is required." : undefined} placeholder="Doe" />
-        <Field label="Professional title" required value={personal.headline} onChange={(event) => updatePersonal({ headline: event.target.value })} error={showErrors && !personal.headline.trim() ? "Professional title is required." : undefined} placeholder="Software Developer" className="sm:col-span-2" />
+        <Field label="Title" value={personal.headline} onChange={(event) => updatePersonal({ headline: event.target.value })} placeholder="Software Developer" className="sm:col-span-2" />
         <Field label="Email" required type="email" value={personal.contact.email} onChange={(event) => updatePersonal({ contact: { email: event.target.value } })} error={showErrors && !personal.contact.email.trim() ? "Email is required." : undefined} placeholder="john.doe@email.com" />
-        <Field label="Phone number" required type="tel" value={personal.contact.phone} onChange={(event) => updatePersonal({ contact: { phone: event.target.value } })} error={showErrors && !personal.contact.phone.trim() ? "Phone number is required." : undefined} placeholder="0912 345 6789" />
+        <PhoneField
+          required
+          countryCode={personal.contact.phoneCountry}
+          number={personal.contact.phoneNumber}
+          onCountryChange={(code) => updatePersonal({ contact: { phoneCountry: code } })}
+          onNumberChange={(value) => updatePersonal({ contact: { phoneNumber: value } })}
+          error={showErrors ? (!personal.contact.phoneNumber.trim() ? "Phone number is required." : !phoneValid ? "Enter a valid phone number." : undefined) : undefined}
+        />
         <Field label="Location" required value={personal.contact.location} onChange={(event) => updatePersonal({ contact: { location: event.target.value } })} error={showErrors && !personal.contact.location.trim() ? "Location is required." : undefined} placeholder="Cebu City, Philippines" />
-        <Field label="LinkedIn" type="url" value={personal.contact.linkedin} onChange={(event) => updatePersonal({ contact: { linkedin: event.target.value } })} placeholder="linkedin.com/in/johndoe" />
-        <Field label="GitHub" type="url" value={personal.contact.github} onChange={(event) => updatePersonal({ contact: { github: event.target.value } })} placeholder="github.com/johndoe" />
-        <Field label="Portfolio" type="url" value={personal.contact.website} onChange={(event) => updatePersonal({ contact: { website: event.target.value } })} placeholder="johndoe.dev" />
-      </div><div className="mt-8 border-t border-slate-200/80 pt-7"><h2 className="text-xl font-semibold tracking-tight text-slate-900">Professional summary</h2><p className="mt-2 text-sm text-slate-600">Aim for two to four concise sentences.</p><div className="mt-4"><Textarea label="Summary" value={resume.professionalSummary} onChange={(event) => dispatch({ type: "SET_PROFESSIONAL_SUMMARY", payload: event.target.value })} error={showErrors && !resume.professionalSummary.trim() ? "Summary is required." : undefined} maxLength={600} hint={`${resume.professionalSummary.length}/600 characters`} placeholder="Summarize your expertise, strengths, and the value you bring." /></div></div></Section>}
-      {currentStep === 2 && <Section title="Work experience" description="This section is optional. Add roles that best demonstrate your impact."><div className="space-y-3">{resume.experiences.map((item, index) => <ExperienceEditor key={item.id} item={item} index={index} showErrors={showErrors} onChange={(nextItem) => setExperience(resume.experiences.map((entry) => entry.id === nextItem.id ? nextItem : entry))} onRemove={() => setExperience(resume.experiences.filter((entry) => entry.id !== item.id))} />)}</div><AddButton onClick={() => setExperience([...resume.experiences, { id: makeId(), employer: "", role: "", location: "", startDate: "", endDate: "", current: false, description: "", highlights: [] }])}>+ Add experience</AddButton></Section>}
+      </div>
+      <div className="mt-6"><LinkListInput values={personal.links} onChange={(links) => updatePersonal({ links })} makeId={makeId} /></div>
+      <div className="mt-8 border-t border-slate-200/80 pt-7"><h2 className="text-xl font-semibold tracking-tight text-slate-900">Professional summary</h2><p className="mt-2 text-sm text-slate-600">Aim for two to four concise sentences.</p><div className="mt-4"><Textarea label="Summary" value={resume.professionalSummary} onChange={(event) => dispatch({ type: "SET_PROFESSIONAL_SUMMARY", payload: event.target.value })} error={showErrors && !resume.professionalSummary.trim() ? "Summary is required." : undefined} maxLength={600} hint={`${resume.professionalSummary.length}/600 characters`} placeholder="Summarize your expertise, strengths, and the value you bring." /></div></div></Section>}
+      {currentStep === 2 && <Section title="Work experience" description="This section is optional. Add roles that best demonstrate your impact."><div className="space-y-3">{resume.experiences.map((item, index) => <ExperienceEditor key={item.id} item={item} index={index} showErrors={showErrors} onChange={(nextItem) => setExperience(resume.experiences.map((entry) => entry.id === nextItem.id ? nextItem : entry))} onRemove={() => setExperience(resume.experiences.filter((entry) => entry.id !== item.id))} />)}</div><AddButton onClick={() => setExperience([...resume.experiences, { id: makeId(), employer: "", role: "", location: "", startDate: "", endDate: "", current: false, highlights: [] }])}>+ Add experience</AddButton></Section>}
       {currentStep === 3 && <Section title="Education" description="Add at least one college, university, or high school entry."><div className="space-y-3">{resume.education.map((item, index) => <EducationEditor key={item.id} item={item} index={index} showErrors={showErrors} onChange={(nextItem) => setEducation(resume.education.map((entry) => entry.id === nextItem.id ? nextItem : entry))} onRemove={() => setEducation(resume.education.filter((entry) => entry.id !== item.id))} />)}</div>{showErrors && resume.education.length === 0 && <p className="mt-3 text-sm text-red-600">Add at least one education entry to continue.</p>}<div className="mt-4 flex flex-wrap gap-3"><AddButton onClick={() => setEducation([...resume.education, blankEducation("college")])}>+ Add college / university</AddButton><AddButton onClick={() => setEducation([...resume.education, blankEducation("highSchool")])}>+ Add high school</AddButton></div></Section>}
-      {currentStep === 4 && <Section title="Skills" description="Add the individual skills most relevant to the role you want."><TagInput label="Skills" values={skills} onChange={(nextItems) => dispatch({ type: "SET_SKILLS", payload: nextItems })} placeholder="Type a skill and press Enter" />{showErrors && hasSkillsErrors && <p className="mt-2 text-sm text-red-600">Add at least one skill to continue.</p>}</Section>}
+      {currentStep === 4 && <Section title="Skills" description="Add the individual skills most relevant to the role you want.">
+        <TagInput label="Skills" values={primarySkills} onChange={(values) => dispatch({ type: "SET_SKILL_GROUP", payload: { index: 0, skills: values } })} placeholder="Type a skill and press Enter" />
+        {showErrors && hasSkillsErrors && <p className="mt-2 text-sm text-red-600">Add at least one skill to continue.</p>}
+        <div className="mt-6 border-t border-slate-200/80 pt-6">
+          <Field label="Category name" value={secondaryGroup?.name ?? "Other Skills"} onChange={(event) => dispatch({ type: "SET_SKILL_GROUP", payload: { index: 1, name: event.target.value } })} placeholder="Other Skills" className="max-w-xs" />
+          <div className="mt-3"><TagInput label={secondaryGroup?.name || "Other Skills"} values={secondaryGroup?.skills ?? []} onChange={(values) => dispatch({ type: "SET_SKILL_GROUP", payload: { index: 1, skills: values } })} placeholder="Type a skill and press Enter" /></div>
+          <p className="mt-2 text-xs text-slate-500">Optional. Rename this category to fit your resume (e.g. Tools, Programming Languages).</p>
+        </div>
+      </Section>}
       {currentStep === 5 && <Section title="Additional sections" description="Choose sections that strengthen your resume. These are optional, so add only what is relevant to you."><OptionalResumeSections /></Section>}
       <div className="mt-9 flex items-center justify-between border-t border-slate-200/80 pt-5"><button type="button" onClick={() => goTo(currentStep - 1)} disabled={currentStep === 1} className="min-h-11 rounded-xl border border-slate-200 bg-white/70 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-45">← Previous</button>{currentStep < steps.length ? <button type="submit" className="min-h-11 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">Next</button> : <button type="submit" className="min-h-11 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">Finish →</button>}</div>
     </form>
@@ -60,36 +83,37 @@ export function ResumeFormContainer() {
 
 function ExperienceEditor({ item, index, showErrors, onChange, onRemove }: { item: Experience; index: number; showErrors: boolean; onChange: (item: Experience) => void; onRemove: () => void }) {
   const update = <K extends keyof Experience>(key: K, value: Experience[K]) => onChange({ ...item, [key]: value });
-  return <EntryCard title={item.role || item.employer || `Experience ${index + 1}`} onRemove={onRemove}><div className="grid gap-4 sm:grid-cols-2"><Field label="Company" required value={item.employer} onChange={(event) => update("employer", event.target.value)} error={showErrors && !item.employer.trim() ? "Company is required." : undefined} placeholder="Acme Inc." /><Field label="Job title" required value={item.role} onChange={(event) => update("role", event.target.value)} error={showErrors && !item.role.trim() ? "Job title is required." : undefined} placeholder="Software Developer" /><Field label="Location" required value={item.location} onChange={(event) => update("location", event.target.value)} error={showErrors && !item.location.trim() ? "Location is required." : undefined} placeholder="Cebu City, Philippines" /><div className="flex items-end"><label className="flex min-h-11 items-center gap-2 text-sm font-medium text-slate-700"><input type="checkbox" checked={item.current} onChange={(event) => onChange({ ...item, current: event.target.checked, endDate: event.target.checked ? "" : item.endDate })} />Current job</label></div><Field label="Start date" required type="month" value={item.startDate} onChange={(event) => update("startDate", event.target.value)} error={showErrors && !item.startDate ? "Start date is required." : undefined} /><Field label="End date" required={!item.current} type="month" disabled={item.current} value={item.endDate} onChange={(event) => update("endDate", event.target.value)} error={showErrors && !item.current && !item.endDate ? "End date is required." : undefined} /><Textarea label="Description" className="sm:col-span-2" value={item.description} onChange={(event) => update("description", event.target.value)} error={showErrors && !item.description.trim() ? "Description is required." : undefined} placeholder="Describe your responsibilities and achievements." /></div></EntryCard>;
+  const hasHighlight = item.highlights.some((line) => line.trim());
+  return <EntryCard title={item.role || item.employer || `Experience ${index + 1}`} onRemove={onRemove}><div className="grid gap-4 sm:grid-cols-2">
+    <Field label="Company" required value={item.employer} onChange={(event) => update("employer", event.target.value)} error={showErrors && !item.employer.trim() ? "Company is required." : undefined} placeholder="Acme Inc." />
+    <Field label="Job title" required value={item.role} onChange={(event) => update("role", event.target.value)} error={showErrors && !item.role.trim() ? "Job title is required." : undefined} placeholder="Software Developer" />
+    <Field label="Location" required value={item.location} onChange={(event) => update("location", event.target.value)} error={showErrors && !item.location.trim() ? "Location is required." : undefined} placeholder="Cebu City, Philippines" />
+    <div className="flex items-end"><label className="flex min-h-11 items-center gap-2 text-sm font-medium text-slate-700"><input type="checkbox" checked={item.current} onChange={(event) => onChange({ ...item, current: event.target.checked, endDate: event.target.checked ? "" : item.endDate })} />Current job</label></div>
+    <PartialDateField label="Start date" required value={item.startDate} onChange={(value) => update("startDate", value)} error={showErrors && !item.startDate ? "Start date is required." : undefined} />
+    <PartialDateField label="End date" required={!item.current} disabled={item.current} value={item.endDate} onChange={(value) => update("endDate", value)} error={showErrors && !item.current && !item.endDate ? "End date is required." : undefined} />
+    <div className="sm:col-span-2">
+      <BulletListInput label="Description" values={item.highlights} onChange={(value) => update("highlights", value)} placeholder="Describe an achievement or responsibility" />
+      {showErrors && !hasHighlight && <p className="mt-1 text-xs text-red-600">Add at least one description.</p>}
+    </div>
+  </div></EntryCard>;
 }
 
 function blankEducation(educationType: Education["educationType"]): Education {
-  return { id: makeId(), educationType, institution: "", degree: "", fieldOfStudy: "", location: "", startDate: "", endDate: "", current: false, description: "", awards: [] };
+  return { id: makeId(), educationType, institution: "", degree: "", fieldOfStudy: "", location: "", startDate: "", endDate: "", current: false, awards: [] };
 }
 
 function EducationEditor({ item, index, showErrors, onChange, onRemove }: { item: Education; index: number; showErrors: boolean; onChange: (item: Education) => void; onRemove: () => void }) {
   const update = <K extends keyof Education>(key: K, value: Education[K]) => onChange({ ...item, [key]: value });
   const isCollege = item.educationType === "college";
-  const addAward = () => update("awards", [...item.awards, { id: makeId(), name: "" }]);
-  const updateAward = (awardId: string, value: string) =>
-    update("awards", item.awards.map((award) => (award.id === awardId ? { ...award, name: value } : award)));
-  const removeAward = (awardId: string) => update("awards", item.awards.filter((award) => award.id !== awardId));
 
   return (
     <EntryCard title={item.institution || `${isCollege ? "College / University" : "High School"} ${index + 1}`} onRemove={onRemove}>
       <div className="grid gap-4 sm:grid-cols-2">
-        {/* Education Level Dropdown - Always Row 1 Left */}
         <label className="block text-sm font-medium text-slate-700">
           Education level
           <select
             value={item.educationType}
-            onChange={(event) =>
-              onChange({
-                ...item,
-                educationType: event.target.value as Education["educationType"],
-                fieldOfStudy: event.target.value === "highSchool" ? "" : item.fieldOfStudy,
-              })
-            }
+            onChange={(event) => onChange({ ...item, educationType: event.target.value as Education["educationType"], fieldOfStudy: event.target.value === "highSchool" ? "" : item.fieldOfStudy })}
             className="mt-1.5 min-h-11 w-full rounded-xl border border-slate-200 bg-white/80 px-3 text-sm text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none"
           >
             <option value="college">College / University</option>
@@ -97,156 +121,36 @@ function EducationEditor({ item, index, showErrors, onChange, onRemove }: { item
           </select>
         </label>
 
-        {/* Institution / School Name Input - Always Row 1 Right */}
-        <Field
-          label="School"
-          required
-          value={item.institution}
-          onChange={(event) => update("institution", event.target.value)}
-          error={showErrors && !item.institution.trim() ? "School is required." : undefined}
-          placeholder={isCollege ? "University of San Carlos" : "Cebu City National Science High School"}
-        />
+        <Field label="School" required value={item.institution} onChange={(event) => update("institution", event.target.value)} error={showErrors && !item.institution.trim() ? "School is required." : undefined} placeholder={isCollege ? "University of San Carlos" : "Cebu City National Science High School"} />
 
-        {/* Dynamic Layout Based on Education Type */}
         {isCollege ? (
           <>
-            {/* COLLEGE LAYOUT */}
-            <Field
-              label="Degree"
-              required
-              value={item.degree}
-              onChange={(event) => update("degree", event.target.value)}
-              error={showErrors && !item.degree.trim() ? "Degree is required." : undefined}
-              placeholder="Bachelor of Science"
-            />
-            <Field
-              label="Field of study"
-              required
-              value={item.fieldOfStudy}
-              onChange={(event) => update("fieldOfStudy", event.target.value)}
-              error={showErrors && !item.fieldOfStudy.trim() ? "Field of study is required." : undefined}
-              placeholder="Computer Science"
-            />
-            <Field
-              label="Start date"
-              required
-              type="month"
-              value={item.startDate}
-              onChange={(event) => update("startDate", event.target.value)}
-              error={showErrors && !item.startDate ? "Start date is required." : undefined}
-            />
-            <div className="flex items-end">
-              <label className="flex min-h-11 items-center gap-2 text-sm font-medium text-slate-700">
-                <input
-                  type="checkbox"
-                  checked={item.current}
-                  onChange={(event) =>
-                    onChange({
-                      ...item,
-                      current: event.target.checked,
-                      endDate: event.target.checked ? "" : item.endDate,
-                    })
-                  }
-                />
-                Currently studying
-              </label>
-            </div>
-            <Field
-              label="End date"
-              required={!item.current}
-              type="month"
-              disabled={item.current}
-              value={item.endDate}
-              onChange={(event) => update("endDate", event.target.value)}
-              error={showErrors && !item.current && !item.endDate ? "End date is required." : undefined}
-            />
+            <Field label="Degree" required value={item.degree} onChange={(event) => update("degree", event.target.value)} error={showErrors && !item.degree.trim() ? "Degree is required." : undefined} placeholder="Bachelor of Science" />
+            <Field label="Field of study" required value={item.fieldOfStudy} onChange={(event) => update("fieldOfStudy", event.target.value)} error={showErrors && !item.fieldOfStudy.trim() ? "Field of study is required." : undefined} placeholder="Computer Science" />
+            <PartialDateField label="Start date" required value={item.startDate} onChange={(value) => update("startDate", value)} error={showErrors && !item.startDate ? "Start date is required." : undefined} />
+            <div className="flex items-end"><label className="flex min-h-11 items-center gap-2 text-sm font-medium text-slate-700"><input type="checkbox" checked={item.current} onChange={(event) => onChange({ ...item, current: event.target.checked, endDate: event.target.checked ? "" : item.endDate })} />Currently studying</label></div>
+            <PartialDateField label="End date" required={!item.current} disabled={item.current} value={item.endDate} onChange={(value) => update("endDate", value)} error={showErrors && !item.current && !item.endDate ? "End date is required." : undefined} />
           </>
         ) : (
           <>
-            {/* HIGH SCHOOL LAYOUT */}
-            
-            {/* Row 2 Left: Start Date */}
-            <Field
-              label="Start date"
-              required
-              type="month"
-              value={item.startDate}
-              onChange={(event) => update("startDate", event.target.value)}
-              error={showErrors && !item.startDate ? "Start date is required." : undefined}
-            />
-            
-            {/* Row 2 Right: Strand / Program */}
-            <Field
-              label="Strand / Program"
-              required
-              value={item.degree}
-              onChange={(event) => update("degree", event.target.value)}
-              error={showErrors && !item.degree.trim() ? "Strand / Program is required." : undefined}
-              placeholder="STEM"
-            />
-            
-            {/* Row 3 Left: End Date */}
-            <Field
-              label="End date"
-              required={!item.current}
-              type="month"
-              disabled={item.current}
-              value={item.endDate}
-              onChange={(event) => update("endDate", event.target.value)}
-              error={showErrors && !item.current && !item.endDate ? "End date is required." : undefined}
-            />
-            
-            {/* Row 3 Right: Currently Studying */}
-            <div className="flex items-end">
-              <label className="flex min-h-11 items-center gap-2 text-sm font-medium text-slate-700">
-                <input
-                  type="checkbox"
-                  checked={item.current}
-                  onChange={(event) =>
-                    onChange({
-                      ...item,
-                      current: event.target.checked,
-                      endDate: event.target.checked ? "" : item.endDate,
-                    })
-                  }
-                />
-                Currently studying
-              </label>
-            </div>
+            <PartialDateField label="Start date" required value={item.startDate} onChange={(value) => update("startDate", value)} error={showErrors && !item.startDate ? "Start date is required." : undefined} />
+            <Field label="Strand / Program" required value={item.degree} onChange={(event) => update("degree", event.target.value)} error={showErrors && !item.degree.trim() ? "Strand / Program is required." : undefined} placeholder="STEM" />
+            <PartialDateField label="End date" required={!item.current} disabled={item.current} value={item.endDate} onChange={(value) => update("endDate", value)} error={showErrors && !item.current && !item.endDate ? "End date is required." : undefined} />
+            <div className="flex items-end"><label className="flex min-h-11 items-center gap-2 text-sm font-medium text-slate-700"><input type="checkbox" checked={item.current} onChange={(event) => onChange({ ...item, current: event.target.checked, endDate: event.target.checked ? "" : item.endDate })} />Currently studying</label></div>
           </>
         )}
       </div>
 
-      {/* Awards Section remains unchanged */}
       <div className="mt-6 border-t border-slate-200/80 pt-5">
-        <h3 className="text-sm font-semibold text-slate-800">Awards & Achievements</h3>
-        <p className="mt-1 text-xs text-slate-500">Optional. Add academic honors specific to this entry (e.g. Dean&apos;s Lister, With Honors).</p>
-
-        {item.awards.length > 0 && (
-          <div className="mt-3 space-y-3">
-            {item.awards.map((award) => (
-              <div key={award.id} className="flex flex-col gap-3 rounded-xl border border-slate-200/90 bg-white/60 p-3 sm:flex-row sm:items-end">
-                <Field
-                  label="Award / Achievement"
-                  value={award.name}
-                  onChange={(event) => updateAward(award.id, event.target.value)}
-                  placeholder="Honors"
-                  className="flex-1"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeAward(award.id)}
-                  aria-label={`Remove ${award.name || "award"}`}
-                  className="min-h-11 shrink-0 rounded-xl border border-red-200 px-3 text-sm font-semibold text-red-600 transition hover:bg-red-50"
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <AddButton onClick={addAward}>+ Add award</AddButton>
+        <BulletListInput
+          label="Academic Awards / Achievements"
+          values={item.awards.map((award) => award.name)}
+          onChange={(values) => update("awards", values.map((name, awardIndex) => ({ id: item.awards[awardIndex]?.id ?? makeId(), name })))}
+          placeholder="Dean's Lister"
+          addLabel="+ Add award"
+          bulletMark={false}
+        />
+        <p className="mt-1 text-xs text-slate-500">Optional. Shown together on one line, separated by &quot;•&quot;.</p>
       </div>
     </EntryCard>
   );

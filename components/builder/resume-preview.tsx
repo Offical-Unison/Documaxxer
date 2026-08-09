@@ -2,7 +2,8 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useResumeContext } from "@/context/resume-context";
-import { formatDateRange, sortEntriesByRecency } from "@/lib/format";
+import { formatDateRange, formatPartialDate, sortByDateDesc, sortEntriesByRecency } from "@/lib/format";
+import { COUNTRIES } from "@/lib/countries";
 import type { Education, Experience, Project, ResumeData, VolunteerExperience } from "@/types/resume";
 
 const PAGE_WIDTH_MM = 210;
@@ -32,8 +33,6 @@ function EntryHeading({ primary, secondary, dateRange }: { primary: string; seco
 
 const hasExperienceContent = (item: Experience) => item.employer.trim() || item.role.trim();
 const hasEducationContent = (item: Education) => item.institution.trim();
-const hasProjectContent = (item: Project) => item.name.trim();
-const hasVolunteerContent = (item: VolunteerExperience) => item.organization.trim() || item.role.trim();
 
 function sectionHeader(key: string, title: string): PreviewBlock {
   return {
@@ -46,22 +45,18 @@ function sectionContent(id: string, node: ReactNode): PreviewBlock {
   return { id, type: "content", node: <div className="mt-2.5">{node}</div> };
 }
 
+function normalizeUrl(url: string): string {
+  if (!url) return "#";
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
+
 /** Builds an ordered, flat list of atomic preview blocks (never split across pages). */
 function buildBlocks(resume: ResumeData): PreviewBlock[] {
   const blocks: PreviewBlock[] = [];
   const { professionalSummary } = resume;
 
-  // Work experience and education are sorted here for display only — the
-  // arrays in central state are never mutated.
   const experiences = sortEntriesByRecency(resume.experiences.filter(hasExperienceContent));
   const education = sortEntriesByRecency(resume.education.filter(hasEducationContent));
-  const skills = resume.skillGroups.find((group) => group.id === "primary")?.skills ?? [];
-  const projects = resume.optionalSections.includes("projects") ? resume.projects.filter(hasProjectContent) : [];
-  const certifications = resume.optionalSections.includes("certifications") ? resume.certifications.filter((item) => item.name.trim()) : [];
-  const awards = resume.optionalSections.includes("awards") ? resume.awards.filter((item) => item.title.trim()) : [];
-  const volunteering = resume.optionalSections.includes("volunteerExperiences") ? resume.volunteerExperiences.filter(hasVolunteerContent) : [];
-  const languages = resume.optionalSections.includes("languages") ? resume.languages.filter((item) => item.name.trim()) : [];
-  const interests = resume.optionalSections.includes("interests") ? resume.interests.filter(Boolean) : [];
 
   if (professionalSummary.trim()) {
     blocks.push(sectionHeader("summary", "Summary"));
@@ -71,112 +66,116 @@ function buildBlocks(resume: ResumeData): PreviewBlock[] {
   if (experiences.length > 0) {
     blocks.push(sectionHeader("experience", "Experience"));
     experiences.forEach((item) => {
-      blocks.push(
-        sectionContent(
-          `experience-${item.id}`,
-          <div>
-            <EntryHeading primary={item.role || "—"} secondary={[item.employer, item.location].filter(Boolean).join(", ")} dateRange={formatDateRange(item.startDate, item.endDate, item.current)} />
-            {item.description.trim() && <p className="mt-1 text-sm leading-6 text-slate-700">{item.description}</p>}
-          </div>
-        )
-      );
+      const highlights = item.highlights.filter((line) => line.trim());
+      blocks.push(sectionContent(`experience-${item.id}`, (
+        <div>
+          <EntryHeading primary={item.role || "—"} secondary={[item.employer, item.location].filter(Boolean).join(", ")} dateRange={formatDateRange(item.startDate, item.endDate, item.current)} />
+          {highlights.length > 0 && <ul className="mt-1 list-disc space-y-0.5 pl-4 text-sm leading-6 text-slate-700">{highlights.map((line, i) => <li key={i}>{line}</li>)}</ul>}
+        </div>
+      )));
     });
   }
 
   if (education.length > 0) {
     blocks.push(sectionHeader("education", "Education"));
     education.forEach((item) => {
-      blocks.push(
-        sectionContent(
-          `education-${item.id}`,
-          <div>
-            <EntryHeading primary={item.institution} secondary={[item.degree, item.fieldOfStudy].filter(Boolean).join(", ")} dateRange={formatDateRange(item.startDate, item.endDate, item.current)} />
-            {item.awards.some((award) => award.name.trim()) && (
-              <p className="mt-1 text-xs text-slate-600">{item.awards.filter((award) => award.name.trim()).map((award) => award.name).join(", ")}</p>
-            )}
-          </div>
-        )
-      );
+      const awards = item.awards.filter((award) => award.name.trim());
+      blocks.push(sectionContent(`education-${item.id}`, (
+        <div>
+          <EntryHeading primary={item.institution} secondary={[item.degree, item.fieldOfStudy].filter(Boolean).join(", ")} dateRange={formatDateRange(item.startDate, item.endDate, item.current)} />
+          {awards.length > 0 && <p className="mt-1 text-xs text-slate-600">{awards.map((award) => award.name).join(" • ")}</p>}
+        </div>
+      )));
     });
   }
 
-  if (skills.length > 0) {
+  const skillGroups = resume.skillGroups.filter((group) => group.skills.length > 0);
+  if (skillGroups.length > 0) {
     blocks.push(sectionHeader("skills", "Skills"));
-    blocks.push(sectionContent("skills-content", <p className="text-sm leading-6 text-slate-700">{skills.join(" • ")}</p>));
+    blocks.push(sectionContent("skills-content", (
+      <div className="space-y-1">
+        {skillGroups.map((group) => (
+          <p key={group.id} className="text-sm leading-6 text-slate-700">
+            {group.id !== "primary" && <span className="font-semibold text-slate-800">{group.name}: </span>}
+            {group.skills.join(" • ")}
+          </p>
+        ))}
+      </div>
+    )));
   }
 
-  if (projects.length > 0) {
-    blocks.push(sectionHeader("projects", "Projects"));
-    projects.forEach((item) => {
-      blocks.push(
-        sectionContent(
-          `project-${item.id}`,
+  resume.optionalSections.forEach((sectionKey) => {
+    if (sectionKey === "projects") {
+      const hasProjectContent = (item: Project) => item.name.trim();
+      const projects = sortByDateDesc(resume.projects.filter(hasProjectContent));
+      if (projects.length === 0) return;
+      blocks.push(sectionHeader("projects", "Projects"));
+      projects.forEach((item) => {
+        const highlights = item.highlights.filter((line) => line.trim());
+        blocks.push(sectionContent(`project-${item.id}`, (
           <div>
-            <EntryHeading primary={item.name} secondary={item.role} dateRange={formatDateRange(item.startDate, item.endDate, false)} />
-            {item.technologies.length > 0 && <p className="mt-0.5 text-xs text-slate-500">{item.technologies.join(", ")}</p>}
-            {item.description.trim() && <p className="mt-1 text-sm leading-6 text-slate-700">{item.description}</p>}
+            <EntryHeading primary={[item.name, item.technologies.join(", ")].filter(Boolean).join(" | ")} dateRange={formatPartialDate(item.date)} />
+            {highlights.length > 0 && <ul className="mt-1 list-disc space-y-0.5 pl-4 text-sm leading-6 text-slate-700">{highlights.map((line, i) => <li key={i}>{line}</li>)}</ul>}
           </div>
-        )
-      );
-    });
-  }
-
-  if (certifications.length > 0) {
-    blocks.push(sectionHeader("certifications", "Certifications"));
-    certifications.forEach((item) => {
-      blocks.push(
-        sectionContent(
-          `certification-${item.id}`,
-          <EntryHeading primary={item.name} secondary={item.issuer} dateRange={formatDateRange(item.issueDate, item.expiryDate, false)} />
-        )
-      );
-    });
-  }
-
-  if (awards.length > 0) {
-    blocks.push(sectionHeader("awards", "Awards"));
-    awards.forEach((item) => {
-      blocks.push(
-        sectionContent(
-          `award-${item.id}`,
+        )));
+      });
+    }
+    if (sectionKey === "certifications") {
+      const certifications = sortByDateDesc(resume.certifications.filter((item) => item.name.trim()));
+      if (certifications.length === 0) return;
+      blocks.push(sectionHeader("certifications", "Certifications"));
+      certifications.forEach((item) => blocks.push(sectionContent(`certification-${item.id}`, <EntryHeading primary={item.name} dateRange={formatPartialDate(item.date)} />)));
+    }
+    if (sectionKey === "awards") {
+      const awards = sortByDateDesc(resume.awards.filter((item) => item.title.trim()));
+      if (awards.length === 0) return;
+      blocks.push(sectionHeader("awards", "Awards"));
+      awards.forEach((item) => {
+        const highlights = item.highlights.filter((line) => line.trim());
+        blocks.push(sectionContent(`award-${item.id}`, (
           <div>
-            <EntryHeading primary={item.title} secondary={item.issuer} dateRange={formatDateRange(item.date, "", false)} />
-            {item.description.trim() && <p className="mt-1 text-sm leading-6 text-slate-700">{item.description}</p>}
+            <EntryHeading primary={item.title} dateRange={formatPartialDate(item.date)} />
+            {highlights.length > 0 && <ul className="mt-1 list-disc space-y-0.5 pl-4 text-sm leading-6 text-slate-700">{highlights.map((line, i) => <li key={i}>{line}</li>)}</ul>}
           </div>
-        )
-      );
-    });
-  }
-
-  if (volunteering.length > 0) {
-    blocks.push(sectionHeader("volunteering", "Volunteer Experience"));
-    volunteering.forEach((item) => {
-      blocks.push(
-        sectionContent(
-          `volunteer-${item.id}`,
+        )));
+      });
+    }
+    if (sectionKey === "volunteerExperiences") {
+      const hasVolunteerContent = (item: VolunteerExperience) => item.organization.trim() || item.role.trim();
+      const volunteering = sortByDateDesc(resume.volunteerExperiences.filter(hasVolunteerContent));
+      if (volunteering.length === 0) return;
+      blocks.push(sectionHeader("volunteering", "Volunteer Experience"));
+      volunteering.forEach((item) => {
+        const highlights = item.highlights.filter((line) => line.trim());
+        blocks.push(sectionContent(`volunteer-${item.id}`, (
           <div>
-            <EntryHeading primary={item.role || item.organization} secondary={item.role ? item.organization : undefined} dateRange={formatDateRange(item.startDate, item.endDate, false)} />
-            {item.description.trim() && <p className="mt-1 text-sm leading-6 text-slate-700">{item.description}</p>}
+            <EntryHeading primary={[item.role, item.organization].filter(Boolean).join(" | ")} dateRange={formatPartialDate(item.date)} />
+            {highlights.length > 0 && <ul className="mt-1 list-disc space-y-0.5 pl-4 text-sm leading-6 text-slate-700">{highlights.map((line, i) => <li key={i}>{line}</li>)}</ul>}
           </div>
-        )
-      );
-    });
-  }
-
-  if (languages.length > 0) {
-    blocks.push(sectionHeader("languages", "Languages"));
-    blocks.push(
-      sectionContent(
-        "languages-content",
-        <p className="text-sm leading-6 text-slate-700">{languages.map((item) => (item.proficiency ? `${item.name} (${item.proficiency})` : item.name)).join(" • ")}</p>
-      )
-    );
-  }
-
-  if (interests.length > 0) {
-    blocks.push(sectionHeader("interests", "Interests"));
-    blocks.push(sectionContent("interests-content", <p className="text-sm leading-6 text-slate-700">{interests.join(" • ")}</p>));
-  }
+        )));
+      });
+    }
+    if (sectionKey === "languages") {
+      const languages = resume.languages.filter((item) => item.name.trim());
+      if (languages.length === 0) return;
+      blocks.push(sectionHeader("languages", "Languages"));
+      blocks.push(sectionContent("languages-content", <p className="text-sm leading-6 text-slate-700">{languages.map((item) => (item.proficiency ? `${item.name} (${item.proficiency})` : item.name)).join(" • ")}</p>));
+    }
+    if (sectionKey === "other") {
+      const entries = sortByDateDesc(resume.otherSection.entries.filter((entry) => entry.name.trim()));
+      if (entries.length === 0) return;
+      blocks.push(sectionHeader("other", resume.otherSection.name || "Other"));
+      entries.forEach((entry) => {
+        const highlights = entry.highlights.filter((line) => line.trim());
+        blocks.push(sectionContent(`other-entry-${entry.id}`, (
+          <div>
+            <EntryHeading primary={entry.name} dateRange={formatPartialDate(entry.date)} />
+            {highlights.length > 0 && <ul className="mt-1 list-disc space-y-0.5 pl-4 text-sm leading-6 text-slate-700">{highlights.map((line, i) => <li key={i}>{line}</li>)}</ul>}
+          </div>
+        )));
+      });
+    }
+  });
 
   return blocks;
 }
@@ -218,8 +217,8 @@ function paginateBlocks(blocks: PreviewBlock[], heights: Record<string, number>,
 
 /** Renders one A4 sheet, scaled uniformly (never stretched) to fit its container. */
 function A4Page({ children }: { children: ReactNode }) {
-  const boxRef = useRef<HTMLDivElement>(null); // fixed-size viewport, bounded on both axes
-  const sizerRef = useRef<HTMLDivElement>(null); // learns the px equivalent of 210mm, once
+  const boxRef = useRef<HTMLDivElement>(null);
+  const sizerRef = useRef<HTMLDivElement>(null);
   const [naturalWidthPx, setNaturalWidthPx] = useState<number | null>(null);
   const [scale, setScale] = useState(1);
 
@@ -234,7 +233,6 @@ function A4Page({ children }: { children: ReactNode }) {
     const update = () => {
       const widthScale = box.clientWidth / naturalWidthPx;
       const heightScale = box.clientHeight / naturalHeightPx;
-      // Fit inside BOTH dimensions, never upscale past 100%.
       setScale(Math.max(0.05, Math.min(1, widthScale, heightScale)));
     };
     update();
@@ -286,10 +284,8 @@ function PageNavButton({ direction, onClick, disabled }: { direction: "prev" | "
 }
 
 export interface ResumePreviewProps {
-  /** Current page (controlled) — lifted so the inline and expanded views share it. */
   pageIndex: number;
   onPageIndexChange: (index: number) => void;
-  /** CSS max-height applied to the A4 viewport box, e.g. "70vh". */
   maxHeight?: string;
 }
 
@@ -299,21 +295,32 @@ export function ResumePreview({ pageIndex, onPageIndexChange, maxHeight = "70vh"
   const { personalDetails: personal, professionalSummary } = resume;
 
   const fullName = `${personal.firstName} ${personal.lastName}`.trim();
-  const contactLine = [personal.contact.location, personal.contact.email, personal.contact.phone].filter(Boolean).join("  •  ");
-  const linkLine = [personal.contact.linkedin, personal.contact.github, personal.contact.website].filter(Boolean).join("  •  ");
+  const dial = COUNTRIES.find((country) => country.code === personal.contact.phoneCountry)?.dial ?? "+63";
+  const phoneLine = personal.contact.phoneNumber ? `${dial} ${personal.contact.phoneNumber}` : "";
+  const contactLine = [personal.contact.location, personal.contact.email, phoneLine].filter(Boolean).join("  •  ");
+  const links = personal.links.filter((link) => link.name.trim() && link.url.trim());
 
   const experiencesPresent = resume.experiences.some(hasExperienceContent);
   const educationPresent = resume.education.some(hasEducationContent);
-  const skillsPresent = (resume.skillGroups.find((group) => group.id === "primary")?.skills ?? []).length > 0;
-  const isEmpty = !fullName && !personal.headline.trim() && !contactLine && !professionalSummary.trim() && !experiencesPresent && !educationPresent && !skillsPresent;
+  const skillsPresent = (resume.skillGroups[0]?.skills ?? []).length > 0;
+  const isEmpty = !fullName && !personal.headline.trim() && !contactLine && links.length === 0 && !professionalSummary.trim() && !experiencesPresent && !educationPresent && !skillsPresent;
 
-  const headerNode = fullName || personal.headline.trim() || contactLine || linkLine
+  const headerNode = fullName || personal.headline.trim() || contactLine || links.length > 0
     ? (
       <header className="border-b border-slate-300 pb-3 text-center">
         {fullName && <h2 className="text-2xl font-bold tracking-tight text-slate-950">{fullName}</h2>}
         {personal.headline.trim() && <p className="mt-1 text-sm font-medium text-slate-600">{personal.headline}</p>}
         {contactLine && <p className="mt-2 text-xs text-slate-500">{contactLine}</p>}
-        {linkLine && <p className="mt-0.5 text-xs text-slate-500">{linkLine}</p>}
+        {links.length > 0 && (
+          <p className="mt-0.5 text-xs text-slate-500">
+            {links.map((link, index) => (
+              <span key={link.id}>
+                {index > 0 && "  •  "}
+                <a href={normalizeUrl(link.url)} target="_blank" rel="noreferrer" className="text-blue-700 underline">{link.name}</a>
+              </span>
+            ))}
+          </p>
+        )}
       </header>
     )
     : null;
@@ -342,7 +349,6 @@ export function ResumePreview({ pageIndex, onPageIndexChange, maxHeight = "70vh"
     setPages(paginateBlocks(blocks, heights, headerHeight, contentHeight));
   }, [blocks, isEmpty]);
 
-  // Keep the controlled pageIndex valid if the page count shrinks (e.g. after an edit).
   useEffect(() => {
     if (pageIndex > pages.length - 1) onPageIndexChange(Math.max(0, pages.length - 1));
   }, [pages, pageIndex, onPageIndexChange]);
@@ -362,8 +368,6 @@ export function ResumePreview({ pageIndex, onPageIndexChange, maxHeight = "70vh"
 
   return (
     <div>
-      {/* Off-screen measurer: unchanged — rendered at the real 170mm content
-          width so heights (including margins) match the visible layout. */}
       <div aria-hidden="true" style={{ position: "fixed", top: 0, left: "-9999px", width: `${CONTENT_WIDTH_MM}mm`, fontFamily: FONT_STACK }}>
         <div ref={headerMeasureRef} style={{ overflow: "hidden" }}>{headerNode}</div>
         <div ref={measureRef} style={{ overflow: "hidden" }}>
@@ -374,7 +378,6 @@ export function ResumePreview({ pageIndex, onPageIndexChange, maxHeight = "70vh"
         <div ref={contentAreaRef} style={{ height: `${CONTENT_HEIGHT_MM}mm` }} />
       </div>
 
-      {/* Arrows no longer flank the paper — it now gets the card's full width. */}
       <div className="w-full" style={{ aspectRatio: `${PAGE_WIDTH_MM} / ${PAGE_HEIGHT_MM}`, maxHeight }}>
         <A4Page>
           {safeIndex === 0 && headerNode}
@@ -386,7 +389,6 @@ export function ResumePreview({ pageIndex, onPageIndexChange, maxHeight = "70vh"
         </A4Page>
       </div>
 
-      {/* Compact pagination row: chevrons flank the indicator, not the paper. */}
       <div className="mt-3 flex items-center justify-center gap-2 text-xs font-medium text-slate-500">
         {pageCount > 1 && <PageNavButton direction="prev" onClick={() => onPageIndexChange(Math.max(0, safeIndex - 1))} disabled={safeIndex === 0} />}
         <span>Page {safeIndex + 1} of {pageCount}</span>
