@@ -41,8 +41,6 @@ export interface Education {
   awards: EducationAward[];
 }
 
-export interface SkillGroup { id: string; name: string; skills: string[]; }
-
 export interface Project {
   id: string;
   name: string;
@@ -76,24 +74,27 @@ export interface OtherEntry {
   date: string;
   highlights: string[];
 }
-export interface OtherSection { name: string; entries: OtherEntry[]; }
+
+export type OptionalSectionKey = "projects" | "certifications" | "awards" | "volunteerExperiences" | "languages" | "other";
+
+/** Every section whose heading can be renamed via the pencil-icon editor. */
+export type SectionId = "personal" | "summary" | "experience" | "education" | "skills" | OptionalSectionKey;
 
 export interface ResumeData {
   personalDetails: PersonalDetails;
   professionalSummary: string;
   experiences: Experience[];
   education: Education[];
-  /** [0] = "Skills" (fixed name), [1] = renamable "Other Skills" */
-  skillGroups: SkillGroup[];
+  skills: string[];
   projects: Project[];
   certifications: Certification[];
   languages: Language[];
   awards: Award[];
   volunteerExperiences: VolunteerExperience[];
-  otherSection: OtherSection;
+  otherEntries: OtherEntry[];
   optionalSections: OptionalSectionKey[];
+  /** Custom titles keyed by SectionId; always fully populated (see DEFAULT_SECTION_TITLES). */
+  sectionTitles: Record<SectionId, string>;
 }
 
 export interface ResumeState { resume: ResumeData; activeSection: string | null; selectedTemplateId: string | null; }
-
-export type OptionalSectionKey = "projects" | "certifications" | "awards" | "volunteerExperiences" | "languages" | "other";

@@ -53,18 +53,18 @@ function normalizeUrl(url: string): string {
 /** Builds an ordered, flat list of atomic preview blocks (never split across pages). */
 function buildBlocks(resume: ResumeData): PreviewBlock[] {
   const blocks: PreviewBlock[] = [];
-  const { professionalSummary } = resume;
+  const { professionalSummary, sectionTitles } = resume;
 
   const experiences = sortEntriesByRecency(resume.experiences.filter(hasExperienceContent));
   const education = sortEntriesByRecency(resume.education.filter(hasEducationContent));
 
   if (professionalSummary.trim()) {
-    blocks.push(sectionHeader("summary", "Summary"));
+    blocks.push(sectionHeader("summary", sectionTitles.summary));
     blocks.push(sectionContent("summary-content", <p className="text-sm leading-6 text-slate-700">{professionalSummary}</p>));
   }
 
   if (experiences.length > 0) {
-    blocks.push(sectionHeader("experience", "Experience"));
+    blocks.push(sectionHeader("experience", sectionTitles.experience));
     experiences.forEach((item) => {
       const highlights = item.highlights.filter((line) => line.trim());
       blocks.push(sectionContent(`experience-${item.id}`, (
@@ -77,7 +77,7 @@ function buildBlocks(resume: ResumeData): PreviewBlock[] {
   }
 
   if (education.length > 0) {
-    blocks.push(sectionHeader("education", "Education"));
+    blocks.push(sectionHeader("education", sectionTitles.education));
     education.forEach((item) => {
       const awards = item.awards.filter((award) => award.name.trim());
       blocks.push(sectionContent(`education-${item.id}`, (
@@ -89,19 +89,9 @@ function buildBlocks(resume: ResumeData): PreviewBlock[] {
     });
   }
 
-  const skillGroups = resume.skillGroups.filter((group) => group.skills.length > 0);
-  if (skillGroups.length > 0) {
-    blocks.push(sectionHeader("skills", "Skills"));
-    blocks.push(sectionContent("skills-content", (
-      <div className="space-y-1">
-        {skillGroups.map((group) => (
-          <p key={group.id} className="text-sm leading-6 text-slate-700">
-            {group.id !== "primary" && <span className="font-semibold text-slate-800">{group.name}: </span>}
-            {group.skills.join(" • ")}
-          </p>
-        ))}
-      </div>
-    )));
+  if (resume.skills.length > 0) {
+    blocks.push(sectionHeader("skills", sectionTitles.skills));
+    blocks.push(sectionContent("skills-content", <p className="text-sm leading-6 text-slate-700">{resume.skills.join(" • ")}</p>));
   }
 
   resume.optionalSections.forEach((sectionKey) => {
@@ -109,7 +99,7 @@ function buildBlocks(resume: ResumeData): PreviewBlock[] {
       const hasProjectContent = (item: Project) => item.name.trim();
       const projects = sortByDateDesc(resume.projects.filter(hasProjectContent));
       if (projects.length === 0) return;
-      blocks.push(sectionHeader("projects", "Projects"));
+      blocks.push(sectionHeader("projects", sectionTitles.projects));
       projects.forEach((item) => {
         const highlights = item.highlights.filter((line) => line.trim());
         blocks.push(sectionContent(`project-${item.id}`, (
@@ -123,13 +113,13 @@ function buildBlocks(resume: ResumeData): PreviewBlock[] {
     if (sectionKey === "certifications") {
       const certifications = sortByDateDesc(resume.certifications.filter((item) => item.name.trim()));
       if (certifications.length === 0) return;
-      blocks.push(sectionHeader("certifications", "Certifications"));
+      blocks.push(sectionHeader("certifications", sectionTitles.certifications));
       certifications.forEach((item) => blocks.push(sectionContent(`certification-${item.id}`, <EntryHeading primary={item.name} dateRange={formatPartialDate(item.date)} />)));
     }
     if (sectionKey === "awards") {
       const awards = sortByDateDesc(resume.awards.filter((item) => item.title.trim()));
       if (awards.length === 0) return;
-      blocks.push(sectionHeader("awards", "Awards"));
+      blocks.push(sectionHeader("awards", sectionTitles.awards));
       awards.forEach((item) => {
         const highlights = item.highlights.filter((line) => line.trim());
         blocks.push(sectionContent(`award-${item.id}`, (
@@ -144,7 +134,7 @@ function buildBlocks(resume: ResumeData): PreviewBlock[] {
       const hasVolunteerContent = (item: VolunteerExperience) => item.organization.trim() || item.role.trim();
       const volunteering = sortByDateDesc(resume.volunteerExperiences.filter(hasVolunteerContent));
       if (volunteering.length === 0) return;
-      blocks.push(sectionHeader("volunteering", "Volunteer Experience"));
+      blocks.push(sectionHeader("volunteering", sectionTitles.volunteerExperiences));
       volunteering.forEach((item) => {
         const highlights = item.highlights.filter((line) => line.trim());
         blocks.push(sectionContent(`volunteer-${item.id}`, (
@@ -158,13 +148,13 @@ function buildBlocks(resume: ResumeData): PreviewBlock[] {
     if (sectionKey === "languages") {
       const languages = resume.languages.filter((item) => item.name.trim());
       if (languages.length === 0) return;
-      blocks.push(sectionHeader("languages", "Languages"));
+      blocks.push(sectionHeader("languages", sectionTitles.languages));
       blocks.push(sectionContent("languages-content", <p className="text-sm leading-6 text-slate-700">{languages.map((item) => (item.proficiency ? `${item.name} (${item.proficiency})` : item.name)).join(" • ")}</p>));
     }
     if (sectionKey === "other") {
-      const entries = sortByDateDesc(resume.otherSection.entries.filter((entry) => entry.name.trim()));
+      const entries = sortByDateDesc(resume.otherEntries.filter((entry) => entry.name.trim()));
       if (entries.length === 0) return;
-      blocks.push(sectionHeader("other", resume.otherSection.name || "Other"));
+      blocks.push(sectionHeader("other", sectionTitles.other));
       entries.forEach((entry) => {
         const highlights = entry.highlights.filter((line) => line.trim());
         blocks.push(sectionContent(`other-entry-${entry.id}`, (
@@ -302,7 +292,7 @@ export function ResumePreview({ pageIndex, onPageIndexChange, maxHeight = "70vh"
 
   const experiencesPresent = resume.experiences.some(hasExperienceContent);
   const educationPresent = resume.education.some(hasEducationContent);
-  const skillsPresent = (resume.skillGroups[0]?.skills ?? []).length > 0;
+  const skillsPresent = resume.skills.length > 0;
   const isEmpty = !fullName && !personal.headline.trim() && !contactLine && links.length === 0 && !professionalSummary.trim() && !experiencesPresent && !educationPresent && !skillsPresent;
 
   const headerNode = fullName || personal.headline.trim() || contactLine || links.length > 0

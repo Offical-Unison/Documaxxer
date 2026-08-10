@@ -11,7 +11,7 @@ interface BulletListInputProps {
 }
 
 /** Compact repeated-input list: one row per value, no per-row label, add/remove controls. */
-export function BulletListInput({ label, values, onChange, placeholder = "Add a detail", addLabel = "+ Add bullet", bulletMark = true }: BulletListInputProps) {
+export function BulletListInput({ label, values, onChange, placeholder = "Add a detail", addLabel = "+ Add", bulletMark = true }: BulletListInputProps) {
   const update = (index: number, value: string) => onChange(values.map((item, itemIndex) => (itemIndex === index ? value : item)));
   const remove = (index: number) => onChange(values.filter((_, itemIndex) => itemIndex !== index));
   return (

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AddButton, EntryCard, Field, TagInput } from "@/components/builder/form-controls";
 import { BulletListInput } from "@/components/builder/bullet-list";
 import { PartialDateField } from "@/components/builder/date-input";
+import { EditableTitle } from "@/components/builder/editable-title";
 import { useResumeContext } from "@/context/resume-context";
 import type { Award, Certification, Language, OptionalSectionKey, OtherEntry, Project, VolunteerExperience } from "@/types/resume";
 
@@ -64,10 +65,17 @@ export function OptionalResumeSections() {
 function OptionalSection({ section, onRemove }: { section: OptionalSectionKey; onRemove: () => void }) {
   const { state, dispatch } = useResumeContext();
   const resume = state.resume;
-  const heading = sectionOptions.find((option) => option.key === section)?.label ?? section;
   return <section className="rounded-2xl border border-slate-200/90 bg-white/60 p-4 sm:p-5">
     <div className="flex items-center justify-between gap-3">
-      <div className="flex cursor-grab items-center gap-2"><span className="text-slate-400" aria-hidden="true">⠿</span><h4 className="font-semibold text-slate-900">{heading}</h4></div>
+      <div className="flex cursor-grab items-center gap-2">
+        <span className="text-slate-400" aria-hidden="true">⠿</span>
+        <EditableTitle
+          as="h4"
+          className="font-semibold text-slate-900"
+          title={resume.sectionTitles[section]}
+          onSave={(title) => dispatch({ type: "SET_SECTION_TITLE", payload: { id: section, title } })}
+        />
+      </div>
       <button type="button" onClick={onRemove} className="min-h-10 rounded-xl px-3 text-sm font-semibold text-red-600 transition hover:bg-red-50 hover:text-red-700">Remove section</button>
     </div>
     <div className="mt-4">
@@ -76,13 +84,13 @@ function OptionalSection({ section, onRemove }: { section: OptionalSectionKey; o
       {section === "awards" && <Awards items={resume.awards} onChange={(payload) => dispatch({ type: "SET_AWARDS", payload })} />}
       {section === "volunteerExperiences" && <Volunteering items={resume.volunteerExperiences} onChange={(payload) => dispatch({ type: "SET_VOLUNTEER_EXPERIENCES", payload })} />}
       {section === "languages" && <Languages items={resume.languages} onChange={(payload) => dispatch({ type: "SET_LANGUAGES", payload })} />}
-      {section === "other" && <Other name={resume.otherSection.name} entries={resume.otherSection.entries} onNameChange={(name) => dispatch({ type: "SET_OTHER_SECTION_NAME", payload: name })} onEntriesChange={(entries) => dispatch({ type: "SET_OTHER_ENTRIES", payload: entries })} />}
+      {section === "other" && <Other entries={resume.otherEntries} onChange={(entries) => dispatch({ type: "SET_OTHER_ENTRIES", payload: entries })} />}
     </div>
   </section>;
 }
 
 function Projects({ items, onChange }: { items: Project[]; onChange: (items: Project[]) => void }) {
-  return <><div className="space-y-3">{items.map((item, index) => <ProjectEditor key={item.id} item={item} index={index} onChange={(next) => onChange(items.map((entry) => entry.id === next.id ? next : entry))} onRemove={() => onChange(items.filter((entry) => entry.id !== item.id))} />)}</div><AddButton onClick={() => onChange([...items, { id: makeId(), name: "", date: "", technologies: [], highlights: [] }])}>+ Add project</AddButton></>;
+  return <><div className="space-y-3">{items.map((item, index) => <ProjectEditor key={item.id} item={item} index={index} onChange={(next) => onChange(items.map((entry) => entry.id === next.id ? next : entry))} onRemove={() => onChange(items.filter((entry) => entry.id !== item.id))} />)}</div><AddButton onClick={() => onChange([...items, { id: makeId(), name: "", date: "", technologies: [], highlights: [] }])}>+ Add</AddButton></>;
 }
 function ProjectEditor({ item, index, onChange, onRemove }: { item: Project; index: number; onChange: (item: Project) => void; onRemove: () => void }) {
   const update = <K extends keyof Project>(key: K, value: Project[K]) => onChange({ ...item, [key]: value });
@@ -90,12 +98,12 @@ function ProjectEditor({ item, index, onChange, onRemove }: { item: Project; ind
     <Field label="Project name" value={item.name} onChange={(event) => update("name", event.target.value)} placeholder="Portfolio website" />
     <PartialDateField label="Date" value={item.date} onChange={(value) => update("date", value)} />
     <div className="sm:col-span-2"><TagInput label="Technologies" values={item.technologies} onChange={(value) => update("technologies", value)} placeholder="Type a technology and press Enter" /></div>
-    <div className="sm:col-span-2"><BulletListInput label="Description" values={item.highlights} onChange={(value) => update("highlights", value)} placeholder="What did you build and why did it matter?" /></div>
+    <div className="sm:col-span-2"><BulletListInput label="Description" values={item.highlights} onChange={(value) => update("highlights", value)} placeholder="What did you build and why did it matter?" addLabel="+ Add" /></div>
   </div></EntryCard>;
 }
 
 function Certifications({ items, onChange }: { items: Certification[]; onChange: (items: Certification[]) => void }) {
-  return <><div className="space-y-3">{items.map((item, index) => <CertificationEditor key={item.id} item={item} index={index} onChange={(next) => onChange(items.map((entry) => entry.id === next.id ? next : entry))} onRemove={() => onChange(items.filter((entry) => entry.id !== item.id))} />)}</div><AddButton onClick={() => onChange([...items, { id: makeId(), name: "", date: "" }])}>+ Add certification</AddButton></>;
+  return <><div className="space-y-3">{items.map((item, index) => <CertificationEditor key={item.id} item={item} index={index} onChange={(next) => onChange(items.map((entry) => entry.id === next.id ? next : entry))} onRemove={() => onChange(items.filter((entry) => entry.id !== item.id))} />)}</div><AddButton onClick={() => onChange([...items, { id: makeId(), name: "", date: "" }])}>+ Add</AddButton></>;
 }
 function CertificationEditor({ item, index, onChange, onRemove }: { item: Certification; index: number; onChange: (item: Certification) => void; onRemove: () => void }) {
   const update = <K extends keyof Certification>(key: K, value: Certification[K]) => onChange({ ...item, [key]: value });
@@ -103,34 +111,33 @@ function CertificationEditor({ item, index, onChange, onRemove }: { item: Certif
 }
 
 function Awards({ items, onChange }: { items: Award[]; onChange: (items: Award[]) => void }) {
-  return <><div className="space-y-3">{items.map((item, index) => <AwardEditor key={item.id} item={item} index={index} onChange={(next) => onChange(items.map((entry) => entry.id === next.id ? next : entry))} onRemove={() => onChange(items.filter((entry) => entry.id !== item.id))} />)}</div><AddButton onClick={() => onChange([...items, { id: makeId(), title: "", date: "", highlights: [] }])}>+ Add award</AddButton></>;
+  return <><div className="space-y-3">{items.map((item, index) => <AwardEditor key={item.id} item={item} index={index} onChange={(next) => onChange(items.map((entry) => entry.id === next.id ? next : entry))} onRemove={() => onChange(items.filter((entry) => entry.id !== item.id))} />)}</div><AddButton onClick={() => onChange([...items, { id: makeId(), title: "", date: "", highlights: [] }])}>+ Add</AddButton></>;
 }
 function AwardEditor({ item, index, onChange, onRemove }: { item: Award; index: number; onChange: (item: Award) => void; onRemove: () => void }) {
   const update = <K extends keyof Award>(key: K, value: Award[K]) => onChange({ ...item, [key]: value });
-  return <EntryCard title={item.title || `Award ${index + 1}`} onRemove={onRemove}><div className="grid gap-4 sm:grid-cols-2"><Field label="Award name" value={item.title} onChange={(event) => update("title", event.target.value)} placeholder="Hackathon Champion" /><PartialDateField label="Date" value={item.date} onChange={(value) => update("date", value)} /><div className="sm:col-span-2"><BulletListInput label="Description" values={item.highlights} onChange={(value) => update("highlights", value)} placeholder="What was recognized?" /></div></div></EntryCard>;
+  return <EntryCard title={item.title || `Award ${index + 1}`} onRemove={onRemove}><div className="grid gap-4 sm:grid-cols-2"><Field label="Award name" value={item.title} onChange={(event) => update("title", event.target.value)} placeholder="Hackathon Champion" /><PartialDateField label="Date" value={item.date} onChange={(value) => update("date", value)} /><div className="sm:col-span-2"><BulletListInput label="Description" values={item.highlights} onChange={(value) => update("highlights", value)} placeholder="What was recognized?" addLabel="+ Add" /></div></div></EntryCard>;
 }
 
 function Volunteering({ items, onChange }: { items: VolunteerExperience[]; onChange: (items: VolunteerExperience[]) => void }) {
-  return <><div className="space-y-3">{items.map((item, index) => <VolunteerEditor key={item.id} item={item} index={index} onChange={(next) => onChange(items.map((entry) => entry.id === next.id ? next : entry))} onRemove={() => onChange(items.filter((entry) => entry.id !== item.id))} />)}</div><AddButton onClick={() => onChange([...items, { id: makeId(), organization: "", role: "", date: "", highlights: [] }])}>+ Add volunteer experience</AddButton></>;
+  return <><div className="space-y-3">{items.map((item, index) => <VolunteerEditor key={item.id} item={item} index={index} onChange={(next) => onChange(items.map((entry) => entry.id === next.id ? next : entry))} onRemove={() => onChange(items.filter((entry) => entry.id !== item.id))} />)}</div><AddButton onClick={() => onChange([...items, { id: makeId(), organization: "", role: "", date: "", highlights: [] }])}>+ Add</AddButton></>;
 }
 function VolunteerEditor({ item, index, onChange, onRemove }: { item: VolunteerExperience; index: number; onChange: (item: VolunteerExperience) => void; onRemove: () => void }) {
   const update = <K extends keyof VolunteerExperience>(key: K, value: VolunteerExperience[K]) => onChange({ ...item, [key]: value });
-  return <EntryCard title={item.role || item.organization || `Volunteer experience ${index + 1}`} onRemove={onRemove}><div className="grid gap-4 sm:grid-cols-2"><Field label="Role" value={item.role} onChange={(event) => update("role", event.target.value)} placeholder="Volunteer Developer" /><Field label="Organization" value={item.organization} onChange={(event) => update("organization", event.target.value)} placeholder="Cebu Community Organization" /><PartialDateField label="Date" value={item.date} onChange={(value) => update("date", value)} /><div className="sm:col-span-2"><BulletListInput label="Description" values={item.highlights} onChange={(value) => update("highlights", value)} placeholder="Describe your contribution." /></div></div></EntryCard>;
+  return <EntryCard title={item.role || item.organization || `Volunteer experience ${index + 1}`} onRemove={onRemove}><div className="grid gap-4 sm:grid-cols-2"><Field label="Role" value={item.role} onChange={(event) => update("role", event.target.value)} placeholder="Volunteer Developer" /><Field label="Organization" value={item.organization} onChange={(event) => update("organization", event.target.value)} placeholder="Cebu Community Organization" /><PartialDateField label="Date" value={item.date} onChange={(value) => update("date", value)} /><div className="sm:col-span-2"><BulletListInput label="Description" values={item.highlights} onChange={(value) => update("highlights", value)} placeholder="Describe your contribution." addLabel="+ Add" /></div></div></EntryCard>;
 }
 
 function Languages({ items, onChange }: { items: Language[]; onChange: (items: Language[]) => void }) {
   const proficiencyOptions = ["Native / Bilingual", "Fluent", "Proficient / Professional", "Conversational / Intermediate"];
-  return <><div className="space-y-3">{items.map((item, index) => <EntryCard key={item.id} title={item.name || `Language ${index + 1}`} onRemove={() => onChange(items.filter((entry) => entry.id !== item.id))}><div className="grid gap-4 sm:grid-cols-2"><Field label="Language" value={item.name} onChange={(event) => onChange(items.map((entry) => entry.id === item.id ? { ...entry, name: event.target.value } : entry))} placeholder="Filipino" /><label className="block text-sm font-medium text-slate-700">Proficiency<select value={item.proficiency} onChange={(event) => onChange(items.map((entry) => entry.id === item.id ? { ...entry, proficiency: event.target.value } : entry))} className="mt-1.5 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm"><option value="">Select proficiency</option>{proficiencyOptions.map((level) => <option key={level}>{level}</option>)}</select></label></div></EntryCard>)}</div><AddButton onClick={() => onChange([...items, { id: makeId(), name: "", proficiency: "" }])}>+ Add language</AddButton></>;
+  return <><div className="space-y-3">{items.map((item, index) => <EntryCard key={item.id} title={item.name || `Language ${index + 1}`} onRemove={() => onChange(items.filter((entry) => entry.id !== item.id))}><div className="grid gap-4 sm:grid-cols-2"><Field label="Language" value={item.name} onChange={(event) => onChange(items.map((entry) => entry.id === item.id ? { ...entry, name: event.target.value } : entry))} placeholder="Filipino" /><label className="block text-sm font-medium text-slate-700">Proficiency<select value={item.proficiency} onChange={(event) => onChange(items.map((entry) => entry.id === item.id ? { ...entry, proficiency: event.target.value } : entry))} className="mt-1.5 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm"><option value="">Select proficiency</option>{proficiencyOptions.map((level) => <option key={level}>{level}</option>)}</select></label></div></EntryCard>)}</div><AddButton onClick={() => onChange([...items, { id: makeId(), name: "", proficiency: "" }])}>+ Add</AddButton></>;
 }
 
-function Other({ name, entries, onNameChange, onEntriesChange }: { name: string; entries: OtherEntry[]; onNameChange: (name: string) => void; onEntriesChange: (entries: OtherEntry[]) => void }) {
+function Other({ entries, onChange }: { entries: OtherEntry[]; onChange: (entries: OtherEntry[]) => void }) {
   return <>
-    <Field label="Section name" value={name} onChange={(event) => onNameChange(event.target.value)} placeholder="Leadership Experience" className="max-w-sm" />
-    <div className="mt-4 space-y-3">{entries.map((entry, index) => <OtherEntryEditor key={entry.id} item={entry} index={index} onChange={(next) => onEntriesChange(entries.map((item) => item.id === next.id ? next : item))} onRemove={() => onEntriesChange(entries.filter((item) => item.id !== entry.id))} />)}</div>
-    <AddButton onClick={() => onEntriesChange([...entries, { id: makeId(), name: "", date: "", highlights: [] }])}>+ Add entry</AddButton>
+    <div className="space-y-3">{entries.map((entry, index) => <OtherEntryEditor key={entry.id} item={entry} index={index} onChange={(next) => onChange(entries.map((item) => item.id === next.id ? next : item))} onRemove={() => onChange(entries.filter((item) => item.id !== entry.id))} />)}</div>
+    <AddButton onClick={() => onChange([...entries, { id: makeId(), name: "", date: "", highlights: [] }])}>+ Add</AddButton>
   </>;
 }
 function OtherEntryEditor({ item, index, onChange, onRemove }: { item: OtherEntry; index: number; onChange: (item: OtherEntry) => void; onRemove: () => void }) {
   const update = <K extends keyof OtherEntry>(key: K, value: OtherEntry[K]) => onChange({ ...item, [key]: value });
-  return <EntryCard title={item.name || `Entry ${index + 1}`} onRemove={onRemove}><div className="grid gap-4 sm:grid-cols-2"><Field label="Entry name" value={item.name} onChange={(event) => update("name", event.target.value)} placeholder="Student Organization Officer" /><PartialDateField label="Date" value={item.date} onChange={(value) => update("date", value)} /><div className="sm:col-span-2"><BulletListInput label="Description" values={item.highlights} onChange={(value) => update("highlights", value)} placeholder="Describe what you did." /></div></div></EntryCard>;
+  return <EntryCard title={item.name || `Entry ${index + 1}`} onRemove={onRemove}><div className="grid gap-4 sm:grid-cols-2"><Field label="Entry name" value={item.name} onChange={(event) => update("name", event.target.value)} placeholder="Student Organization Officer" /><PartialDateField label="Date" value={item.date} onChange={(value) => update("date", value)} /><div className="sm:col-span-2"><BulletListInput label="Description" values={item.highlights} onChange={(value) => update("highlights", value)} placeholder="Describe what you did." addLabel="+ Add" /></div></div></EntryCard>;
 }

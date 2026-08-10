@@ -1,5 +1,7 @@
 "use client";
 
+import { getYearOptions } from "@/lib/years";
+
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 function parseValue(value: string): { year: string; month: string } {
@@ -20,24 +22,26 @@ interface PartialDateFieldProps {
   error?: string;
 }
 
-/** Year (required when a date is entered) + optional month, stored as "YYYY" or "YYYY-MM". */
+/** Year (dropdown, required when a date is entered) + optional month, stored as "YYYY" or "YYYY-MM". */
 export function PartialDateField({ label, value, onChange, required, disabled, error }: PartialDateFieldProps) {
   const { year, month } = parseValue(value);
+  const yearOptions = getYearOptions();
   return (
     <div>
       <span className="text-sm font-medium text-slate-700">{label}{required && <span className="ml-1 text-blue-600">*</span>}</span>
       <div className="mt-1.5 flex gap-2">
-        <input
-          type="text"
-          inputMode="numeric"
-          maxLength={4}
+        <select
           disabled={disabled}
           value={year}
-          onChange={(event) => onChange(buildValue(event.target.value.replace(/\D/g, "").slice(0, 4), month))}
-          placeholder="Year"
+          onChange={(event) => onChange(buildValue(event.target.value, month))}
           aria-label={`${label} year`}
-          className="min-h-11 w-24 rounded-xl border border-slate-200 bg-white/80 px-3 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 transition focus:border-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-100"
-        />
+          className="min-h-11 w-28 rounded-xl border border-slate-200 bg-white/80 px-2 text-sm text-slate-900 shadow-sm transition focus:border-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-100"
+        >
+          <option value="">Year</option>
+          {yearOptions.map((yearOption) => (
+            <option key={yearOption} value={String(yearOption)}>{yearOption}</option>
+          ))}
+        </select>
         <select
           disabled={disabled || !year}
           value={month}

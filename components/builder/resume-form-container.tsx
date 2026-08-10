@@ -7,6 +7,7 @@ import { BulletListInput } from "@/components/builder/bullet-list";
 import { PartialDateField } from "@/components/builder/date-input";
 import { LinkListInput } from "@/components/builder/link-list";
 import { PhoneField } from "@/components/builder/phone-input";
+import { EditableTitle } from "@/components/builder/editable-title";
 import { OptionalResumeSections } from "@/components/builder/optional-resume-sections";
 import { useResumeContext } from "@/context/resume-context";
 import { isValidPhoneNumber } from "@/lib/phone";
@@ -15,8 +16,11 @@ import type { Education, Experience, PersonalDetails } from "@/types/resume";
 const makeId = () => crypto.randomUUID();
 const steps = ["Personal Information + Summary", "Work Experience", "Education", "Skills", "Additional Sections"];
 
-function Section({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
-  return <section><h2 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">{title}</h2>{description && <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>}<div className="mt-6">{children}</div></section>;
+/** Shared visual weight for every major section heading (form steps + Additional Sections). */
+const SECTION_HEADING_CLASS = "text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl";
+
+function Section({ title, description, children }: { title: React.ReactNode; description?: string; children: React.ReactNode }) {
+  return <section>{typeof title === "string" ? <h2 className={SECTION_HEADING_CLASS}>{title}</h2> : title}{description && <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>}<div className="mt-6">{children}</div></section>;
 }
 
 export function ResumeFormContainer() {
@@ -25,8 +29,9 @@ export function ResumeFormContainer() {
   const [currentStep, setCurrentStep] = useState(() => { const value = Number(state.activeSection); return value >= 1 && value <= 5 ? value : 1; });
   const [showErrors, setShowErrors] = useState(false);
   const personal = resume.personalDetails;
-  const primarySkills = resume.skillGroups[0]?.skills ?? [];
-  const secondaryGroup = resume.skillGroups[1];
+  const primarySkills = resume.skills;
+  const titleFor = (id: keyof typeof resume.sectionTitles) => resume.sectionTitles[id];
+  const renameTitle = (id: keyof typeof resume.sectionTitles) => (title: string) => dispatch({ type: "SET_SECTION_TITLE", payload: { id, title } });
 
   const updatePersonal = (update: Omit<Partial<PersonalDetails>, "contact"> & { contact?: Partial<PersonalDetails["contact"]> }) => {
     dispatch({ type: "UPDATE_PERSONAL_DETAILS", payload: { ...personal, ...update, contact: { ...personal.contact, ...update.contact } } });
@@ -47,7 +52,7 @@ export function ResumeFormContainer() {
     <div className="flex flex-col gap-3 border-b border-slate-200/80 pb-5 sm:flex-row sm:items-end sm:justify-between"><div><p className="eyebrow">Resume content</p><h1 id="form-title" className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">Build your resume</h1></div><p className="text-sm font-medium text-slate-500">Step {currentStep} of {steps.length}</p></div>
     <nav className="mt-5 overflow-x-auto pb-1" aria-label="Resume form sections"><ol className="flex min-w-max gap-2">{steps.map((step, index) => { const number = index + 1; return <li key={step}><button type="button" onClick={() => number < currentStep && goTo(number)} disabled={number > currentStep} aria-current={number === currentStep ? "step" : undefined} className={`rounded-full px-3 py-2 text-xs font-semibold transition ${number === currentStep ? "bg-blue-600 text-white shadow-sm" : number < currentStep ? "bg-blue-50 text-blue-700 hover:bg-blue-100" : "bg-slate-100 text-slate-400"}`}>{number}. {step}</button></li>; })}</ol></nav>
     <form className="mt-8" onSubmit={(event) => { event.preventDefault(); next(); }} noValidate>
-      {currentStep === 1 && <Section title="Personal information" description="Start with the details recruiters use to contact you."><div className="grid gap-4 sm:grid-cols-2">
+      {currentStep === 1 && <Section title={<EditableTitle as="h2" className={SECTION_HEADING_CLASS} title={titleFor("personal")} onSave={renameTitle("personal")} />} description="Start with the details recruiters use to contact you."><div className="grid gap-4 sm:grid-cols-2">
         <Field label="First name" required value={personal.firstName} onChange={(event) => updatePersonal({ firstName: event.target.value })} error={showErrors && !personal.firstName.trim() ? "First name is required." : undefined} placeholder="John" />
         <Field label="Last name" required value={personal.lastName} onChange={(event) => updatePersonal({ lastName: event.target.value })} error={showErrors && !personal.lastName.trim() ? "Last name is required." : undefined} placeholder="Doe" />
         <Field label="Title" value={personal.headline} onChange={(event) => updatePersonal({ headline: event.target.value })} placeholder="Software Developer" className="sm:col-span-2" />
@@ -63,19 +68,14 @@ export function ResumeFormContainer() {
         <Field label="Location" required value={personal.contact.location} onChange={(event) => updatePersonal({ contact: { location: event.target.value } })} error={showErrors && !personal.contact.location.trim() ? "Location is required." : undefined} placeholder="Cebu City, Philippines" />
       </div>
       <div className="mt-6"><LinkListInput values={personal.links} onChange={(links) => updatePersonal({ links })} makeId={makeId} /></div>
-      <div className="mt-8 border-t border-slate-200/80 pt-7"><h2 className="text-xl font-semibold tracking-tight text-slate-900">Professional summary</h2><p className="mt-2 text-sm text-slate-600">Aim for two to four concise sentences.</p><div className="mt-4"><Textarea label="Summary" value={resume.professionalSummary} onChange={(event) => dispatch({ type: "SET_PROFESSIONAL_SUMMARY", payload: event.target.value })} error={showErrors && !resume.professionalSummary.trim() ? "Summary is required." : undefined} maxLength={600} hint={`${resume.professionalSummary.length}/600 characters`} placeholder="Summarize your expertise, strengths, and the value you bring." /></div></div></Section>}
-      {currentStep === 2 && <Section title="Work experience" description="This section is optional. Add roles that best demonstrate your impact."><div className="space-y-3">{resume.experiences.map((item, index) => <ExperienceEditor key={item.id} item={item} index={index} showErrors={showErrors} onChange={(nextItem) => setExperience(resume.experiences.map((entry) => entry.id === nextItem.id ? nextItem : entry))} onRemove={() => setExperience(resume.experiences.filter((entry) => entry.id !== item.id))} />)}</div><AddButton onClick={() => setExperience([...resume.experiences, { id: makeId(), employer: "", role: "", location: "", startDate: "", endDate: "", current: false, highlights: [] }])}>+ Add experience</AddButton></Section>}
-      {currentStep === 3 && <Section title="Education" description="Add at least one college, university, or high school entry."><div className="space-y-3">{resume.education.map((item, index) => <EducationEditor key={item.id} item={item} index={index} showErrors={showErrors} onChange={(nextItem) => setEducation(resume.education.map((entry) => entry.id === nextItem.id ? nextItem : entry))} onRemove={() => setEducation(resume.education.filter((entry) => entry.id !== item.id))} />)}</div>{showErrors && resume.education.length === 0 && <p className="mt-3 text-sm text-red-600">Add at least one education entry to continue.</p>}<div className="mt-4 flex flex-wrap gap-3"><AddButton onClick={() => setEducation([...resume.education, blankEducation("college")])}>+ Add college / university</AddButton><AddButton onClick={() => setEducation([...resume.education, blankEducation("highSchool")])}>+ Add high school</AddButton></div></Section>}
-      {currentStep === 4 && <Section title="Skills" description="Add the individual skills most relevant to the role you want.">
-        <TagInput label="Skills" values={primarySkills} onChange={(values) => dispatch({ type: "SET_SKILL_GROUP", payload: { index: 0, skills: values } })} placeholder="Type a skill and press Enter" />
+      <div className="mt-8 border-t border-slate-200/80 pt-7"><EditableTitle as="h2" className={SECTION_HEADING_CLASS} title={titleFor("summary")} onSave={renameTitle("summary")} /><p className="mt-2 text-sm text-slate-600">Aim for two to four concise sentences.</p><div className="mt-4"><Textarea label="Summary" value={resume.professionalSummary} onChange={(event) => dispatch({ type: "SET_PROFESSIONAL_SUMMARY", payload: event.target.value })} error={showErrors && !resume.professionalSummary.trim() ? "Summary is required." : undefined} maxLength={600} hint={`${resume.professionalSummary.length}/600 characters`} placeholder="Summarize your expertise, strengths, and the value you bring." /></div></div></Section>}
+      {currentStep === 2 && <Section title={<EditableTitle as="h2" className={SECTION_HEADING_CLASS} title={titleFor("experience")} onSave={renameTitle("experience")} />} description="This section is optional. Add roles that best demonstrate your impact."><div className="space-y-3">{resume.experiences.map((item, index) => <ExperienceEditor key={item.id} item={item} index={index} showErrors={showErrors} onChange={(nextItem) => setExperience(resume.experiences.map((entry) => entry.id === nextItem.id ? nextItem : entry))} onRemove={() => setExperience(resume.experiences.filter((entry) => entry.id !== item.id))} />)}</div><AddButton onClick={() => setExperience([...resume.experiences, { id: makeId(), employer: "", role: "", location: "", startDate: "", endDate: "", current: false, highlights: [] }])}>+ Add</AddButton></Section>}
+      {currentStep === 3 && <Section title={<EditableTitle as="h2" className={SECTION_HEADING_CLASS} title={titleFor("education")} onSave={renameTitle("education")} />} description="Add at least one college, university, or high school entry."><div className="space-y-3">{resume.education.map((item, index) => <EducationEditor key={item.id} item={item} index={index} showErrors={showErrors} onChange={(nextItem) => setEducation(resume.education.map((entry) => entry.id === nextItem.id ? nextItem : entry))} onRemove={() => setEducation(resume.education.filter((entry) => entry.id !== item.id))} />)}</div>{showErrors && resume.education.length === 0 && <p className="mt-3 text-sm text-red-600">Add at least one education entry to continue.</p>}<div className="mt-4 flex flex-wrap gap-3"><AddButton onClick={() => setEducation([...resume.education, blankEducation("college")])}>+ Add College</AddButton><AddButton onClick={() => setEducation([...resume.education, blankEducation("highSchool")])}>+ Add High School</AddButton></div></Section>}
+      {currentStep === 4 && <Section title={<EditableTitle as="h2" className={SECTION_HEADING_CLASS} title={titleFor("skills")} onSave={renameTitle("skills")} />} description="Add the individual skills most relevant to the role you want.">
+        <TagInput label="Skills" values={primarySkills} onChange={(values) => dispatch({ type: "SET_SKILLS", payload: values })} placeholder="Type a skill and press Enter" />
         {showErrors && hasSkillsErrors && <p className="mt-2 text-sm text-red-600">Add at least one skill to continue.</p>}
-        <div className="mt-6 border-t border-slate-200/80 pt-6">
-          <Field label="Category name" value={secondaryGroup?.name ?? "Other Skills"} onChange={(event) => dispatch({ type: "SET_SKILL_GROUP", payload: { index: 1, name: event.target.value } })} placeholder="Other Skills" className="max-w-xs" />
-          <div className="mt-3"><TagInput label={secondaryGroup?.name || "Other Skills"} values={secondaryGroup?.skills ?? []} onChange={(values) => dispatch({ type: "SET_SKILL_GROUP", payload: { index: 1, skills: values } })} placeholder="Type a skill and press Enter" /></div>
-          <p className="mt-2 text-xs text-slate-500">Optional. Rename this category to fit your resume (e.g. Tools, Programming Languages).</p>
-        </div>
       </Section>}
-      {currentStep === 5 && <Section title="Additional sections" description="Choose sections that strengthen your resume. These are optional, so add only what is relevant to you."><OptionalResumeSections /></Section>}
+      {currentStep === 5 && <Section title="Additional Sections" description="Choose sections that strengthen your resume. These are optional, so add only what is relevant to you."><OptionalResumeSections /></Section>}
       <div className="mt-9 flex items-center justify-between border-t border-slate-200/80 pt-5"><button type="button" onClick={() => goTo(currentStep - 1)} disabled={currentStep === 1} className="min-h-11 rounded-xl border border-slate-200 bg-white/70 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-45">← Previous</button>{currentStep < steps.length ? <button type="submit" className="min-h-11 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">Next</button> : <button type="submit" className="min-h-11 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">Finish →</button>}</div>
     </form>
   </Card>;
@@ -92,7 +92,7 @@ function ExperienceEditor({ item, index, showErrors, onChange, onRemove }: { ite
     <PartialDateField label="Start date" required value={item.startDate} onChange={(value) => update("startDate", value)} error={showErrors && !item.startDate ? "Start date is required." : undefined} />
     <PartialDateField label="End date" required={!item.current} disabled={item.current} value={item.endDate} onChange={(value) => update("endDate", value)} error={showErrors && !item.current && !item.endDate ? "End date is required." : undefined} />
     <div className="sm:col-span-2">
-      <BulletListInput label="Description" values={item.highlights} onChange={(value) => update("highlights", value)} placeholder="Describe an achievement or responsibility" />
+      <BulletListInput label="Description" values={item.highlights} onChange={(value) => update("highlights", value)} placeholder="Describe an achievement or responsibility" addLabel="+ Add" />
       {showErrors && !hasHighlight && <p className="mt-1 text-xs text-red-600">Add at least one description.</p>}
     </div>
   </div></EntryCard>;
@@ -147,7 +147,7 @@ function EducationEditor({ item, index, showErrors, onChange, onRemove }: { item
           values={item.awards.map((award) => award.name)}
           onChange={(values) => update("awards", values.map((name, awardIndex) => ({ id: item.awards[awardIndex]?.id ?? makeId(), name })))}
           placeholder="Dean's Lister"
-          addLabel="+ Add award"
+          addLabel="+ Add"
           bulletMark={false}
         />
         <p className="mt-1 text-xs text-slate-500">Optional. Shown together on one line, separated by &quot;•&quot;.</p>
