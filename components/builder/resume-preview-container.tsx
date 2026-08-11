@@ -46,7 +46,7 @@ export function ResumePreviewContainer() {
           Expand
         </button>
       </div>
-      <div className="mt-4">
+      <div className="mt-4 flex justify-center">
         <TemplatePicker variant="compact" selectedId={state.selectedTemplateId} onSelect={changeTemplate} />
       </div>
       <div className="mt-5">
