@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Card } from "@/components/ui/card";
 import { ResumePreview } from "@/components/builder/resume-preview";
+import { TemplatePicker } from "@/components/builder/template-picker";
+import { useResumeContext } from "@/context/resume-context";
+import type { TemplateId } from "@/lib/templates";
 
 function ExpandIcon() {
   return (
@@ -17,9 +20,15 @@ function ExpandIcon() {
 }
 
 export function ResumePreviewContainer() {
+  const { state, dispatch } = useResumeContext();
   // Lifted here so the inline preview and the expanded modal share one page state.
   const [pageIndex, setPageIndex] = useState(0);
   const [expanded, setExpanded] = useState(false);
+
+  const changeTemplate = (id: TemplateId) => {
+    dispatch({ type: "SET_TEMPLATE", payload: id });
+    setPageIndex(0); // layout changes with template; avoid landing on a now-invalid page
+  };
 
   return (
     <Card aria-labelledby="preview-title" className="xl:sticky xl:top-6 xl:self-start">
@@ -36,6 +45,9 @@ export function ResumePreviewContainer() {
           <ExpandIcon />
           Expand
         </button>
+      </div>
+      <div className="mt-4">
+        <TemplatePicker variant="compact" selectedId={state.selectedTemplateId} onSelect={changeTemplate} />
       </div>
       <div className="mt-5">
         <ResumePreview pageIndex={pageIndex} onPageIndexChange={setPageIndex} maxHeight="70vh" />

@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode }
 import { useResumeContext } from "@/context/resume-context";
 import { formatDateRange, formatPartialDate, sortByDateDesc, sortEntriesByRecency } from "@/lib/format";
 import { COUNTRIES } from "@/lib/countries";
+import { getTemplate, type TemplateId } from "@/lib/templates";
 import type { Education, Experience, Project, ResumeData, VolunteerExperience } from "@/types/resume";
 
 const PAGE_WIDTH_MM = 210;
@@ -11,7 +12,41 @@ const PAGE_HEIGHT_MM = 297;
 const MARGIN_MM = 20;
 const CONTENT_WIDTH_MM = PAGE_WIDTH_MM - MARGIN_MM * 2;
 const CONTENT_HEIGHT_MM = PAGE_HEIGHT_MM - MARGIN_MM * 2;
-const FONT_STACK = "Georgia, 'Times New Roman', serif";
+const FONT_STACK_SERIF = "Georgia, 'Times New Roman', serif";
+const FONT_STACK_SANS = "'Segoe UI', Helvetica, Arial, sans-serif";
+
+/** Per-template visual theme. Layout (single vs. two-column) is handled separately in the component. */
+interface TemplateTheme {
+  fontStack: string;
+  headerAlign: "left" | "center";
+  labelColor: string;
+  ruleColor: string;
+}
+
+const TEMPLATE_THEMES: Record<TemplateId, TemplateTheme> = {
+  classic: { fontStack: FONT_STACK_SERIF, headerAlign: "center", labelColor: "text-slate-700", ruleColor: "border-slate-300" },
+  modern: { fontStack: FONT_STACK_SANS, headerAlign: "left", labelColor: "text-blue-700", ruleColor: "border-blue-200" },
+  sidebar: { fontStack: FONT_STACK_SANS, headerAlign: "left", labelColor: "text-blue-700", ruleColor: "border-blue-200" },
+};
+
+/** Sidebar's rail owns these sections; stripped from the main flowed column when the template is "sidebar". */
+const RAIL_SECTION_PREFIXES = ["education", "skills", "languages"];
+function splitForSidebar(blocks: PreviewBlock[]) {
+  const rail: PreviewBlock[] = [];
+  const main: PreviewBlock[] = [];
+  blocks.forEach((block) => (RAIL_SECTION_PREFIXES.some((prefix) => block.id.startsWith(prefix)) ? rail : main).push(block));
+  return { rail, main };
+}
+
+/**
+ * Sidebar MVP limitation: the main column is measured and paginated at this
+ * fixed fraction of content width on every page, whether or not the rail is
+ * showing (rail only renders on page 1). This keeps a single measurement
+ * pass valid across all pages instead of requiring per-page re-pagination.
+ */
+const SIDEBAR_MAIN_WIDTH_RATIO = 0.62;
+const SIDEBAR_RAIL_WIDTH_RATIO = 1 - SIDEBAR_MAIN_WIDTH_RATIO;
+const SIDEBAR_GAP_MM = 6;
 
 interface PreviewBlock {
   id: string;
@@ -34,11 +69,11 @@ function EntryHeading({ primary, secondary, dateRange }: { primary: string; seco
 const hasExperienceContent = (item: Experience) => item.employer.trim() || item.role.trim();
 const hasEducationContent = (item: Education) => item.institution.trim();
 
-function sectionHeader(key: string, title: string): PreviewBlock {
+function sectionHeader(key: string, title: string, theme: TemplateTheme): PreviewBlock {
   return {
     id: `${key}-header`,
     type: "header",
-    node: <h3 className="mt-5 border-b border-slate-300 pb-1 text-xs font-bold uppercase tracking-wider text-slate-700">{title}</h3>,
+    node: <h3 className={`mt-5 border-b ${theme.ruleColor} pb-1 text-xs font-bold uppercase tracking-wider ${theme.labelColor}`}>{title}</h3>,
   };
 }
 function sectionContent(id: string, node: ReactNode): PreviewBlock {
@@ -51,7 +86,7 @@ function normalizeUrl(url: string): string {
 }
 
 /** Builds an ordered, flat list of atomic preview blocks (never split across pages). */
-function buildBlocks(resume: ResumeData): PreviewBlock[] {
+function buildBlocks(resume: ResumeData, theme: TemplateTheme): PreviewBlock[] {
   const blocks: PreviewBlock[] = [];
   const { professionalSummary, sectionTitles } = resume;
 
@@ -59,12 +94,12 @@ function buildBlocks(resume: ResumeData): PreviewBlock[] {
   const education = sortEntriesByRecency(resume.education.filter(hasEducationContent));
 
   if (professionalSummary.trim()) {
-    blocks.push(sectionHeader("summary", sectionTitles.summary));
+    blocks.push(sectionHeader("summary", sectionTitles.summary, theme));
     blocks.push(sectionContent("summary-content", <p className="text-sm leading-6 text-slate-700">{professionalSummary}</p>));
   }
 
   if (experiences.length > 0) {
-    blocks.push(sectionHeader("experience", sectionTitles.experience));
+    blocks.push(sectionHeader("experience", sectionTitles.experience, theme));
     experiences.forEach((item) => {
       const highlights = item.highlights.filter((line) => line.trim());
       blocks.push(sectionContent(`experience-${item.id}`, (
@@ -77,7 +112,7 @@ function buildBlocks(resume: ResumeData): PreviewBlock[] {
   }
 
   if (education.length > 0) {
-    blocks.push(sectionHeader("education", sectionTitles.education));
+    blocks.push(sectionHeader("education", sectionTitles.education, theme));
     education.forEach((item) => {
       const awards = item.awards.filter((award) => award.name.trim());
       blocks.push(sectionContent(`education-${item.id}`, (
@@ -90,7 +125,7 @@ function buildBlocks(resume: ResumeData): PreviewBlock[] {
   }
 
   if (resume.skills.length > 0) {
-    blocks.push(sectionHeader("skills", sectionTitles.skills));
+    blocks.push(sectionHeader("skills", sectionTitles.skills, theme));
     blocks.push(sectionContent("skills-content", <p className="text-sm leading-6 text-slate-700">{resume.skills.join(" • ")}</p>));
   }
 
@@ -99,7 +134,7 @@ function buildBlocks(resume: ResumeData): PreviewBlock[] {
       const hasProjectContent = (item: Project) => item.name.trim();
       const projects = sortByDateDesc(resume.projects.filter(hasProjectContent));
       if (projects.length === 0) return;
-      blocks.push(sectionHeader("projects", sectionTitles.projects));
+      blocks.push(sectionHeader("projects", sectionTitles.projects, theme));
       projects.forEach((item) => {
         const highlights = item.highlights.filter((line) => line.trim());
         blocks.push(sectionContent(`project-${item.id}`, (
@@ -113,13 +148,13 @@ function buildBlocks(resume: ResumeData): PreviewBlock[] {
     if (sectionKey === "certifications") {
       const certifications = sortByDateDesc(resume.certifications.filter((item) => item.name.trim()));
       if (certifications.length === 0) return;
-      blocks.push(sectionHeader("certifications", sectionTitles.certifications));
+      blocks.push(sectionHeader("certifications", sectionTitles.certifications, theme));
       certifications.forEach((item) => blocks.push(sectionContent(`certification-${item.id}`, <EntryHeading primary={item.name} dateRange={formatPartialDate(item.date)} />)));
     }
     if (sectionKey === "awards") {
       const awards = sortByDateDesc(resume.awards.filter((item) => item.title.trim()));
       if (awards.length === 0) return;
-      blocks.push(sectionHeader("awards", sectionTitles.awards));
+      blocks.push(sectionHeader("awards", sectionTitles.awards, theme));
       awards.forEach((item) => {
         const highlights = item.highlights.filter((line) => line.trim());
         blocks.push(sectionContent(`award-${item.id}`, (
@@ -134,7 +169,7 @@ function buildBlocks(resume: ResumeData): PreviewBlock[] {
       const hasVolunteerContent = (item: VolunteerExperience) => item.organization.trim() || item.role.trim();
       const volunteering = sortByDateDesc(resume.volunteerExperiences.filter(hasVolunteerContent));
       if (volunteering.length === 0) return;
-      blocks.push(sectionHeader("volunteering", sectionTitles.volunteerExperiences));
+      blocks.push(sectionHeader("volunteering", sectionTitles.volunteerExperiences, theme));
       volunteering.forEach((item) => {
         const highlights = item.highlights.filter((line) => line.trim());
         blocks.push(sectionContent(`volunteer-${item.id}`, (
@@ -148,13 +183,13 @@ function buildBlocks(resume: ResumeData): PreviewBlock[] {
     if (sectionKey === "languages") {
       const languages = resume.languages.filter((item) => item.name.trim());
       if (languages.length === 0) return;
-      blocks.push(sectionHeader("languages", sectionTitles.languages));
+      blocks.push(sectionHeader("languages", sectionTitles.languages, theme));
       blocks.push(sectionContent("languages-content", <p className="text-sm leading-6 text-slate-700">{languages.map((item) => (item.proficiency ? `${item.name} (${item.proficiency})` : item.name)).join(" • ")}</p>));
     }
     if (sectionKey === "other") {
       const entries = sortByDateDesc(resume.otherEntries.filter((entry) => entry.name.trim()));
       if (entries.length === 0) return;
-      blocks.push(sectionHeader("other", sectionTitles.other));
+      blocks.push(sectionHeader("other", sectionTitles.other, theme));
       entries.forEach((entry) => {
         const highlights = entry.highlights.filter((line) => line.trim());
         blocks.push(sectionContent(`other-entry-${entry.id}`, (
@@ -206,7 +241,7 @@ function paginateBlocks(blocks: PreviewBlock[], heights: Record<string, number>,
 }
 
 /** Renders one A4 sheet, scaled uniformly (never stretched) to fit its container. */
-function A4Page({ children }: { children: ReactNode }) {
+function A4Page({ children, fontStack }: { children: ReactNode; fontStack: string }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const sizerRef = useRef<HTMLDivElement>(null);
   const [naturalWidthPx, setNaturalWidthPx] = useState<number | null>(null);
@@ -242,7 +277,7 @@ function A4Page({ children }: { children: ReactNode }) {
           className="bg-white shadow-md ring-1 ring-slate-200"
           style={{ width: "210mm", height: "297mm", transform: `scale(${scale})`, transformOrigin: "top left", position: "absolute", top: 0, left: 0 }}
         >
-          <div className="h-full w-full overflow-hidden text-slate-900" style={{ padding: `${MARGIN_MM}mm`, fontFamily: FONT_STACK }}>
+          <div className="h-full w-full overflow-hidden text-slate-900" style={{ padding: `${MARGIN_MM}mm`, fontFamily: fontStack }}>
             {children}
           </div>
         </div>
@@ -281,7 +316,11 @@ export interface ResumePreviewProps {
 
 export function ResumePreview({ pageIndex, onPageIndexChange, maxHeight = "70vh" }: ResumePreviewProps) {
   const { state } = useResumeContext();
-  const { resume } = state;
+  const { resume, selectedTemplateId } = state;
+  const templateId = getTemplate(selectedTemplateId).id;
+  const theme = TEMPLATE_THEMES[templateId];
+  const isSidebar = templateId === "sidebar";
+
   const { personalDetails: personal, professionalSummary } = resume;
 
   const fullName = `${personal.firstName} ${personal.lastName}`.trim();
@@ -297,11 +336,12 @@ export function ResumePreview({ pageIndex, onPageIndexChange, maxHeight = "70vh"
 
   const headerNode = fullName || personal.headline.trim() || contactLine || links.length > 0
     ? (
-      <header className="border-b border-slate-300 pb-3 text-center">
+      <header className={`border-b border-slate-300 pb-3 ${theme.headerAlign === "center" ? "text-center" : "text-left"}`}>
         {fullName && <h2 className="text-2xl font-bold tracking-tight text-slate-950">{fullName}</h2>}
         {personal.headline.trim() && <p className="mt-1 text-sm font-medium text-slate-600">{personal.headline}</p>}
-        {contactLine && <p className="mt-2 text-xs text-slate-500">{contactLine}</p>}
-        {links.length > 0 && (
+        {/* Sidebar keeps contact/links in the rail instead of the header, to avoid duplicating them. */}
+        {!isSidebar && contactLine && <p className="mt-2 text-xs text-slate-500">{contactLine}</p>}
+        {!isSidebar && links.length > 0 && (
           <p className="mt-0.5 text-xs text-slate-500">
             {links.map((link, index) => (
               <span key={link.id}>
@@ -315,12 +355,18 @@ export function ResumePreview({ pageIndex, onPageIndexChange, maxHeight = "70vh"
     )
     : null;
 
-  const blocks = useMemo(() => buildBlocks(resume), [resume]);
+  const blocks = useMemo(() => buildBlocks(resume, theme), [resume, theme]);
+  const { rail: railBlocks, main: mainBlocks } = useMemo(
+    () => (isSidebar ? splitForSidebar(blocks) : { rail: [] as PreviewBlock[], main: blocks }),
+    [blocks, isSidebar]
+  );
 
   const headerMeasureRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
   const contentAreaRef = useRef<HTMLDivElement>(null);
   const [pages, setPages] = useState<PreviewBlock[][]>([[]]);
+
+  const measureWidthMM = isSidebar ? CONTENT_WIDTH_MM * SIDEBAR_MAIN_WIDTH_RATIO - SIDEBAR_GAP_MM / 2 : CONTENT_WIDTH_MM;
 
   useLayoutEffect(() => {
     if (isEmpty) return;
@@ -330,14 +376,14 @@ export function ResumePreview({ pageIndex, onPageIndexChange, maxHeight = "70vh"
       const children = Array.from(container.children) as HTMLElement[];
       children.forEach((child, index) => {
         const nextTop = index < children.length - 1 ? children[index + 1].offsetTop : container.scrollHeight;
-        const block = blocks[index];
+        const block = mainBlocks[index];
         if (block) heights[block.id] = nextTop - child.offsetTop;
       });
     }
     const headerHeight = headerMeasureRef.current?.offsetHeight ?? 0;
     const contentHeight = contentAreaRef.current?.offsetHeight ?? 1;
-    setPages(paginateBlocks(blocks, heights, headerHeight, contentHeight));
-  }, [blocks, isEmpty]);
+    setPages(paginateBlocks(mainBlocks, heights, headerHeight, contentHeight));
+  }, [mainBlocks, isEmpty]);
 
   useEffect(() => {
     if (pageIndex > pages.length - 1) onPageIndexChange(Math.max(0, pages.length - 1));
@@ -358,10 +404,10 @@ export function ResumePreview({ pageIndex, onPageIndexChange, maxHeight = "70vh"
 
   return (
     <div>
-      <div aria-hidden="true" style={{ position: "fixed", top: 0, left: "-9999px", width: `${CONTENT_WIDTH_MM}mm`, fontFamily: FONT_STACK }}>
+      <div aria-hidden="true" style={{ position: "fixed", top: 0, left: "-9999px", width: `${measureWidthMM}mm`, fontFamily: theme.fontStack }}>
         <div ref={headerMeasureRef} style={{ overflow: "hidden" }}>{headerNode}</div>
         <div ref={measureRef} style={{ overflow: "hidden" }}>
-          {blocks.map((block) => (
+          {mainBlocks.map((block) => (
             <div key={block.id}>{block.node}</div>
           ))}
         </div>
@@ -369,13 +415,42 @@ export function ResumePreview({ pageIndex, onPageIndexChange, maxHeight = "70vh"
       </div>
 
       <div className="w-full" style={{ aspectRatio: `${PAGE_WIDTH_MM} / ${PAGE_HEIGHT_MM}`, maxHeight }}>
-        <A4Page>
+        <A4Page fontStack={theme.fontStack}>
           {safeIndex === 0 && headerNode}
-          {currentBlocks.map((block, index) => (
-            <div key={block.id} style={safeIndex > 0 && index === 0 ? { marginTop: 0 } : undefined}>
-              {block.node}
+          {isSidebar ? (
+            <div className="mt-3 flex" style={{ gap: `${SIDEBAR_GAP_MM}mm` }}>
+              {safeIndex === 0 && (
+                <aside style={{ width: `${CONTENT_WIDTH_MM * SIDEBAR_RAIL_WIDTH_RATIO}mm` }} className="shrink-0 rounded-lg bg-blue-50/60 p-3">
+                  {contactLine && <p className="text-xs leading-5 text-slate-600">{contactLine}</p>}
+                  {links.length > 0 && (
+                    <div className="mt-1 space-y-0.5">
+                      {links.map((link) => (
+                        <a key={link.id} href={normalizeUrl(link.url)} target="_blank" rel="noreferrer" className="block text-xs leading-5 text-blue-700 underline">
+                          {link.name}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                  {railBlocks.map((block) => (
+                    <div key={block.id} className="mt-3 first:mt-0">{block.node}</div>
+                  ))}
+                </aside>
+              )}
+              <div style={{ width: `${measureWidthMM}mm` }} className="min-w-0">
+                {currentBlocks.map((block, index) => (
+                  <div key={block.id} style={safeIndex > 0 && index === 0 ? { marginTop: 0 } : undefined}>
+                    {block.node}
+                  </div>
+                ))}
+              </div>
             </div>
-          ))}
+          ) : (
+            currentBlocks.map((block, index) => (
+              <div key={block.id} style={safeIndex > 0 && index === 0 ? { marginTop: 0 } : undefined}>
+                {block.node}
+              </div>
+            ))
+          )}
         </A4Page>
       </div>
 

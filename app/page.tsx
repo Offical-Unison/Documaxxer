@@ -8,7 +8,7 @@ export default function BuilderPage() {
     <main className="min-h-screen">
       <BuilderHeader />
       <div className="section-shell py-7 sm:py-10">
-        <ProgressBar totalSteps={5} />
+        <ProgressBar totalSteps={6} /> 
         <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
           <div className="min-w-0">
             <ResumeFormContainer />

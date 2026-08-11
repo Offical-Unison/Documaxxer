@@ -1,4 +1,5 @@
 import type { Award, Certification, Education, Experience, Language, OptionalSectionKey, OtherEntry, PersonalDetails, Project, ResumeData, ResumeState, SectionId, VolunteerExperience } from "@/types/resume";
+import { DEFAULT_TEMPLATE_ID } from "@/lib/templates";
 
 export const DEFAULT_SECTION_TITLES: Record<SectionId, string> = {
   personal: "Personal Information",
@@ -34,7 +35,11 @@ export const initialResumeData: ResumeData = {
   sectionTitles: { ...DEFAULT_SECTION_TITLES },
 };
 
-export const initialResumeState: ResumeState = { resume: initialResumeData, activeSection: null, selectedTemplateId: null };
+export const initialResumeState: ResumeState = {
+  resume: initialResumeData,
+  activeSection: null,
+  selectedTemplateId: DEFAULT_TEMPLATE_ID, // was: null
+};
 
 export type ResumeAction =
   | { type: "SET_RESUME"; payload: ResumeData }

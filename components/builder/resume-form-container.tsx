@@ -9,12 +9,16 @@ import { LinkListInput } from "@/components/builder/link-list";
 import { PhoneField } from "@/components/builder/phone-input";
 import { EditableTitle } from "@/components/builder/editable-title";
 import { OptionalResumeSections } from "@/components/builder/optional-resume-sections";
+import { TemplatePicker } from "@/components/builder/template-picker";
 import { useResumeContext } from "@/context/resume-context";
 import { isValidPhoneNumber } from "@/lib/phone";
+import type { TemplateId } from "@/lib/templates";
 import type { Education, Experience, PersonalDetails } from "@/types/resume";
 
 const makeId = () => crypto.randomUUID();
-const steps = ["Personal Information + Summary", "Work Experience", "Education", "Skills", "Additional Sections"];
+/** Index 0 is the template picker; form validation only applies to steps 1-5. */
+const steps = ["Template", "Personal Information + Summary", "Work Experience", "Education", "Skills", "Additional Sections"];
+const LAST_STEP = steps.length - 1;
 
 /** Shared visual weight for every major section heading (form steps + Additional Sections). */
 const SECTION_HEADING_CLASS = "text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl";
@@ -26,7 +30,7 @@ function Section({ title, description, children }: { title: React.ReactNode; des
 export function ResumeFormContainer() {
   const { state, dispatch } = useResumeContext();
   const { resume } = state;
-  const [currentStep, setCurrentStep] = useState(() => { const value = Number(state.activeSection); return value >= 1 && value <= 5 ? value : 1; });
+  const [currentStep, setCurrentStep] = useState(() => { const value = Number(state.activeSection); return value >= 0 && value <= LAST_STEP ? value : 0; });
   const [showErrors, setShowErrors] = useState(false);
   const personal = resume.personalDetails;
   const primarySkills = resume.skills;
@@ -46,12 +50,18 @@ export function ResumeFormContainer() {
   const hasSkillsErrors = primarySkills.length === 0;
   const invalidStep = () => currentStep === 1 ? hasPersonalErrors : currentStep === 2 ? hasExperienceErrors : currentStep === 3 ? hasEducationErrors : currentStep === 4 ? hasSkillsErrors : false;
   const goTo = (nextStep: number) => { setCurrentStep(nextStep); setShowErrors(false); dispatch({ type: "SET_ACTIVE_SECTION", payload: String(nextStep) }); window.scrollTo({ top: 0, behavior: "smooth" }); };
-  const next = () => { if (invalidStep()) { setShowErrors(true); return; } if (currentStep < steps.length) goTo(currentStep + 1); };
+  const next = () => { if (invalidStep()) { setShowErrors(true); return; } if (currentStep < LAST_STEP) goTo(currentStep + 1); };
 
   return <Card aria-labelledby="form-title" className="min-w-0">
-    <div className="flex flex-col gap-3 border-b border-slate-200/80 pb-5 sm:flex-row sm:items-end sm:justify-between"><div><p className="eyebrow">Resume content</p><h1 id="form-title" className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">Build your resume</h1></div><p className="text-sm font-medium text-slate-500">Step {currentStep} of {steps.length}</p></div>
-    <nav className="mt-5 overflow-x-auto pb-1" aria-label="Resume form sections"><ol className="flex min-w-max gap-2">{steps.map((step, index) => { const number = index + 1; return <li key={step}><button type="button" onClick={() => number < currentStep && goTo(number)} disabled={number > currentStep} aria-current={number === currentStep ? "step" : undefined} className={`rounded-full px-3 py-2 text-xs font-semibold transition ${number === currentStep ? "bg-blue-600 text-white shadow-sm" : number < currentStep ? "bg-blue-50 text-blue-700 hover:bg-blue-100" : "bg-slate-100 text-slate-400"}`}>{number}. {step}</button></li>; })}</ol></nav>
+    <div className="flex flex-col gap-3 border-b border-slate-200/80 pb-5 sm:flex-row sm:items-end sm:justify-between"><div><p className="eyebrow">Resume content</p><h1 id="form-title" className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">Build your resume</h1></div><p className="text-sm font-medium text-slate-500">Step {currentStep + 1} of {steps.length}</p></div>
+    <nav className="mt-5 overflow-x-auto pb-1" aria-label="Resume form sections"><ol className="flex min-w-max gap-2">{steps.map((step, number) => <li key={step}><button type="button" onClick={() => number < currentStep && goTo(number)} disabled={number > currentStep} aria-current={number === currentStep ? "step" : undefined} className={`rounded-full px-3 py-2 text-xs font-semibold transition ${number === currentStep ? "bg-blue-600 text-white shadow-sm" : number < currentStep ? "bg-blue-50 text-blue-700 hover:bg-blue-100" : "bg-slate-100 text-slate-400"}`}>{number === 0 ? step : `${number}. ${step}`}</button></li>)}</ol></nav>
     <form className="mt-8" onSubmit={(event) => { event.preventDefault(); next(); }} noValidate>
+      {currentStep === 0 && <Section title="Choose a template" description="Pick a starting look — you can switch anytime from the preview panel.">
+        <TemplatePicker
+          selectedId={state.selectedTemplateId}
+          onSelect={(id: TemplateId) => dispatch({ type: "SET_TEMPLATE", payload: id })}
+        />
+      </Section>}
       {currentStep === 1 && <Section title={<EditableTitle as="h2" className={SECTION_HEADING_CLASS} title={titleFor("personal")} onSave={renameTitle("personal")} />} description="Start with the details recruiters use to contact you."><div className="grid gap-4 sm:grid-cols-2">
         <Field label="First name" required value={personal.firstName} onChange={(event) => updatePersonal({ firstName: event.target.value })} error={showErrors && !personal.firstName.trim() ? "First name is required." : undefined} placeholder="John" />
         <Field label="Last name" required value={personal.lastName} onChange={(event) => updatePersonal({ lastName: event.target.value })} error={showErrors && !personal.lastName.trim() ? "Last name is required." : undefined} placeholder="Doe" />
@@ -76,7 +86,7 @@ export function ResumeFormContainer() {
         {showErrors && hasSkillsErrors && <p className="mt-2 text-sm text-red-600">Add at least one skill to continue.</p>}
       </Section>}
       {currentStep === 5 && <Section title="Additional Sections" description="Choose sections that strengthen your resume. These are optional, so add only what is relevant to you."><OptionalResumeSections /></Section>}
-      <div className="mt-9 flex items-center justify-between border-t border-slate-200/80 pt-5"><button type="button" onClick={() => goTo(currentStep - 1)} disabled={currentStep === 1} className="min-h-11 rounded-xl border border-slate-200 bg-white/70 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-45">← Previous</button>{currentStep < steps.length ? <button type="submit" className="min-h-11 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">Next</button> : <button type="submit" className="min-h-11 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">Finish →</button>}</div>
+      <div className="mt-9 flex items-center justify-between border-t border-slate-200/80 pt-5"><button type="button" onClick={() => goTo(currentStep - 1)} disabled={currentStep === 0} className="min-h-11 rounded-xl border border-slate-200 bg-white/70 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-45">← Previous</button>{currentStep < LAST_STEP ? <button type="submit" className="min-h-11 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">Next</button> : <button type="submit" className="min-h-11 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">Finish →</button>}</div>
     </form>
   </Card>;
 }
