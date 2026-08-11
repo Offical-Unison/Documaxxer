@@ -5,6 +5,7 @@ import { useResumeContext } from "@/context/resume-context";
 import { formatDateRange, formatPartialDate, sortByDateDesc, sortEntriesByRecency } from "@/lib/format";
 import { COUNTRIES } from "@/lib/countries";
 import { getTemplate, type TemplateId } from "@/lib/templates";
+import { countResumeWords } from "@/lib/statistics";
 import type { Education, Experience, Project, ResumeData, VolunteerExperience } from "@/types/resume";
 
 const PAGE_WIDTH_MM = 210;
@@ -360,6 +361,7 @@ export function ResumePreview({ pageIndex, onPageIndexChange, maxHeight = "70vh"
     () => (isSidebar ? splitForSidebar(blocks) : { rail: [] as PreviewBlock[], main: blocks }),
     [blocks, isSidebar]
   );
+  const wordCount = useMemo(() => countResumeWords(resume), [resume]);
 
   const headerMeasureRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
@@ -459,6 +461,7 @@ export function ResumePreview({ pageIndex, onPageIndexChange, maxHeight = "70vh"
         <span>Page {safeIndex + 1} of {pageCount}</span>
         {pageCount > 1 && <PageNavButton direction="next" onClick={() => onPageIndexChange(Math.min(pageCount - 1, safeIndex + 1))} disabled={safeIndex >= pageCount - 1} />}
       </div>
+      <p className="mt-1 text-center text-xs text-slate-400">{wordCount} {wordCount === 1 ? "word" : "words"}</p>
     </div>
   );
 }
