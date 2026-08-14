@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { Card } from "@/components/ui/card";
 import { ResumePreview } from "@/components/builder/resume-preview";
 import { TemplatePicker } from "@/components/builder/template-picker";
+import { FontPicker } from "@/components/builder/font-picker";
 import { useResumeContext } from "@/context/resume-context";
 import type { TemplateId } from "@/lib/templates";
 
@@ -46,8 +47,13 @@ export function ResumePreviewContainer() {
           Expand
         </button>
       </div>
-      <div className="mt-4 flex justify-center">
-        <TemplatePicker variant="compact" selectedId={state.selectedTemplateId} onSelect={changeTemplate} />
+      <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
+        <div className="min-w-0 flex-1">
+          <TemplatePicker variant="compact" selectedId={state.selectedTemplateId} onSelect={changeTemplate} />
+        </div>
+        <div className="min-w-0 flex-1 sm:max-w-[160px]">
+          <FontPicker selectedId={state.selectedFontId} onSelect={(id) => dispatch({ type: "SET_FONT", payload: id })} />
+        </div>
       </div>
       <div className="mt-5">
         <ResumePreview pageIndex={pageIndex} onPageIndexChange={setPageIndex} maxHeight="70vh" />

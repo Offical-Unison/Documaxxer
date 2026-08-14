@@ -97,4 +97,4 @@ export interface ResumeData {
   sectionTitles: Record<SectionId, string>;
 }
 
-export interface ResumeState { resume: ResumeData; activeSection: string | null; selectedTemplateId: string | null; }
+export interface ResumeState { resume: ResumeData; activeSection: string | null; selectedTemplateId: string | null; selectedFontId: string | null; }

@@ -5,6 +5,7 @@ import { useResumeContext } from "@/context/resume-context";
 import { formatDateRange, formatPartialDate, sortByDateDesc, sortEntriesByRecency } from "@/lib/format";
 import { COUNTRIES } from "@/lib/countries";
 import { getTemplate, type TemplateId } from "@/lib/templates";
+import { getFont } from "@/lib/fonts";
 import { countResumeWords } from "@/lib/statistics";
 import type { Education, Experience, Project, ResumeData, VolunteerExperience } from "@/types/resume";
 
@@ -127,7 +128,11 @@ function buildBlocks(resume: ResumeData, theme: TemplateTheme): PreviewBlock[] {
 
   if (resume.skills.length > 0) {
     blocks.push(sectionHeader("skills", sectionTitles.skills, theme));
-    blocks.push(sectionContent("skills-content", <p className="text-sm leading-6 text-slate-700">{resume.skills.join(" • ")}</p>));
+    blocks.push(sectionContent("skills-content", (
+      <ul className="list-disc space-y-0.5 pl-4 text-sm leading-6 text-slate-700">
+        {resume.skills.map((skill) => <li key={skill}>{skill}</li>)}
+      </ul>
+    )));
   }
 
   resume.optionalSections.forEach((sectionKey) => {
@@ -317,10 +322,11 @@ export interface ResumePreviewProps {
 
 export function ResumePreview({ pageIndex, onPageIndexChange, maxHeight = "70vh" }: ResumePreviewProps) {
   const { state } = useResumeContext();
-  const { resume, selectedTemplateId } = state;
+  const { resume, selectedTemplateId, selectedFontId } = state;
   const templateId = getTemplate(selectedTemplateId).id;
   const theme = TEMPLATE_THEMES[templateId];
   const isSidebar = templateId === "sidebar";
+  const fontStack = getFont(selectedFontId).stack;
 
   const { personalDetails: personal, professionalSummary } = resume;
 
@@ -406,7 +412,7 @@ export function ResumePreview({ pageIndex, onPageIndexChange, maxHeight = "70vh"
 
   return (
     <div>
-      <div aria-hidden="true" style={{ position: "fixed", top: 0, left: "-9999px", width: `${measureWidthMM}mm`, fontFamily: theme.fontStack }}>
+      <div aria-hidden="true" style={{ position: "fixed", top: 0, left: "-9999px", width: `${measureWidthMM}mm`, fontFamily: fontStack }}>
         <div ref={headerMeasureRef} style={{ overflow: "hidden" }}>{headerNode}</div>
         <div ref={measureRef} style={{ overflow: "hidden" }}>
           {mainBlocks.map((block) => (
@@ -417,7 +423,7 @@ export function ResumePreview({ pageIndex, onPageIndexChange, maxHeight = "70vh"
       </div>
 
       <div className="w-full" style={{ aspectRatio: `${PAGE_WIDTH_MM} / ${PAGE_HEIGHT_MM}`, maxHeight }}>
-        <A4Page fontStack={theme.fontStack}>
+        <A4Page fontStack={fontStack}>
           {safeIndex === 0 && headerNode}
           {isSidebar ? (
             <div className="mt-3 flex" style={{ gap: `${SIDEBAR_GAP_MM}mm` }}>

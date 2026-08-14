@@ -1,5 +1,6 @@
 import type { Award, Certification, Education, Experience, Language, OptionalSectionKey, OtherEntry, PersonalDetails, Project, ResumeData, ResumeState, SectionId, VolunteerExperience } from "@/types/resume";
 import { DEFAULT_TEMPLATE_ID } from "@/lib/templates";
+import { DEFAULT_FONT_ID } from "@/lib/fonts";
 
 export const DEFAULT_SECTION_TITLES: Record<SectionId, string> = {
   personal: "Personal Information",
@@ -38,13 +39,15 @@ export const initialResumeData: ResumeData = {
 export const initialResumeState: ResumeState = {
   resume: initialResumeData,
   activeSection: null,
-  selectedTemplateId: DEFAULT_TEMPLATE_ID, // was: null
+  selectedTemplateId: DEFAULT_TEMPLATE_ID,
+  selectedFontId: DEFAULT_FONT_ID,
 };
 
 export type ResumeAction =
   | { type: "SET_RESUME"; payload: ResumeData }
   | { type: "SET_ACTIVE_SECTION"; payload: string | null }
   | { type: "SET_TEMPLATE"; payload: string | null }
+  | { type: "SET_FONT"; payload: string | null }
   | { type: "UPDATE_PERSONAL_DETAILS"; payload: PersonalDetails }
   | { type: "SET_PROFESSIONAL_SUMMARY"; payload: string }
   | { type: "SET_EXPERIENCES"; payload: Experience[] }
@@ -65,6 +68,7 @@ export function resumeReducer(state: ResumeState, action: ResumeAction): ResumeS
     case "SET_RESUME": return { ...state, resume: action.payload };
     case "SET_ACTIVE_SECTION": return { ...state, activeSection: action.payload };
     case "SET_TEMPLATE": return { ...state, selectedTemplateId: action.payload };
+    case "SET_FONT": return { ...state, selectedFontId: action.payload };
     case "UPDATE_PERSONAL_DETAILS": return { ...state, resume: { ...state.resume, personalDetails: action.payload } };
     case "SET_PROFESSIONAL_SUMMARY": return { ...state, resume: { ...state.resume, professionalSummary: action.payload } };
     case "SET_EXPERIENCES": return { ...state, resume: { ...state.resume, experiences: action.payload } };

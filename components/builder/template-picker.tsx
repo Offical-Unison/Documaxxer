@@ -11,20 +11,25 @@ interface TemplatePickerProps {
 export function TemplatePicker({ selectedId, onSelect, variant = "grid" }: TemplatePickerProps) {
   if (variant === "compact") {
     return (
-      <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white/70 p-1">
-        {RESUME_TEMPLATES.map((template) => (
-          <button
-            key={template.id}
-            type="button"
-            onClick={() => onSelect(template.id)}
-            aria-pressed={selectedId === template.id}
-            className={`min-h-9 rounded-lg px-3 text-xs font-semibold transition ${
-              selectedId === template.id ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:bg-blue-50 hover:text-blue-700"
-            }`}
-          >
-            {template.name}
-          </button>
-        ))}
+      <div className="w-full">
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Template</p>
+        <select
+          value={selectedId ?? ""}
+          onChange={(event) => onSelect(event.target.value as TemplateId)}
+          aria-label="Resume template"
+          className="min-h-9 w-full appearance-none rounded-2xl border border-slate-200/90 bg-white/70 bg-no-repeat px-3 text-sm text-slate-700 shadow-sm backdrop-blur transition focus:border-blue-500 focus:outline-none"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%2364748b' stroke-width='1.6'%3E%3Cpath d='M5 7.5l5 5 5-5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+            backgroundPosition: "right 0.60rem center",
+            backgroundSize: "1rem",
+          }}
+        >
+          {RESUME_TEMPLATES.map((template) => (
+            <option key={template.id} value={template.id}>
+              {template.name}
+            </option>
+          ))}
+        </select>
       </div>
     );
   }
