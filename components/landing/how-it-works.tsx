@@ -17,21 +17,32 @@ export function HowItWorks() {
   const step = TUTORIAL_STEPS[stepIndex];
 
   return (
-    <section className="section-shell py-16 sm:py-20" aria-labelledby="how-it-works-title">
+    <section className="section-shell py-16 sm:py-24" aria-labelledby="how-it-works-title">
       <div className="mx-auto max-w-2xl text-center">
         <p className="eyebrow">How it works</p>
-        <h2 id="how-it-works-title" className="mt-3 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">Build your resume in 4 simple steps</h2>
-        <p className="mt-4 text-base leading-7 text-slate-600">From picking a look to downloading a polished document — here&apos;s what to expect.</p>
+        <h2 id="how-it-works-title" className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+          Build your resume in 4 simple steps
+        </h2>
+        <p className="mt-4 text-base leading-7 text-slate-500">
+          From picking a look to downloading a polished document — here&apos;s what to expect.
+        </p>
       </div>
 
-      <div className="mx-auto mt-10 max-w-xl rounded-3xl border border-white/75 bg-white/70 p-6 shadow-[0_12px_32px_rgba(15,23,42,0.08)] backdrop-blur sm:p-8">
-        <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Step {stepIndex + 1} of {TUTORIAL_STEPS.length}</p>
-        <h3 className="mt-2 text-xl font-semibold text-slate-950">{step.title}</h3>
-        <p className="mt-2 text-sm leading-6 text-slate-600">{step.description}</p>
+      <div className="mx-auto mt-12 max-w-xl rounded-3xl border border-white/70 bg-white/70 p-6 shadow-[0_8px_32px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:p-8">
+        <p className="text-xs font-semibold uppercase tracking-widest text-blue-600">
+          Step {stepIndex + 1} of {TUTORIAL_STEPS.length}
+        </p>
+        <h3 className="mt-3 text-xl font-bold tracking-tight text-slate-950">{step.title}</h3>
+        <p className="mt-2.5 text-sm leading-6 text-slate-500">{step.description}</p>
 
         <div className="mt-6 flex gap-1.5" aria-hidden="true">
           {TUTORIAL_STEPS.map((_, index) => (
-            <span key={index} className={`h-1.5 flex-1 rounded-full transition ${index <= stepIndex ? "bg-blue-600" : "bg-slate-200"}`} />
+            <span
+              key={index}
+              className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
+                index <= stepIndex ? "bg-blue-600" : "bg-slate-200"
+              }`}
+            />
           ))}
         </div>
 
@@ -40,7 +51,7 @@ export function HowItWorks() {
             type="button"
             onClick={() => setStepIndex((i) => Math.max(0, i - 1))}
             disabled={stepIndex === 0}
-            className="min-h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            className="min-h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
             ← Previous
           </button>
@@ -58,7 +69,7 @@ export function HowItWorks() {
         </div>
       </div>
 
-      <div className="mt-10 flex justify-center">
+      <div className="mt-12 flex justify-center">
         <Button asChild className="px-8"><Link href="/builder">Build Resume <span aria-hidden="true">→</span></Link></Button>
       </div>
     </section>

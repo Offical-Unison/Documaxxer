@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Card } from "@/components/ui/card";
 import { ResumePreview } from "@/components/builder/resume-preview";
+import { GenerateButton } from "@/components/builder/generate-button";
 import { TemplatePicker } from "@/components/builder/template-picker";
 import { FontPicker } from "@/components/builder/font-picker";
 import { useResumeContext } from "@/context/resume-context";
@@ -22,13 +23,12 @@ function ExpandIcon() {
 
 export function ResumePreviewContainer() {
   const { state, dispatch } = useResumeContext();
-  // Lifted here so the inline preview and the expanded modal share one page state.
   const [pageIndex, setPageIndex] = useState(0);
   const [expanded, setExpanded] = useState(false);
 
   const changeTemplate = (id: TemplateId) => {
     dispatch({ type: "SET_TEMPLATE", payload: id });
-    setPageIndex(0); // layout changes with template; avoid landing on a now-invalid page
+    setPageIndex(0);
   };
 
   return (
@@ -36,18 +36,19 @@ export function ResumePreviewContainer() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="eyebrow">Preview</p>
-          <h2 id="preview-title" className="mt-2 text-xl font-semibold">Your resume</h2>
+          <h2 id="preview-title" className="mt-2 text-xl font-bold tracking-tight text-slate-950">Your resume</h2>
         </div>
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="mt-1 inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white/70 px-3 text-xs font-semibold text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+          className="mt-1 inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-slate-200/80 bg-white/80 px-3 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
         >
           <ExpandIcon />
           Expand
         </button>
       </div>
-      <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
+
+      <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
         <div className="min-w-0 flex-1">
           <TemplatePicker variant="compact" selectedId={state.selectedTemplateId} onSelect={changeTemplate} />
         </div>
@@ -55,9 +56,15 @@ export function ResumePreviewContainer() {
           <FontPicker selectedId={state.selectedFontId} onSelect={(id) => dispatch({ type: "SET_FONT", payload: id })} />
         </div>
       </div>
+
       <div className="mt-5">
         <ResumePreview pageIndex={pageIndex} onPageIndexChange={setPageIndex} maxHeight="70vh" />
       </div>
+
+      <div className="mt-5">
+        <GenerateButton />
+      </div>
+
       {expanded && <ExpandedPreviewModal pageIndex={pageIndex} onPageIndexChange={setPageIndex} onClose={() => setExpanded(false)} />}
     </Card>
   );

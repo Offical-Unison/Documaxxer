@@ -18,18 +18,18 @@ export function TutorialScreen() {
 
   return (
     <main className="flex min-h-screen items-center justify-center p-4">
-      <div className="w-full max-w-md rounded-3xl border border-white/75 bg-white p-6 shadow-[0_12px_32px_rgba(15,23,42,0.08)] sm:p-8">
+      <div className="w-full max-w-md rounded-3xl border border-white/60 bg-white/80 p-6 shadow-[0_8px_32px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:p-8">
         <div className="flex items-center justify-between">
           <p className="eyebrow">Step {stepIndex + 1} of {TUTORIAL_STEPS.length}</p>
           <button type="button" onClick={() => router.push("/builder")} className="text-sm font-semibold text-slate-400 transition hover:text-slate-600">Skip</button>
         </div>
 
-        <h1 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">{step.title}</h1>
-        <p className="mt-3 text-sm leading-6 text-slate-600">{step.description}</p>
+        <h1 className="mt-4 text-2xl font-bold tracking-tight text-slate-950">{step.title}</h1>
+        <p className="mt-3 text-sm leading-6 text-slate-500">{step.description}</p>
 
         <div className="mt-6 flex gap-1.5" aria-hidden="true">
           {TUTORIAL_STEPS.map((_, index) => (
-            <span key={index} className={`h-1.5 flex-1 rounded-full transition ${index <= stepIndex ? "bg-blue-600" : "bg-slate-200"}`} />
+            <span key={index} className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${index <= stepIndex ? "bg-blue-600" : "bg-slate-200"}`} />
           ))}
         </div>
 
@@ -38,7 +38,7 @@ export function TutorialScreen() {
             type="button"
             onClick={() => setStepIndex((i) => Math.max(0, i - 1))}
             disabled={stepIndex === 0}
-            className="min-h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            className="min-h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
             ← Previous
           </button>

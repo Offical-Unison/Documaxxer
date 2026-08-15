@@ -1,10 +1,46 @@
 @import "tailwindcss";
 
-:root { --ink: #111827; --canvas: #f5f7fa; }
-* { box-sizing: border-box; }
-html { background: var(--canvas); }
-body { margin: 0; background: radial-gradient(circle at top right, rgba(219, 234, 254, .65), transparent 32rem), var(--canvas); color: var(--ink); font-family: "Segoe UI", "Helvetica Neue", sans-serif; }
-button, a { -webkit-tap-highlight-color: transparent; }
-:focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
-.section-shell { width: min(100% - 2rem, 76rem); margin-inline: auto; }
-.eyebrow { color: #2563eb; font-size: .75rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+@layer utilities {
+  .section-shell {
+    @apply mx-auto w-full max-w-6xl px-5 sm:px-8;
+  }
+
+  .eyebrow {
+    @apply text-xs font-semibold uppercase tracking-widest text-blue-600;
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus-visible ring for keyboard navigation */
+:focus-visible {
+  @apply outline-2 outline-offset-2 outline-blue-600;
+}
+
+/* Custom scrollbar for a more polished feel */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-slate-300;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-400;
+}
+
+.print-only { display: none; }
+
+@media print {
+  @page { size: A4; margin: 0; }
+  html, body { background: #ffffff !important; }
+  body * { visibility: hidden; }
+  .print-only, .print-only * { visibility: visible; }
+  .print-only { display: block; position: absolute; top: 0; left: 0; width: 210mm; }
+}

@@ -2,9 +2,11 @@ import { BuilderHeader } from "@/components/builder/builder-header";
 import { ProgressBar } from "@/components/builder/progress-bar";
 import { ResumeFormContainer } from "@/components/builder/resume-form-container";
 import { ResumePreviewContainer } from "@/components/builder/resume-preview-container";
+import { ResumePrintView } from "@/components/builder/resume-print-view";
 
 export default function BuilderPage() {
   return (
+    <>
     <main className="min-h-screen">
       <BuilderHeader />
       <div className="section-shell py-7 sm:py-10">
@@ -17,5 +19,7 @@ export default function BuilderPage() {
         </div>
       </div>
     </main>
+    <ResumePrintView />
+    </>
   );
 }

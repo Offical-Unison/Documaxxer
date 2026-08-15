@@ -12,12 +12,12 @@ export function TemplatePicker({ selectedId, onSelect, variant = "grid" }: Templ
   if (variant === "compact") {
     return (
       <div className="w-full">
-        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Template</p>
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-slate-400">Template</p>
         <select
           value={selectedId ?? ""}
           onChange={(event) => onSelect(event.target.value as TemplateId)}
           aria-label="Resume template"
-          className="min-h-9 w-full appearance-none rounded-2xl border border-slate-200/90 bg-white/70 bg-no-repeat px-3 text-sm text-slate-700 shadow-sm backdrop-blur transition focus:border-blue-500 focus:outline-none"
+          className="min-h-9 w-full appearance-none rounded-xl border border-slate-200/80 bg-white/80 bg-no-repeat px-3 text-sm text-slate-700 shadow-sm backdrop-blur transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none"
           style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%2364748b' stroke-width='1.6'%3E%3Cpath d='M5 7.5l5 5 5-5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
             backgroundPosition: "right 0.60rem center",
@@ -45,12 +45,14 @@ export function TemplatePicker({ selectedId, onSelect, variant = "grid" }: Templ
             onClick={() => onSelect(template.id)}
             aria-pressed={active}
             className={`flex flex-col items-start rounded-2xl border p-5 text-left transition ${
-              active ? "border-blue-400 bg-blue-50/70 shadow-[0_8px_20px_rgba(37,99,235,0.12)]" : "border-slate-200/90 bg-white/60 hover:border-blue-200"
+              active
+                ? "border-blue-400 bg-blue-50/70 shadow-[0_8px_24px_rgba(37,99,235,0.10)]"
+                : "border-slate-200/80 bg-white/60 shadow-sm hover:border-blue-200 hover:bg-blue-50/30"
             }`}
           >
             <TemplateThumbnail id={template.id} />
-            <h3 className="mt-4 text-base font-semibold text-slate-900">{template.name}</h3>
-            <p className="mt-1.5 text-sm leading-6 text-slate-600">{template.description}</p>
+            <h3 className="mt-4 text-base font-bold text-slate-900">{template.name}</h3>
+            <p className="mt-1.5 text-sm leading-6 text-slate-500">{template.description}</p>
             {active && <span className="mt-3 text-xs font-semibold text-blue-700">✓ Selected</span>}
           </button>
         );
@@ -59,10 +61,9 @@ export function TemplatePicker({ selectedId, onSelect, variant = "grid" }: Templ
   );
 }
 
-/** Tiny abstract preview so users can distinguish layouts before committing. */
 function TemplateThumbnail({ id }: { id: TemplateId }) {
   return (
-    <div className="h-24 w-full rounded-lg border border-slate-200 bg-white p-2">
+    <div className="h-24 w-full rounded-lg border border-slate-200/80 bg-white p-2 shadow-sm">
       {id === "classic" && (
         <div className="flex h-full flex-col items-center gap-1">
           <div className="h-1.5 w-12 rounded-full bg-slate-800" />

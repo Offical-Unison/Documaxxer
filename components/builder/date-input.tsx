@@ -9,6 +9,7 @@ function parseValue(value: string): { year: string; month: string } {
   const [year, month] = value.split("-");
   return { year: year ?? "", month: month ?? "" };
 }
+
 function buildValue(year: string, month: string): string {
   return year ? (month ? `${year}-${month}` : year) : "";
 }
@@ -22,20 +23,23 @@ interface PartialDateFieldProps {
   error?: string;
 }
 
-/** Year (dropdown, required when a date is entered) + optional month, stored as "YYYY" or "YYYY-MM". */
 export function PartialDateField({ label, value, onChange, required, disabled, error }: PartialDateFieldProps) {
   const { year, month } = parseValue(value);
   const yearOptions = getYearOptions();
+
   return (
     <div>
-      <span className="text-sm font-medium text-slate-700">{label}{required && <span className="ml-1 text-blue-600">*</span>}</span>
+      <span className="text-sm font-medium text-slate-700">
+        {label}
+        {required && <span className="ml-1 text-blue-600">*</span>}
+      </span>
       <div className="mt-1.5 flex gap-2">
         <select
           disabled={disabled}
           value={year}
           onChange={(event) => onChange(buildValue(event.target.value, month))}
           aria-label={`${label} year`}
-          className="min-h-11 w-28 rounded-xl border border-slate-200 bg-white/80 px-2 text-sm text-slate-900 shadow-sm transition focus:border-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-100"
+          className="min-h-11 w-28 rounded-xl border border-slate-200/80 bg-white px-2.5 text-sm text-slate-900 shadow-sm transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-50"
         >
           <option value="">Year</option>
           {yearOptions.map((yearOption) => (
@@ -47,7 +51,7 @@ export function PartialDateField({ label, value, onChange, required, disabled, e
           value={month}
           onChange={(event) => onChange(buildValue(year, event.target.value))}
           aria-label={`${label} month (optional)`}
-          className="min-h-11 flex-1 rounded-xl border border-slate-200 bg-white/80 px-3 text-sm text-slate-900 shadow-sm transition focus:border-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-100"
+          className="min-h-11 flex-1 rounded-xl border border-slate-200/80 bg-white px-3 text-sm text-slate-900 shadow-sm transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-50"
         >
           <option value="">Month (optional)</option>
           {MONTHS.map((name, index) => (
@@ -55,7 +59,7 @@ export function PartialDateField({ label, value, onChange, required, disabled, e
           ))}
         </select>
       </div>
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+      {error && <p className="mt-1.5 text-xs text-red-600">{error}</p>}
     </div>
   );
 }
