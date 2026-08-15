@@ -11,7 +11,7 @@ export default function BuilderPage() {
       <BuilderHeader />
       <div className="section-shell py-7 sm:py-10">
         <ProgressBar totalSteps={6} />
-        <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
           <div className="min-w-0">
             <ResumeFormContainer />
           </div>

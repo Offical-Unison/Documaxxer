@@ -29,9 +29,9 @@ export function PartialDateField({ label, value, onChange, required, disabled, e
 
   return (
     <div>
-      <span className="text-sm font-medium text-slate-700">
+      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
         {label}
-        {required && <span className="ml-1 text-blue-600">*</span>}
+        {required && <span className="ml-1 text-blue-600 dark:text-blue-400">*</span>}
       </span>
       <div className="mt-1.5 flex gap-2">
         <select
@@ -39,7 +39,7 @@ export function PartialDateField({ label, value, onChange, required, disabled, e
           value={year}
           onChange={(event) => onChange(buildValue(event.target.value, month))}
           aria-label={`${label} year`}
-          className="min-h-11 w-28 rounded-xl border border-slate-200/80 bg-white px-2.5 text-sm text-slate-900 shadow-sm transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-50"
+          className="min-h-11 w-28 rounded-xl border border-slate-200/80 bg-white px-2.5 text-sm text-slate-900 shadow-sm transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 dark:border-slate-700/80 dark:bg-slate-800 dark:text-slate-100 dark:disabled:bg-slate-800/50"
         >
           <option value="">Year</option>
           {yearOptions.map((yearOption) => (
@@ -51,7 +51,7 @@ export function PartialDateField({ label, value, onChange, required, disabled, e
           value={month}
           onChange={(event) => onChange(buildValue(year, event.target.value))}
           aria-label={`${label} month (optional)`}
-          className="min-h-11 flex-1 rounded-xl border border-slate-200/80 bg-white px-3 text-sm text-slate-900 shadow-sm transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-50"
+          className="min-h-11 flex-1 rounded-xl border border-slate-200/80 bg-white px-3 text-sm text-slate-900 shadow-sm transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 dark:border-slate-700/80 dark:bg-slate-800 dark:text-slate-100 dark:disabled:bg-slate-800/50"
         >
           <option value="">Month (optional)</option>
           {MONTHS.map((name, index) => (
@@ -59,7 +59,7 @@ export function PartialDateField({ label, value, onChange, required, disabled, e
           ))}
         </select>
       </div>
-      {error && <p className="mt-1.5 text-xs text-red-600">{error}</p>}
+      {error && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">{error}</p>}
     </div>
   );
 }

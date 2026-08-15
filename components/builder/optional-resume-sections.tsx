@@ -44,29 +44,29 @@ export function OptionalResumeSections() {
               key={section.key}
               className={`flex min-h-44 flex-col rounded-2xl border p-5 transition ${
                 section.recommended
-                  ? "border-blue-200/80 bg-blue-50/50 shadow-[0_4px_16px_rgba(37,99,235,0.06)]"
-                  : "border-slate-200/80 bg-white/60 shadow-sm"
+                  ? "border-blue-200/80 bg-blue-50/50 shadow-[0_4px_16px_rgba(37,99,235,0.06)] dark:border-blue-400/30 dark:bg-blue-500/10"
+                  : "border-slate-200/80 bg-white/60 shadow-sm dark:border-slate-700/80 dark:bg-slate-800/60"
               }`}
             >
               <div className="flex items-start justify-between gap-3">
-                <h3 className="text-base font-bold text-slate-900">{section.label}</h3>
+                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">{section.label}</h3>
                 {section.recommended && (
-                  <span className="shrink-0 rounded-full bg-blue-100 px-2.5 py-1 text-[11px] font-semibold text-blue-700">
+                  <span className="shrink-0 rounded-full bg-blue-100 px-2.5 py-1 text-[11px] font-semibold text-blue-700 dark:bg-blue-500/20 dark:text-blue-300">
                     Recommended for students
                   </span>
                 )}
               </div>
-              <p className="mt-2.5 text-sm leading-6 text-slate-500">{section.description}</p>
+              <p className="mt-2.5 text-sm leading-6 text-slate-500 dark:text-slate-400">{section.description}</p>
               <div className="mt-auto pt-5">
                 {added ? (
-                  <span className="inline-flex min-h-10 items-center rounded-xl bg-green-50 px-3.5 text-sm font-semibold text-green-700">
+                  <span className="inline-flex min-h-10 items-center rounded-xl bg-green-50 px-3.5 text-sm font-semibold text-green-700 dark:bg-green-500/15 dark:text-green-300">
                     ✓ Added
                   </span>
                 ) : (
                   <button
                     type="button"
                     onClick={() => addSection(section.key)}
-                    className="min-h-10 rounded-xl border border-blue-200/80 bg-white/80 px-4 text-sm font-semibold text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50"
+                    className="min-h-10 rounded-xl border border-blue-200/80 bg-white/80 px-4 text-sm font-semibold text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 dark:border-blue-400/30 dark:bg-slate-900/60 dark:text-blue-300 dark:hover:border-blue-400/50 dark:hover:bg-blue-500/10"
                   >
                     + Add
                   </button>
@@ -78,9 +78,9 @@ export function OptionalResumeSections() {
       </div>
 
       {resume.optionalSections.length > 0 && (
-        <div className="mt-8 border-t border-slate-200/80 pt-7">
-          <h3 className="text-base font-bold text-slate-900">Added sections</h3>
-          <p className="mt-1 text-xs text-slate-400">Drag a section to reorder how it appears on your resume.</p>
+        <div className="mt-8 border-t border-slate-200/80 pt-7 dark:border-slate-700/80">
+          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Added sections</h3>
+          <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">Drag a section to reorder how it appears on your resume.</p>
           <div className="mt-4 space-y-5">
             {resume.optionalSections.map((section, index) => (
               <div
@@ -106,13 +106,13 @@ function OptionalSection({ section, onRemove }: { section: OptionalSectionKey; o
   const { state, dispatch } = useResumeContext();
   const resume = state.resume;
   return (
-    <section className="rounded-2xl border border-slate-200/80 bg-white/70 p-4 shadow-sm sm:p-5">
+    <section className="rounded-2xl border border-slate-200/80 bg-white/70 p-4 shadow-sm dark:border-slate-700/80 dark:bg-slate-800/70 sm:p-5">
       <div className="flex items-center justify-between gap-3">
         <div className="flex cursor-grab items-center gap-2">
-          <span className="text-slate-300" aria-hidden="true">⠿</span>
+          <span className="text-slate-300 dark:text-slate-600" aria-hidden="true">⠿</span>
           <EditableTitle
             as="h4"
-            className="font-semibold text-slate-900"
+            className="font-semibold text-slate-900 dark:text-slate-100"
             title={resume.sectionTitles[section]}
             onSave={(title) => dispatch({ type: "SET_SECTION_TITLE", payload: { id: section, title } })}
           />
@@ -120,7 +120,7 @@ function OptionalSection({ section, onRemove }: { section: OptionalSectionKey; o
         <button
           type="button"
           onClick={onRemove}
-          className="min-h-10 rounded-xl px-3 text-sm font-semibold text-red-500 transition hover:bg-red-50 hover:text-red-600"
+          className="min-h-10 rounded-xl px-3 text-sm font-semibold text-red-500 transition hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-950/40 dark:hover:text-red-300"
         >
           Remove section
         </button>
@@ -144,9 +144,9 @@ function Projects({ items, onChange }: { items: Project[]; onChange: (items: Pro
 function ProjectEditor({ item, index, onChange, onRemove }: { item: Project; index: number; onChange: (item: Project) => void; onRemove: () => void }) {
   const update = <K extends keyof Project>(key: K, value: Project[K]) => onChange({ ...item, [key]: value });
   return <EntryCard title={item.name || `Project ${index + 1}`} onRemove={onRemove}><div className="grid gap-4 sm:grid-cols-2">
-    <Field label="Project name" value={item.name} onChange={(event) => update("name", event.target.value)} placeholder="Portfolio website" />
+    <Field label="Project name" value={item.name} onChange={(event) => update("name", event.target.value)} placeholder="Portfolio website" suggestionKey="projects.name" />
     <PartialDateField label="Date" value={item.date} onChange={(value) => update("date", value)} />
-    <div className="sm:col-span-2"><TagInput label="Technologies" values={item.technologies} onChange={(value) => update("technologies", value)} placeholder="Type a technology and press Enter" /></div>
+    <div className="sm:col-span-2"><TagInput label="Technologies" values={item.technologies} onChange={(value) => update("technologies", value)} placeholder="Type a technology and press Enter" suggestionKey="projects.technologies" /></div>
     <div className="sm:col-span-2"><BulletListInput label="Description" values={item.highlights} onChange={(value) => update("highlights", value)} placeholder="What did you build and why did it matter?" addLabel="+ Add" /></div>
   </div></EntryCard>;
 }
@@ -157,7 +157,7 @@ function Certifications({ items, onChange }: { items: Certification[]; onChange:
 
 function CertificationEditor({ item, index, onChange, onRemove }: { item: Certification; index: number; onChange: (item: Certification) => void; onRemove: () => void }) {
   const update = <K extends keyof Certification>(key: K, value: Certification[K]) => onChange({ ...item, [key]: value });
-  return <EntryCard title={item.name || `Certification ${index + 1}`} onRemove={onRemove}><div className="grid gap-4 sm:grid-cols-2"><Field label="Certificate name" value={item.name} onChange={(event) => update("name", event.target.value)} placeholder="AWS Certified Cloud Practitioner" /><PartialDateField label="Date" value={item.date} onChange={(value) => update("date", value)} /></div></EntryCard>;
+  return <EntryCard title={item.name || `Certification ${index + 1}`} onRemove={onRemove}><div className="grid gap-4 sm:grid-cols-2"><Field label="Certificate name" value={item.name} onChange={(event) => update("name", event.target.value)} placeholder="AWS Certified Cloud Practitioner" suggestionKey="certifications.name" /><PartialDateField label="Date" value={item.date} onChange={(value) => update("date", value)} /></div></EntryCard>;
 }
 
 function Awards({ items, onChange }: { items: Award[]; onChange: (items: Award[]) => void }) {
@@ -166,7 +166,7 @@ function Awards({ items, onChange }: { items: Award[]; onChange: (items: Award[]
 
 function AwardEditor({ item, index, onChange, onRemove }: { item: Award; index: number; onChange: (item: Award) => void; onRemove: () => void }) {
   const update = <K extends keyof Award>(key: K, value: Award[K]) => onChange({ ...item, [key]: value });
-  return <EntryCard title={item.title || `Award ${index + 1}`} onRemove={onRemove}><div className="grid gap-4 sm:grid-cols-2"><Field label="Award name" value={item.title} onChange={(event) => update("title", event.target.value)} placeholder="Hackathon Champion" /><PartialDateField label="Date" value={item.date} onChange={(value) => update("date", value)} /><div className="sm:col-span-2"><BulletListInput label="Description" values={item.highlights} onChange={(value) => update("highlights", value)} placeholder="What was recognized?" addLabel="+ Add" /></div></div></EntryCard>;
+  return <EntryCard title={item.title || `Award ${index + 1}`} onRemove={onRemove}><div className="grid gap-4 sm:grid-cols-2"><Field label="Award name" value={item.title} onChange={(event) => update("title", event.target.value)} placeholder="Hackathon Champion" suggestionKey="awards.title" /><PartialDateField label="Date" value={item.date} onChange={(value) => update("date", value)} /><div className="sm:col-span-2"><BulletListInput label="Description" values={item.highlights} onChange={(value) => update("highlights", value)} placeholder="What was recognized?" addLabel="+ Add" /></div></div></EntryCard>;
 }
 
 function Volunteering({ items, onChange }: { items: VolunteerExperience[]; onChange: (items: VolunteerExperience[]) => void }) {
@@ -175,12 +175,12 @@ function Volunteering({ items, onChange }: { items: VolunteerExperience[]; onCha
 
 function VolunteerEditor({ item, index, onChange, onRemove }: { item: VolunteerExperience; index: number; onChange: (item: VolunteerExperience) => void; onRemove: () => void }) {
   const update = <K extends keyof VolunteerExperience>(key: K, value: VolunteerExperience[K]) => onChange({ ...item, [key]: value });
-  return <EntryCard title={item.role || item.organization || `Volunteer experience ${index + 1}`} onRemove={onRemove}><div className="grid gap-4 sm:grid-cols-2"><Field label="Role" value={item.role} onChange={(event) => update("role", event.target.value)} placeholder="Volunteer Developer" /><Field label="Organization" value={item.organization} onChange={(event) => update("organization", event.target.value)} placeholder="Cebu Community Organization" /><PartialDateField label="Date" value={item.date} onChange={(value) => update("date", value)} /><div className="sm:col-span-2"><BulletListInput label="Description" values={item.highlights} onChange={(value) => update("highlights", value)} placeholder="Describe your contribution." addLabel="+ Add" /></div></div></EntryCard>;
+  return <EntryCard title={item.role || item.organization || `Volunteer experience ${index + 1}`} onRemove={onRemove}><div className="grid gap-4 sm:grid-cols-2"><Field label="Role" value={item.role} onChange={(event) => update("role", event.target.value)} placeholder="Volunteer Developer" suggestionKey="volunteer.role" /><Field label="Organization" value={item.organization} onChange={(event) => update("organization", event.target.value)} placeholder="Cebu Community Organization" suggestionKey="volunteer.organization" /><PartialDateField label="Date" value={item.date} onChange={(value) => update("date", value)} /><div className="sm:col-span-2"><BulletListInput label="Description" values={item.highlights} onChange={(value) => update("highlights", value)} placeholder="Describe your contribution." addLabel="+ Add" /></div></div></EntryCard>;
 }
 
 function Languages({ items, onChange }: { items: Language[]; onChange: (items: Language[]) => void }) {
   const proficiencyOptions = ["Native / Bilingual", "Fluent", "Proficient / Professional", "Conversational / Intermediate"];
-  return <><div className="space-y-3">{items.map((item, index) => <EntryCard key={item.id} title={item.name || `Language ${index + 1}`} onRemove={() => onChange(items.filter((entry) => entry.id !== item.id))}><div className="grid gap-4 sm:grid-cols-2"><Field label="Language" value={item.name} onChange={(event) => onChange(items.map((entry) => entry.id === item.id ? { ...entry, name: event.target.value } : entry))} placeholder="Filipino" /><label className="block text-sm font-medium text-slate-700">Proficiency<select value={item.proficiency} onChange={(event) => onChange(items.map((entry) => entry.id === item.id ? { ...entry, proficiency: event.target.value } : entry))} className="mt-1.5 min-h-11 w-full rounded-xl border border-slate-200/80 bg-white px-3 text-sm shadow-sm transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none"><option value="">Select proficiency</option>{proficiencyOptions.map((level) => <option key={level}>{level}</option>)}</select></label></div></EntryCard>)}</div><AddButton onClick={() => onChange([...items, { id: makeId(), name: "", proficiency: "" }])}>+ Add</AddButton></>;
+  return <><div className="space-y-3">{items.map((item, index) => <EntryCard key={item.id} title={item.name || `Language ${index + 1}`} onRemove={() => onChange(items.filter((entry) => entry.id !== item.id))}><div className="grid gap-4 sm:grid-cols-2"><Field label="Language" value={item.name} onChange={(event) => onChange(items.map((entry) => entry.id === item.id ? { ...entry, name: event.target.value } : entry))} placeholder="Filipino" suggestionKey="languages.name" /><label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Proficiency<select value={item.proficiency} onChange={(event) => onChange(items.map((entry) => entry.id === item.id ? { ...entry, proficiency: event.target.value } : entry))} className="mt-1.5 min-h-11 w-full rounded-xl border border-slate-200/80 bg-white px-3 text-sm shadow-sm transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none dark:border-slate-700/80 dark:bg-slate-800 dark:text-slate-100"><option value="">Select proficiency</option>{proficiencyOptions.map((level) => <option key={level}>{level}</option>)}</select></label></div></EntryCard>)}</div><AddButton onClick={() => onChange([...items, { id: makeId(), name: "", proficiency: "" }])}>+ Add</AddButton></>;
 }
 
 function Other({ entries, onChange }: { entries: OtherEntry[]; onChange: (entries: OtherEntry[]) => void }) {
@@ -192,5 +192,5 @@ function Other({ entries, onChange }: { entries: OtherEntry[]; onChange: (entrie
 
 function OtherEntryEditor({ item, index, onChange, onRemove }: { item: OtherEntry; index: number; onChange: (item: OtherEntry) => void; onRemove: () => void }) {
   const update = <K extends keyof OtherEntry>(key: K, value: OtherEntry[K]) => onChange({ ...item, [key]: value });
-  return <EntryCard title={item.name || `Entry ${index + 1}`} onRemove={onRemove}><div className="grid gap-4 sm:grid-cols-2"><Field label="Entry name" value={item.name} onChange={(event) => update("name", event.target.value)} placeholder="Student Organization Officer" /><PartialDateField label="Date" value={item.date} onChange={(value) => update("date", value)} /><div className="sm:col-span-2"><BulletListInput label="Description" values={item.highlights} onChange={(value) => update("highlights", value)} placeholder="Describe what you did." addLabel="+ Add" /></div></div></EntryCard>;
+  return <EntryCard title={item.name || `Entry ${index + 1}`} onRemove={onRemove}><div className="grid gap-4 sm:grid-cols-2"><Field label="Entry name" value={item.name} onChange={(event) => update("name", event.target.value)} placeholder="Student Organization Officer" suggestionKey="other.name" /><PartialDateField label="Date" value={item.date} onChange={(value) => update("date", value)} /><div className="sm:col-span-2"><BulletListInput label="Description" values={item.highlights} onChange={(value) => update("highlights", value)} placeholder="Describe what you did." addLabel="+ Add" /></div></div></EntryCard>;
 }

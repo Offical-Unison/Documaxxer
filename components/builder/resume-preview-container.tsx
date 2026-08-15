@@ -36,12 +36,12 @@ export function ResumePreviewContainer() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="eyebrow">Preview</p>
-          <h2 id="preview-title" className="mt-2 text-xl font-bold tracking-tight text-slate-950">Your resume</h2>
+          <h2 id="preview-title" className="mt-2 text-xl font-bold tracking-tight text-slate-950 dark:text-slate-50">Your resume</h2>
         </div>
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="mt-1 inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-slate-200/80 bg-white/80 px-3 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+          className="mt-1 inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-slate-200/80 bg-white/80 px-3 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-700/80 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:border-blue-400/40 dark:hover:bg-blue-500/10 dark:hover:text-blue-300"
         >
           <ExpandIcon />
           Expand
@@ -62,7 +62,13 @@ export function ResumePreviewContainer() {
       </div>
 
       <div className="mt-5">
-        <GenerateButton />
+        {state.generateUnlocked ? (
+          <GenerateButton />
+        ) : (
+          <p className="text-center text-xs text-slate-400 dark:text-slate-500">
+            Finish the form to download your resume.
+          </p>
+        )}
       </div>
 
       {expanded && <ExpandedPreviewModal pageIndex={pageIndex} onPageIndexChange={setPageIndex} onClose={() => setExpanded(false)} />}
@@ -92,7 +98,7 @@ function ExpandedPreviewModal({ pageIndex, onPageIndexChange, onClose }: { pageI
           type="button"
           onClick={onClose}
           aria-label="Close expanded preview"
-          className="absolute -top-3 right-0 flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-semibold text-slate-700 shadow-md transition hover:bg-slate-50 sm:-top-4 sm:-right-4"
+          className="absolute -top-3 right-0 flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-semibold text-slate-700 shadow-md transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 sm:-top-4 sm:-right-4"
         >
           ×
         </button>

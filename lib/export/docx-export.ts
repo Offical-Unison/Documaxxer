@@ -8,22 +8,22 @@ import type { Education, Experience, ResumeData } from "@/types/resume";
 const hasExperienceContent = (item: Experience) => item.employer.trim() || item.role.trim();
 const hasEducationContent = (item: Education) => item.institution.trim();
 
-const ACCENT = "2563EB";
-const MUTED = "6B7280";
-const BODY = "111827";
+const ACCENT = "2563EB"; // border-only accent, see sectionHeading()
+const MUTED = "000000";
+const BODY = "000000";
 
 function sectionHeading(text: string): Paragraph {
   return new Paragraph({
     spacing: { before: 240, after: 80 },
     border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: ACCENT } },
-    children: [new TextRun({ text: text.toUpperCase(), bold: true, color: ACCENT, size: 20 })],
+    children: [new TextRun({ text: text.toUpperCase(), bold: true, color: BODY, size: 20 })],
   });
 }
 
 function entryHeading(primary: string, secondary: string, dateRange: string): Paragraph {
   const runs: TextRun[] = [new TextRun({ text: primary, bold: true, size: 22, color: BODY })];
   if (dateRange) runs.push(new TextRun({ text: `\t${dateRange}`, size: 18, color: MUTED }));
-  if (secondary) runs.push(new TextRun({ text: secondary, break: 1, size: 20, color: "374151" }));
+  if (secondary) runs.push(new TextRun({ text: secondary, break: 1, size: 20, color: BODY }));
   return new Paragraph({ tabStops: [{ type: TabStopType.RIGHT, position: TabStopPosition.MAX }], spacing: { before: 120 }, children: runs });
 }
 
@@ -45,25 +45,25 @@ export async function exportResumeToDocx(resume: ResumeData): Promise<void> {
   const links = personal.links.filter((link) => link.name.trim() && link.url.trim());
 
   const children: Paragraph[] = [
-    new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: fullName, bold: true, size: 32 })] }),
+    new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: fullName, bold: true, size: 32, color: BODY })] }),
   ];
   if (personal.headline.trim()) {
-    children.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 40 }, children: [new TextRun({ text: personal.headline, size: 22, color: "374151" })] }));
+    children.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 40 }, children: [new TextRun({ text: personal.headline, size: 22, color: BODY })] }));
   }
   if (contactLine) {
-    children.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 40 }, children: [new TextRun({ text: contactLine, size: 18, color: MUTED })] }));
+    children.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 40 }, children: [new TextRun({ text: contactLine, size: 18, color: BODY })] }));
   }
   if (links.length > 0) {
     children.push(new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { after: 120 },
-      children: links.map((link, index) => new TextRun({ text: `${index > 0 ? "  •  " : ""}${link.name}`, size: 18, color: ACCENT, underline: {} })),
+      children: links.map((link, index) => new TextRun({ text: `${index > 0 ? "  •  " : ""}${link.name}`, size: 18, color: BODY, underline: {} })),
     }));
   }
 
   if (resume.professionalSummary.trim()) {
     children.push(sectionHeading(resume.sectionTitles.summary));
-    children.push(new Paragraph({ text: resume.professionalSummary, spacing: { after: 80 } }));
+    children.push(new Paragraph({ children: [new TextRun({ text: resume.professionalSummary, color: BODY })], spacing: { after: 80 } }));
   }
 
   const experiences = sortEntriesByRecency(resume.experiences.filter(hasExperienceContent));
@@ -128,7 +128,7 @@ export async function exportResumeToDocx(resume: ResumeData): Promise<void> {
       const items = resume.languages.filter((item) => item.name.trim());
       if (items.length === 0) return;
       children.push(sectionHeading(resume.sectionTitles.languages));
-      children.push(new Paragraph({ text: items.map((item) => (item.proficiency ? `${item.name} (${item.proficiency})` : item.name)).join(" • ") }));
+      children.push(new Paragraph({ children: [new TextRun({ text: items.map((item) => (item.proficiency ? `${item.name} (${item.proficiency})` : item.name)).join(" • "), color: BODY })] }));
     }
     if (key === "other") {
       const items = sortByDateDesc(resume.otherEntries.filter((entry) => entry.name.trim()));

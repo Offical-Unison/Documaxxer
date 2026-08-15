@@ -41,13 +41,13 @@ export function ResumePrintView() {
 
   const headerNode = fullName || personal.headline.trim() || contactLine || links.length > 0 ? (
     <header className={`border-b border-slate-300 pb-3 ${theme.headerAlign === "center" ? "text-center" : "text-left"}`}>
-      {fullName && <h2 className="text-2xl font-bold tracking-tight text-slate-950">{fullName}</h2>}
-      {personal.headline.trim() && <p className="mt-1 text-sm font-medium text-slate-600">{personal.headline}</p>}
-      {!isSidebar && contactLine && <p className="mt-2 text-xs text-slate-500">{contactLine}</p>}
+      {fullName && <h2 className="text-2xl font-bold tracking-tight text-black">{fullName}</h2>}
+      {personal.headline.trim() && <p className="mt-1 text-sm font-medium text-black">{personal.headline}</p>}
+      {!isSidebar && contactLine && <p className="mt-2 text-xs text-black">{contactLine}</p>}
       {!isSidebar && links.length > 0 && (
-        <p className="mt-0.5 text-xs text-slate-500">
+        <p className="mt-0.5 text-xs text-black">
           {links.map((link, index) => (
-            <span key={link.id}>{index > 0 && "  •  "}<a href={normalizeUrl(link.url)} className="text-blue-700 underline">{link.name}</a></span>
+            <span key={link.id}>{index > 0 && "  •  "}<a href={normalizeUrl(link.url)} className="text-black underline">{link.name}</a></span>
           ))}
         </p>
       )}

@@ -40,10 +40,10 @@ export function EditableTitle({ title, onSave, as = "h2", className = "" }: Edit
           onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); save(); } if (event.key === "Escape") cancel(); }}
           onBlur={save}
           aria-label="Section title"
-          className="min-h-9 rounded-lg border border-blue-300 bg-white px-2.5 text-sm font-semibold text-slate-900 shadow-sm transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none"
+          className="min-h-9 rounded-lg border border-blue-300 bg-white px-2.5 text-sm font-semibold text-slate-900 shadow-sm transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none dark:border-blue-400/50 dark:bg-slate-800 dark:text-slate-100"
         />
-        <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={save} className="text-xs font-semibold text-blue-700 hover:text-blue-800">Save</button>
-        <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={cancel} className="text-xs font-semibold text-slate-400 hover:text-slate-600">Cancel</button>
+        <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={save} className="text-xs font-semibold text-blue-700 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">Save</button>
+        <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={cancel} className="text-xs font-semibold text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300">Cancel</button>
       </div>
     );
   }
@@ -55,7 +55,7 @@ export function EditableTitle({ title, onSave, as = "h2", className = "" }: Edit
         type="button"
         onClick={() => { setDraft(title); setEditing(true); }}
         aria-label={`Rename ${title}`}
-        className="text-slate-300 transition hover:text-blue-600"
+        className="text-slate-300 transition hover:text-blue-600 dark:text-slate-600 dark:hover:text-blue-400"
       >
         <PencilIcon />
       </button>

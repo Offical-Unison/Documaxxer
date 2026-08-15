@@ -1,14 +1,51 @@
 "use client";
 
-import { createContext, useContext, useMemo, useReducer, type Dispatch, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useReducer, useRef, type Dispatch, type ReactNode } from "react";
 import { initialResumeState, resumeReducer, type ResumeAction } from "@/context/resume-reducer";
 import type { ResumeState } from "@/types/resume";
 
 interface ResumeContextValue { state: ResumeState; dispatch: Dispatch<ResumeAction>; }
 const ResumeContext = createContext<ResumeContextValue | undefined>(undefined);
 
+const STORAGE_KEY = "resummaxer:resume-state:v1";
+const SAVE_DEBOUNCE_MS = 500;
+
 export function ResumeProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(resumeReducer, initialResumeState);
+  const hydrated = useRef(false);
+  const saveTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw) as ResumeState;
+        dispatch({ type: "SET_RESUME", payload: saved.resume });
+        dispatch({ type: "SET_TEMPLATE", payload: saved.selectedTemplateId });
+        dispatch({ type: "SET_FONT", payload: saved.selectedFontId });
+        dispatch({ type: "SET_ACTIVE_SECTION", payload: saved.activeSection });
+        if (saved.generateUnlocked) dispatch({ type: "UNLOCK_GENERATE" });
+      }
+    } catch {
+      // corrupted/unavailable storage — start fresh
+    } finally {
+      hydrated.current = true;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated.current) return;
+    if (saveTimeout.current) clearTimeout(saveTimeout.current);
+    saveTimeout.current = setTimeout(() => {
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch {
+        // quota/private-browsing — autosave silently no-ops
+      }
+    }, SAVE_DEBOUNCE_MS);
+    return () => { if (saveTimeout.current) clearTimeout(saveTimeout.current); };
+  }, [state]);
+
   const value = useMemo(() => ({ state, dispatch }), [state]);
   return <ResumeContext.Provider value={value}>{children}</ResumeContext.Provider>;
 }

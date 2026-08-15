@@ -1,39 +1,33 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer utilities {
   .section-shell {
-    @apply mx-auto w-full max-w-6xl px-5 sm:px-8;
+    @apply mx-auto w-full max-w-7xl px-5 sm:px-8;
   }
-
   .eyebrow {
-    @apply text-xs font-semibold uppercase tracking-widest text-blue-600;
+    @apply text-xs font-semibold uppercase tracking-widest text-blue-600 dark:text-blue-400;
   }
 }
 
-/* Smooth scrolling */
 html {
   scroll-behavior: smooth;
 }
 
-/* Focus-visible ring for keyboard navigation */
-:focus-visible {
-  @apply outline-2 outline-offset-2 outline-blue-600;
+body {
+  @apply bg-[#F5F7FA] text-slate-900 dark:bg-slate-950 dark:text-slate-100;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-/* Custom scrollbar for a more polished feel */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+:focus-visible {
+  @apply outline-2 outline-offset-2 outline-blue-600 dark:outline-blue-400;
 }
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  @apply rounded-full bg-slate-300;
-}
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-slate-400;
-}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { @apply rounded-full bg-slate-300 dark:bg-slate-700; }
+::-webkit-scrollbar-thumb:hover { @apply bg-slate-400 dark:bg-slate-600; }
 
 .print-only { display: none; }
 
@@ -41,6 +35,14 @@ html {
   @page { size: A4; margin: 0; }
   html, body { background: #ffffff !important; }
   body * { visibility: hidden; }
-  .print-only, .print-only * { visibility: visible; }
+
+  .print-only, .print-only * {
+    visibility: visible !important;
+    color: #000000 !important;
+    background: transparent !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .print-only a { color: #000000 !important; text-decoration: underline; }
   .print-only { display: block; position: absolute; top: 0; left: 0; width: 210mm; }
 }

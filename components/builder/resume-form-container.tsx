@@ -19,13 +19,13 @@ const makeId = () => crypto.randomUUID();
 const steps = ["Template", "Personal Information + Summary", "Work Experience", "Education", "Skills", "Additional Sections"];
 const LAST_STEP = steps.length - 1;
 
-const SECTION_HEADING_CLASS = "text-xl font-bold tracking-tight text-slate-900 sm:text-2xl";
+const SECTION_HEADING_CLASS = "text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-2xl";
 
 function Section({ title, description, children }: { title: React.ReactNode; description?: string; children: React.ReactNode }) {
   return (
     <section>
       {typeof title === "string" ? <h2 className={SECTION_HEADING_CLASS}>{title}</h2> : title}
-      {description && <p className="mt-2 text-sm leading-6 text-slate-500">{description}</p>}
+      {description && <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">{description}</p>}
       <div className="mt-6">{children}</div>
     </section>
   );
@@ -34,7 +34,8 @@ function Section({ title, description, children }: { title: React.ReactNode; des
 export function ResumeFormContainer() {
   const { state, dispatch } = useResumeContext();
   const { resume } = state;
-  const [currentStep, setCurrentStep] = useState(() => { const value = Number(state.activeSection); return value >= 0 && value <= LAST_STEP ? value : 0; });
+  const savedStep = Number(state.activeSection);
+  const currentStep = savedStep >= 0 && savedStep <= LAST_STEP ? savedStep : 0;
   const [showErrors, setShowErrors] = useState(false);
   const personal = resume.personalDetails;
   const primarySkills = resume.skills;
@@ -53,21 +54,25 @@ export function ResumeFormContainer() {
   const hasEducationErrors = resume.education.length === 0 || resume.education.some((item) => !item.institution.trim() || !item.degree.trim() || (item.educationType === "college" && !item.fieldOfStudy.trim()) || !item.startDate || (!item.current && !item.endDate));
   const hasSkillsErrors = primarySkills.length === 0;
   const invalidStep = () => currentStep === 1 ? hasPersonalErrors : currentStep === 2 ? hasExperienceErrors : currentStep === 3 ? hasEducationErrors : currentStep === 4 ? hasSkillsErrors : false;
-  const goTo = (nextStep: number) => { setCurrentStep(nextStep); setShowErrors(false); dispatch({ type: "SET_ACTIVE_SECTION", payload: String(nextStep) }); window.scrollTo({ top: 0, behavior: "smooth" }); };
-  const next = () => { if (invalidStep()) { setShowErrors(true); return; } if (currentStep < LAST_STEP) goTo(currentStep + 1); };
+  const goTo = (nextStep: number) => { setShowErrors(false); dispatch({ type: "SET_ACTIVE_SECTION", payload: String(nextStep) }); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const next = () => {
+    if (invalidStep()) { setShowErrors(true); return; }
+    if (currentStep < LAST_STEP) { goTo(currentStep + 1); }
+    else { dispatch({ type: "UNLOCK_GENERATE" }); }
+  };
 
   return (
     <Card aria-labelledby="form-title" className="min-w-0">
-      <div className="flex flex-col gap-3 border-b border-slate-200/60 pb-5 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-3 border-b border-slate-200/60 pb-5 dark:border-slate-700/60 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="eyebrow">Resume content</p>
-          <h1 id="form-title" className="mt-2 text-2xl font-bold tracking-tight text-slate-950">Build your resume</h1>
+          <h1 id="form-title" className="mt-2 text-2xl font-bold tracking-tight text-slate-950 dark:text-slate-50">Build your resume</h1>
         </div>
-        <p className="text-sm font-medium tabular-nums text-slate-400">Step {currentStep + 1} of {steps.length}</p>
+        <p className="text-sm font-medium tabular-nums text-slate-400 dark:text-slate-500">Step {currentStep + 1} of {steps.length}</p>
       </div>
 
-      <nav className="mt-5 overflow-x-auto pb-1" aria-label="Resume form sections">
-        <ol className="flex min-w-max gap-2">
+      <nav className="mt-5" aria-label="Resume form sections">
+        <ol className="flex flex-wrap gap-2">
           {steps.map((step, number) => (
             <li key={step}>
               <button
@@ -77,10 +82,10 @@ export function ResumeFormContainer() {
                 aria-current={number === currentStep ? "step" : undefined}
                 className={`rounded-full px-3.5 py-2 text-xs font-semibold transition ${
                   number === currentStep
-                    ? "bg-blue-600 text-white shadow-sm"
+                    ? "bg-blue-600 text-white shadow-sm dark:bg-blue-500"
                     : number < currentStep
-                      ? "bg-blue-50 text-blue-700 hover:bg-blue-100"
-                      : "bg-slate-100 text-slate-400"
+                      ? "bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-500/15 dark:text-blue-300 dark:hover:bg-blue-500/25"
+                      : "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500"
                 }`}
               >
                 {number === 0 ? step : `${number}. ${step}`}
@@ -105,7 +110,7 @@ export function ResumeFormContainer() {
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="First name" required value={personal.firstName} onChange={(event) => updatePersonal({ firstName: event.target.value })} error={showErrors && !personal.firstName.trim() ? "First name is required." : undefined} placeholder="John" />
               <Field label="Last name" required value={personal.lastName} onChange={(event) => updatePersonal({ lastName: event.target.value })} error={showErrors && !personal.lastName.trim() ? "Last name is required." : undefined} placeholder="Doe" />
-              <Field label="Title" value={personal.headline} onChange={(event) => updatePersonal({ headline: event.target.value })} placeholder="Software Developer" className="sm:col-span-2" />
+              <Field label="Title" value={personal.headline} onChange={(event) => updatePersonal({ headline: event.target.value })} placeholder="Software Developer" className="sm:col-span-2" suggestionKey="personal.headline" />
               <Field label="Email" required type="email" value={personal.contact.email} onChange={(event) => updatePersonal({ contact: { email: event.target.value } })} error={showErrors && !personal.contact.email.trim() ? "Email is required." : undefined} placeholder="john.doe@email.com" />
               <PhoneField
                 required
@@ -115,12 +120,12 @@ export function ResumeFormContainer() {
                 onNumberChange={(value) => updatePersonal({ contact: { phoneNumber: value } })}
                 error={showErrors ? (!personal.contact.phoneNumber.trim() ? "Phone number is required." : !phoneValid ? "Enter a valid phone number." : undefined) : undefined}
               />
-              <Field label="Location" required value={personal.contact.location} onChange={(event) => updatePersonal({ contact: { location: event.target.value } })} error={showErrors && !personal.contact.location.trim() ? "Location is required." : undefined} placeholder="Cebu, Philippines" />
+              <Field label="Location" required value={personal.contact.location} onChange={(event) => updatePersonal({ contact: { location: event.target.value } })} error={showErrors && !personal.contact.location.trim() ? "Location is required." : undefined} placeholder="Cebu, Philippines" suggestionKey="personal.location" />
             </div>
             <div className="mt-6"><LinkListInput values={personal.links} onChange={(links) => updatePersonal({ links })} makeId={makeId} /></div>
-            <div className="mt-8 border-t border-slate-200/60 pt-7">
+            <div className="mt-8 border-t border-slate-200/60 pt-7 dark:border-slate-700/60">
               <EditableTitle as="h2" className={SECTION_HEADING_CLASS} title={titleFor("summary")} onSave={renameTitle("summary")} />
-              <p className="mt-2 text-sm text-slate-500">Aim for two to four concise sentences.</p>
+              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Aim for two to four concise sentences.</p>
               <div className="mt-4">
                 <Textarea label="Summary" value={resume.professionalSummary} onChange={(event) => dispatch({ type: "SET_PROFESSIONAL_SUMMARY", payload: event.target.value })} error={showErrors && !resume.professionalSummary.trim() ? "Summary is required." : undefined} maxLength={600} hint={`${resume.professionalSummary.length}/600 characters`} placeholder="Summarize your expertise, strengths, and the value you bring." />
               </div>
@@ -146,7 +151,7 @@ export function ResumeFormContainer() {
                 <EducationEditor key={item.id} item={item} index={index} showErrors={showErrors} onChange={(nextItem) => setEducation(resume.education.map((entry) => entry.id === nextItem.id ? nextItem : entry))} onRemove={() => setEducation(resume.education.filter((entry) => entry.id !== item.id))} />
               ))}
             </div>
-            {showErrors && resume.education.length === 0 && <p className="mt-3 text-sm text-red-600">Add at least one education entry to continue.</p>}
+            {showErrors && resume.education.length === 0 && <p className="mt-3 text-sm text-red-600 dark:text-red-400">Add at least one education entry to continue.</p>}
             <div className="mt-4">
               <AddButton onClick={() => setEducation([...resume.education, blankEducation("college")])}>+ Add</AddButton>
             </div>
@@ -155,8 +160,8 @@ export function ResumeFormContainer() {
 
         {currentStep === 4 && (
           <Section title={<EditableTitle as="h2" className={SECTION_HEADING_CLASS} title={titleFor("skills")} onSave={renameTitle("skills")} />} description="Add the individual skills most relevant to the role you want.">
-            <TagInput label="Skills" values={primarySkills} onChange={(values) => dispatch({ type: "SET_SKILLS", payload: values })} placeholder="Type a skill and press Enter" />
-            {showErrors && hasSkillsErrors && <p className="mt-2 text-sm text-red-600">Add at least one skill to continue.</p>}
+            <TagInput label="Skills" values={primarySkills} onChange={(values) => dispatch({ type: "SET_SKILLS", payload: values })} placeholder="Type a skill and press Enter" suggestionKey="skills" />
+            {showErrors && hasSkillsErrors && <p className="mt-2 text-sm text-red-600 dark:text-red-400">Add at least one skill to continue.</p>}
           </Section>
         )}
 
@@ -166,18 +171,18 @@ export function ResumeFormContainer() {
           </Section>
         )}
 
-        <div className="mt-9 flex items-center justify-between border-t border-slate-200/60 pt-5">
+        <div className="mt-9 flex items-center justify-between border-t border-slate-200/60 pt-5 dark:border-slate-700/60">
           <button
             type="button"
             onClick={() => goTo(currentStep - 1)}
             disabled={currentStep === 0}
-            className="min-h-11 rounded-xl border border-slate-200/80 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            className="min-h-11 rounded-xl border border-slate-200/80 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700/80 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
           >
             ← Previous
           </button>
           <button
             type="submit"
-            className="min-h-11 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.98]"
+            className="min-h-11 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.98] dark:bg-blue-500 dark:hover:bg-blue-400"
           >
             {currentStep < LAST_STEP ? "Next" : "Finish →"}
           </button>
@@ -194,12 +199,12 @@ function ExperienceEditor({ item, index, showErrors, onChange, onRemove }: { ite
   return (
     <EntryCard title={item.role || item.employer || `Experience ${index + 1}`} onRemove={onRemove}>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Company" required value={item.employer} onChange={(event) => update("employer", event.target.value)} error={showErrors && !item.employer.trim() ? "Company is required." : undefined} placeholder="Acme Inc." />
-        <Field label="Job title" required value={item.role} onChange={(event) => update("role", event.target.value)} error={showErrors && !item.role.trim() ? "Job title is required." : undefined} placeholder="Software Developer" />
-        <Field label="Location" required value={item.location} onChange={(event) => update("location", event.target.value)} error={showErrors && !item.location.trim() ? "Location is required." : undefined} placeholder="Cebu, Philippines" />
+        <Field label="Company" required value={item.employer} onChange={(event) => update("employer", event.target.value)} error={showErrors && !item.employer.trim() ? "Company is required." : undefined} placeholder="Acme Inc." suggestionKey="experience.employer" />
+        <Field label="Job title" required value={item.role} onChange={(event) => update("role", event.target.value)} error={showErrors && !item.role.trim() ? "Job title is required." : undefined} placeholder="Software Developer" suggestionKey="experience.role" />
+        <Field label="Location" required value={item.location} onChange={(event) => update("location", event.target.value)} error={showErrors && !item.location.trim() ? "Location is required." : undefined} placeholder="Cebu, Philippines" suggestionKey="experience.location" />
         <div className="flex items-end">
-          <label className="flex min-h-11 items-center gap-2 text-sm font-medium text-slate-700">
-            <input type="checkbox" checked={item.current} onChange={(event) => onChange({ ...item, current: event.target.checked, endDate: event.target.checked ? "" : item.endDate })} className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+          <label className="flex min-h-11 items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+            <input type="checkbox" checked={item.current} onChange={(event) => onChange({ ...item, current: event.target.checked, endDate: event.target.checked ? "" : item.endDate })} className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800" />
             Current job
           </label>
         </div>
@@ -207,7 +212,7 @@ function ExperienceEditor({ item, index, showErrors, onChange, onRemove }: { ite
         <PartialDateField label="End date" required={!item.current} disabled={item.current} value={item.endDate} onChange={(value) => update("endDate", value)} error={showErrors && !item.current && !item.endDate ? "End date is required." : undefined} />
         <div className="sm:col-span-2">
           <BulletListInput label="Description" values={item.highlights} onChange={(value) => update("highlights", value)} placeholder="Describe an achievement or responsibility" addLabel="+ Add" />
-          {showErrors && !hasHighlight && <p className="mt-1.5 text-xs text-red-600">Add at least one description.</p>}
+          {showErrors && !hasHighlight && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">Add at least one description.</p>}
         </div>
       </div>
     </EntryCard>
@@ -225,28 +230,28 @@ function EducationEditor({ item, index, showErrors, onChange, onRemove }: { item
   return (
     <EntryCard title={item.institution || `${isCollege ? "College / University" : "High School"} ${index + 1}`} onRemove={onRemove}>
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block text-sm font-medium text-slate-700">
+        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
           Education level
           <select
             value={item.educationType}
             onChange={(event) => onChange({ ...item, educationType: event.target.value as Education["educationType"], fieldOfStudy: event.target.value === "highSchool" ? "" : item.fieldOfStudy })}
-            className="mt-1.5 min-h-11 w-full rounded-xl border border-slate-200/80 bg-white px-3 text-sm text-slate-900 shadow-sm transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none"
+            className="mt-1.5 min-h-11 w-full rounded-xl border border-slate-200/80 bg-white px-3 text-sm text-slate-900 shadow-sm transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none dark:border-slate-700/80 dark:bg-slate-800 dark:text-slate-100"
           >
             <option value="college">College / University</option>
             <option value="highSchool">High School</option>
           </select>
         </label>
 
-        <Field label="School" required value={item.institution} onChange={(event) => update("institution", event.target.value)} error={showErrors && !item.institution.trim() ? "School is required." : undefined} placeholder={isCollege ? "University of San Carlos" : "Cebu City National Science High School"} />
+        <Field label="School" required value={item.institution} onChange={(event) => update("institution", event.target.value)} error={showErrors && !item.institution.trim() ? "School is required." : undefined} placeholder={isCollege ? "University of San Carlos" : "Cebu City National Science High School"} suggestionKey="education.institution" />
 
         {isCollege ? (
           <>
-            <Field label="Degree" required value={item.degree} onChange={(event) => update("degree", event.target.value)} error={showErrors && !item.degree.trim() ? "Degree is required." : undefined} placeholder="Bachelor of Science" />
-            <Field label="Field of study" required value={item.fieldOfStudy} onChange={(event) => update("fieldOfStudy", event.target.value)} error={showErrors && !item.fieldOfStudy.trim() ? "Field of study is required." : undefined} placeholder="Computer Science" />
+            <Field label="Degree" required value={item.degree} onChange={(event) => update("degree", event.target.value)} error={showErrors && !item.degree.trim() ? "Degree is required." : undefined} placeholder="Bachelor of Science" suggestionKey="education.degree" />
+            <Field label="Field of study" required value={item.fieldOfStudy} onChange={(event) => update("fieldOfStudy", event.target.value)} error={showErrors && !item.fieldOfStudy.trim() ? "Field of study is required." : undefined} placeholder="Computer Science" suggestionKey="education.fieldOfStudy" />
             <PartialDateField label="Start date" required value={item.startDate} onChange={(value) => update("startDate", value)} error={showErrors && !item.startDate ? "Start date is required." : undefined} />
             <div className="flex items-end">
-              <label className="flex min-h-11 items-center gap-2 text-sm font-medium text-slate-700">
-                <input type="checkbox" checked={item.current} onChange={(event) => onChange({ ...item, current: event.target.checked, endDate: event.target.checked ? "" : item.endDate })} className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+              <label className="flex min-h-11 items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                <input type="checkbox" checked={item.current} onChange={(event) => onChange({ ...item, current: event.target.checked, endDate: event.target.checked ? "" : item.endDate })} className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800" />
                 Currently studying
               </label>
             </div>
@@ -255,11 +260,11 @@ function EducationEditor({ item, index, showErrors, onChange, onRemove }: { item
         ) : (
           <>
             <PartialDateField label="Start date" required value={item.startDate} onChange={(value) => update("startDate", value)} error={showErrors && !item.startDate ? "Start date is required." : undefined} />
-            <Field label="Strand / Program" required value={item.degree} onChange={(event) => update("degree", event.target.value)} error={showErrors && !item.degree.trim() ? "Strand / Program is required." : undefined} placeholder="STEM" />
+            <Field label="Strand / Program" required value={item.degree} onChange={(event) => update("degree", event.target.value)} error={showErrors && !item.degree.trim() ? "Strand / Program is required." : undefined} placeholder="STEM" suggestionKey="education.degree" />
             <PartialDateField label="End date" required={!item.current} disabled={item.current} value={item.endDate} onChange={(value) => update("endDate", value)} error={showErrors && !item.current && !item.endDate ? "End date is required." : undefined} />
             <div className="flex items-end">
-              <label className="flex min-h-11 items-center gap-2 text-sm font-medium text-slate-700">
-                <input type="checkbox" checked={item.current} onChange={(event) => onChange({ ...item, current: event.target.checked, endDate: event.target.checked ? "" : item.endDate })} className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+              <label className="flex min-h-11 items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                <input type="checkbox" checked={item.current} onChange={(event) => onChange({ ...item, current: event.target.checked, endDate: event.target.checked ? "" : item.endDate })} className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800" />
                 Currently studying
               </label>
             </div>
@@ -267,7 +272,7 @@ function EducationEditor({ item, index, showErrors, onChange, onRemove }: { item
         )}
       </div>
 
-      <div className="mt-6 border-t border-slate-200/60 pt-5">
+      <div className="mt-6 border-t border-slate-200/60 pt-5 dark:border-slate-700/60">
         <BulletListInput
           label="Academic Awards / Achievements"
           values={item.awards.map((award) => award.name)}
@@ -276,7 +281,7 @@ function EducationEditor({ item, index, showErrors, onChange, onRemove }: { item
           addLabel="+ Add"
           bulletMark={false}
         />
-        <p className="mt-1.5 text-xs text-slate-400">Optional. Shown together on one line, separated by &quot;•&quot;.</p>
+        <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">Optional. Shown together on one line, separated by &quot;•&quot;.</p>
       </div>
     </EntryCard>
   );

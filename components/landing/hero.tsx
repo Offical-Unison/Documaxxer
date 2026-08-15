@@ -3,13 +3,13 @@ import { Button } from "@/components/ui/button";
 
 export function Hero() {
   return (
-    <section className="section-shell grid gap-12 py-16 md:grid-cols-[1.1fr_.9fr] md:items-center md:py-24">
+    <section className="section-shell grid gap-12 pt-16 pb-8 md:grid-cols-[1.1fr_.9fr] md:items-center md:pt-24 md:pb-12">
       <div>
         <p className="eyebrow">Your next opportunity starts here</p>
-        <h1 className="mt-5 max-w-3xl text-4xl font-bold tracking-[-0.03em] text-slate-950 sm:text-5xl lg:text-[3.4rem] lg:leading-[1.1]">
+        <h1 className="mt-5 max-w-3xl text-4xl font-bold tracking-[-0.03em] text-slate-950 sm:text-5xl lg:text-[3.4rem] lg:leading-[1.1] dark:text-slate-50">
           Make your experience impossible to overlook.
         </h1>
-        <p className="mt-6 max-w-lg text-lg leading-relaxed text-slate-500">
+        <p className="mt-6 max-w-lg text-lg leading-relaxed text-slate-500 dark:text-slate-400">
           A thoughtful, distraction-free resume builder designed to help you present your best work with clarity.
         </p>
         <Button className="mt-8" asChild>
@@ -17,7 +17,7 @@ export function Hero() {
         </Button>
       </div>
 
-      <div className="rounded-3xl border border-blue-100/80 bg-gradient-to-br from-blue-50/80 to-slate-50/60 p-6 shadow-[0_8px_30px_rgba(37,99,235,0.06)] sm:p-8" aria-hidden="true">
+      <div className="rounded-3xl border border-blue-100/80 bg-gradient-to-br from-blue-50/80 to-slate-50/60 p-6 shadow-[0_8px_30px_rgba(37,99,235,0.06)] dark:border-blue-400/20 dark:from-blue-500/10 dark:to-slate-900/40 sm:p-8" aria-hidden="true">
         <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_4px_16px_rgba(15,23,42,0.04)]">
           <div className="h-3.5 w-28 rounded-full bg-slate-900" />
           <div className="mt-3 h-2 w-40 rounded-full bg-slate-200" />

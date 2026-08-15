@@ -2,15 +2,15 @@ export interface ResumeLink { id: string; name: string; url: string; }
 
 export interface ContactDetails {
   email: string;
-  phoneCountry: string; // ISO country code, e.g. "PH"
-  phoneNumber: string;  // national number, without the dial code
+  phoneCountry: string;
+  phoneNumber: string;
   location: string;
 }
 
 export interface PersonalDetails {
   firstName: string;
   lastName: string;
-  headline: string; // "Title" — optional
+  headline: string;
   contact: ContactDetails;
   links: ResumeLink[];
 }
@@ -20,10 +20,10 @@ export interface Experience {
   employer: string;
   role: string;
   location: string;
-  startDate: string; // "YYYY" or "YYYY-MM"
+  startDate: string;
   endDate: string;
   current: boolean;
-  highlights: string[]; // bullet points
+  highlights: string[];
 }
 
 export interface EducationAward { id: string; name: string; }
@@ -44,13 +44,12 @@ export interface Education {
 export interface Project {
   id: string;
   name: string;
-  date: string; // single partial date
+  date: string;
   technologies: string[];
   highlights: string[];
 }
 
 export interface Certification { id: string; name: string; date: string; }
-
 export interface Language { id: string; name: string; proficiency: string; }
 
 export interface Award {
@@ -76,8 +75,6 @@ export interface OtherEntry {
 }
 
 export type OptionalSectionKey = "projects" | "certifications" | "awards" | "volunteerExperiences" | "languages" | "other";
-
-/** Every section whose heading can be renamed via the pencil-icon editor. */
 export type SectionId = "personal" | "summary" | "experience" | "education" | "skills" | OptionalSectionKey;
 
 export interface ResumeData {
@@ -93,8 +90,13 @@ export interface ResumeData {
   volunteerExperiences: VolunteerExperience[];
   otherEntries: OtherEntry[];
   optionalSections: OptionalSectionKey[];
-  /** Custom titles keyed by SectionId; always fully populated (see DEFAULT_SECTION_TITLES). */
   sectionTitles: Record<SectionId, string>;
 }
 
-export interface ResumeState { resume: ResumeData; activeSection: string | null; selectedTemplateId: string | null; selectedFontId: string | null; }
+export interface ResumeState {
+  resume: ResumeData;
+  activeSection: string | null;
+  selectedTemplateId: string | null;
+  selectedFontId: string | null;
+  generateUnlocked: boolean;
+}

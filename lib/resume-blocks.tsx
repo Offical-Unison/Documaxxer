@@ -19,9 +19,9 @@ export interface TemplateTheme {
 }
 
 export const TEMPLATE_THEMES: Record<TemplateId, TemplateTheme> = {
-  classic: { fontStack: FONT_STACK_SERIF, headerAlign: "center", labelColor: "text-slate-700", ruleColor: "border-slate-300" },
-  modern: { fontStack: FONT_STACK_SANS, headerAlign: "left", labelColor: "text-blue-700", ruleColor: "border-blue-200" },
-  sidebar: { fontStack: FONT_STACK_SANS, headerAlign: "left", labelColor: "text-blue-700", ruleColor: "border-blue-200" },
+  classic: { fontStack: FONT_STACK_SERIF, headerAlign: "center", labelColor: "text-black", ruleColor: "border-slate-300" },
+  modern: { fontStack: FONT_STACK_SANS, headerAlign: "left", labelColor: "text-black", ruleColor: "border-blue-200" },
+  sidebar: { fontStack: FONT_STACK_SANS, headerAlign: "left", labelColor: "text-black", ruleColor: "border-blue-200" },
 };
 
 const RAIL_SECTION_PREFIXES = ["education", "skills", "languages"];
@@ -46,10 +46,10 @@ export function EntryHeading({ primary, secondary, dateRange }: { primary: strin
   return (
     <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
       <div>
-        <p className="text-sm font-semibold text-slate-900">{primary}</p>
-        {secondary && <p className="text-sm text-slate-600">{secondary}</p>}
+        <p className="text-sm font-semibold text-black">{primary}</p>
+        {secondary && <p className="text-sm text-black">{secondary}</p>}
       </div>
-      {dateRange && <p className="shrink-0 text-xs font-medium text-slate-500">{dateRange}</p>}
+      {dateRange && <p className="shrink-0 text-xs font-medium text-black">{dateRange}</p>}
     </div>
   );
 }
@@ -83,7 +83,7 @@ export function buildBlocks(resume: ResumeData, theme: TemplateTheme): PreviewBl
 
   if (professionalSummary.trim()) {
     blocks.push(sectionHeader("summary", sectionTitles.summary, theme));
-    blocks.push(sectionContent("summary-content", <p className="text-sm leading-6 text-slate-700">{professionalSummary}</p>));
+    blocks.push(sectionContent("summary-content", <p className="text-sm leading-6 text-black">{professionalSummary}</p>));
   }
 
   if (experiences.length > 0) {
@@ -93,7 +93,7 @@ export function buildBlocks(resume: ResumeData, theme: TemplateTheme): PreviewBl
       blocks.push(sectionContent(`experience-${item.id}`, (
         <div>
           <EntryHeading primary={item.role || "—"} secondary={[item.employer, item.location].filter(Boolean).join(", ")} dateRange={formatDateRange(item.startDate, item.endDate, item.current)} />
-          {highlights.length > 0 && <ul className="mt-1 list-disc space-y-0.5 pl-4 text-sm leading-6 text-slate-700">{highlights.map((line, i) => <li key={i}>{line}</li>)}</ul>}
+          {highlights.length > 0 && <ul className="mt-1 list-disc space-y-0.5 pl-4 text-sm leading-6 text-black">{highlights.map((line, i) => <li key={i}>{line}</li>)}</ul>}
         </div>
       )));
     });
@@ -106,7 +106,7 @@ export function buildBlocks(resume: ResumeData, theme: TemplateTheme): PreviewBl
       blocks.push(sectionContent(`education-${item.id}`, (
         <div>
           <EntryHeading primary={item.institution} secondary={[item.degree, item.fieldOfStudy].filter(Boolean).join(", ")} dateRange={formatDateRange(item.startDate, item.endDate, item.current)} />
-          {awards.length > 0 && <p className="mt-1 text-xs text-slate-600">{awards.map((award) => award.name).join(" • ")}</p>}
+          {awards.length > 0 && <p className="mt-1 text-xs text-black">{awards.map((award) => award.name).join(" • ")}</p>}
         </div>
       )));
     });
@@ -115,7 +115,7 @@ export function buildBlocks(resume: ResumeData, theme: TemplateTheme): PreviewBl
   if (resume.skills.length > 0) {
     blocks.push(sectionHeader("skills", sectionTitles.skills, theme));
     blocks.push(sectionContent("skills-content", (
-      <ul className="list-disc space-y-0.5 pl-4 text-sm leading-6 text-slate-700">
+      <ul className="list-disc space-y-0.5 pl-4 text-sm leading-6 text-black">
         {resume.skills.map((skill) => <li key={skill}>{skill}</li>)}
       </ul>
     )));
@@ -132,7 +132,7 @@ export function buildBlocks(resume: ResumeData, theme: TemplateTheme): PreviewBl
         blocks.push(sectionContent(`project-${item.id}`, (
           <div>
             <EntryHeading primary={[item.name, item.technologies.join(", ")].filter(Boolean).join(" | ")} dateRange={formatPartialDate(item.date)} />
-            {highlights.length > 0 && <ul className="mt-1 list-disc space-y-0.5 pl-4 text-sm leading-6 text-slate-700">{highlights.map((line, i) => <li key={i}>{line}</li>)}</ul>}
+            {highlights.length > 0 && <ul className="mt-1 list-disc space-y-0.5 pl-4 text-sm leading-6 text-black">{highlights.map((line, i) => <li key={i}>{line}</li>)}</ul>}
           </div>
         )));
       });
@@ -152,7 +152,7 @@ export function buildBlocks(resume: ResumeData, theme: TemplateTheme): PreviewBl
         blocks.push(sectionContent(`award-${item.id}`, (
           <div>
             <EntryHeading primary={item.title} dateRange={formatPartialDate(item.date)} />
-            {highlights.length > 0 && <ul className="mt-1 list-disc space-y-0.5 pl-4 text-sm leading-6 text-slate-700">{highlights.map((line, i) => <li key={i}>{line}</li>)}</ul>}
+            {highlights.length > 0 && <ul className="mt-1 list-disc space-y-0.5 pl-4 text-sm leading-6 text-black">{highlights.map((line, i) => <li key={i}>{line}</li>)}</ul>}
           </div>
         )));
       });
@@ -167,7 +167,7 @@ export function buildBlocks(resume: ResumeData, theme: TemplateTheme): PreviewBl
         blocks.push(sectionContent(`volunteer-${item.id}`, (
           <div>
             <EntryHeading primary={[item.role, item.organization].filter(Boolean).join(" | ")} dateRange={formatPartialDate(item.date)} />
-            {highlights.length > 0 && <ul className="mt-1 list-disc space-y-0.5 pl-4 text-sm leading-6 text-slate-700">{highlights.map((line, i) => <li key={i}>{line}</li>)}</ul>}
+            {highlights.length > 0 && <ul className="mt-1 list-disc space-y-0.5 pl-4 text-sm leading-6 text-black">{highlights.map((line, i) => <li key={i}>{line}</li>)}</ul>}
           </div>
         )));
       });
@@ -176,7 +176,7 @@ export function buildBlocks(resume: ResumeData, theme: TemplateTheme): PreviewBl
       const languages = resume.languages.filter((item) => item.name.trim());
       if (languages.length === 0) return;
       blocks.push(sectionHeader("languages", sectionTitles.languages, theme));
-      blocks.push(sectionContent("languages-content", <p className="text-sm leading-6 text-slate-700">{languages.map((item) => (item.proficiency ? `${item.name} (${item.proficiency})` : item.name)).join(" • ")}</p>));
+      blocks.push(sectionContent("languages-content", <p className="text-sm leading-6 text-black">{languages.map((item) => (item.proficiency ? `${item.name} (${item.proficiency})` : item.name)).join(" • ")}</p>));
     }
     if (sectionKey === "other") {
       const entries = sortByDateDesc(resume.otherEntries.filter((entry) => entry.name.trim()));
@@ -187,7 +187,7 @@ export function buildBlocks(resume: ResumeData, theme: TemplateTheme): PreviewBl
         blocks.push(sectionContent(`other-entry-${entry.id}`, (
           <div>
             <EntryHeading primary={entry.name} dateRange={formatPartialDate(entry.date)} />
-            {highlights.length > 0 && <ul className="mt-1 list-disc space-y-0.5 pl-4 text-sm leading-6 text-slate-700">{highlights.map((line, i) => <li key={i}>{line}</li>)}</ul>}
+            {highlights.length > 0 && <ul className="mt-1 list-disc space-y-0.5 pl-4 text-sm leading-6 text-black">{highlights.map((line, i) => <li key={i}>{line}</li>)}</ul>}
           </div>
         )));
       });

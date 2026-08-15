@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { useResumeContext } from "@/context/resume-context";
 import { exportResumeToDocx } from "@/lib/export/docx-export";
 
@@ -25,18 +24,25 @@ export function GenerateButton() {
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white/70 p-5 shadow-sm">
-      <p className="text-sm font-semibold text-slate-800">Download your resume</p>
-      <div className="mt-3 grid gap-2 sm:grid-cols-2">
-        <Button onClick={handlePdf} className="w-full justify-center">Download PDF</Button>
-        <Button onClick={handleDocx} disabled={isExportingDocx} className="w-full justify-center bg-slate-800 hover:bg-slate-900">
+    <div>
+      <div className="grid gap-2 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={handlePdf}
+          className="min-h-11 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400"
+        >
+          Download PDF
+        </button>
+        <button
+          type="button"
+          onClick={handleDocx}
+          disabled={isExportingDocx}
+          className="min-h-11 rounded-xl bg-slate-800 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-900 disabled:opacity-60 dark:bg-slate-700 dark:hover:bg-slate-600"
+        >
           {isExportingDocx ? "Preparing…" : "Download Word (.docx)"}
-        </Button>
+        </button>
       </div>
-      <p className="mt-2.5 text-center text-xs text-slate-400">
-        PDF opens your browser&apos;s print dialog — choose &quot;Save as PDF&quot; as the destination.
-      </p>
-      {docxError && <p className="mt-2 text-center text-xs text-red-600">{docxError}</p>}
+      {docxError && <p className="mt-2 text-center text-xs text-red-600 dark:text-red-400">{docxError}</p>}
     </div>
   );
 }

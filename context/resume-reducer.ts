@@ -41,6 +41,7 @@ export const initialResumeState: ResumeState = {
   activeSection: null,
   selectedTemplateId: DEFAULT_TEMPLATE_ID,
   selectedFontId: DEFAULT_FONT_ID,
+  generateUnlocked: false,
 };
 
 export type ResumeAction =
@@ -61,6 +62,7 @@ export type ResumeAction =
   | { type: "SET_OTHER_ENTRIES"; payload: OtherEntry[] }
   | { type: "SET_OPTIONAL_SECTIONS"; payload: OptionalSectionKey[] }
   | { type: "SET_SECTION_TITLE"; payload: { id: SectionId; title: string } }
+  | { type: "UNLOCK_GENERATE" }
   | { type: "RESET_RESUME" };
 
 export function resumeReducer(state: ResumeState, action: ResumeAction): ResumeState {
@@ -82,6 +84,7 @@ export function resumeReducer(state: ResumeState, action: ResumeAction): ResumeS
     case "SET_OTHER_ENTRIES": return { ...state, resume: { ...state.resume, otherEntries: action.payload } };
     case "SET_OPTIONAL_SECTIONS": return { ...state, resume: { ...state.resume, optionalSections: action.payload } };
     case "SET_SECTION_TITLE": return { ...state, resume: { ...state.resume, sectionTitles: { ...state.resume.sectionTitles, [action.payload.id]: action.payload.title } } };
+    case "UNLOCK_GENERATE": return { ...state, generateUnlocked: true };
     case "RESET_RESUME": return initialResumeState;
     default: return state;
   }
