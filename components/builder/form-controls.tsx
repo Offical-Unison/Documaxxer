@@ -28,7 +28,7 @@ export function Field({ label, error, className = "", id, suggestionKey, ...prop
         id={fieldId}
         type={type}
         list={listId}
-        className="mt-1.5 min-h-11 w-full rounded-xl border border-slate-200/80 bg-white px-3.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 dark:border-slate-700/80 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-400 dark:disabled:bg-slate-800/50"
+        className="mt-1.5 min-h-11 w-full rounded-xl border border-slate-200/90 bg-white/90 px-3.5 text-sm text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.04)] placeholder:text-slate-400 transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 focus:bg-white focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 dark:border-slate-700/80 dark:bg-[#1A2234]/90 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-500/20 dark:disabled:bg-slate-800/50"
         onBlur={(event) => {
           setLocalError(validate(event.target.value));
           if (suggestionKey) record(event.target.value);
@@ -55,7 +55,7 @@ export function Textarea({ label, hint, error, className = "", id, ...props }: T
       <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
       <textarea
         id={fieldId}
-        className="mt-1.5 min-h-28 w-full rounded-xl border border-slate-200/80 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none dark:border-slate-700/80 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-400"
+        className="mt-1.5 min-h-28 w-full rounded-xl border border-slate-200/90 bg-white/90 px-3.5 py-2.5 text-sm text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.04)] placeholder:text-slate-400 transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 focus:bg-white focus:outline-none dark:border-slate-700/80 dark:bg-[#1A2234]/90 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-500/20"
         {...props}
       />
       {hint && <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">{hint}</p>}
@@ -67,7 +67,7 @@ export function Textarea({ label, hint, error, className = "", id, ...props }: T
 export function EntryCard({ title, children, onRemove }: { title: string; children: ReactNode; onRemove: () => void }) {
   const [open, setOpen] = useState(true);
   return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white/70 shadow-sm dark:border-slate-700/80 dark:bg-slate-800/70">
+    <div className="rounded-2xl border border-slate-200/90 bg-slate-50/60 shadow-[0_1px_3px_rgba(15,23,42,0.03)] dark:border-slate-800/80 dark:bg-[#161D2B]/90">
       <div className="flex items-center justify-between gap-3 px-4 py-3">
         <button
           type="button"
@@ -86,7 +86,7 @@ export function EntryCard({ title, children, onRemove }: { title: string; childr
           Remove
         </button>
       </div>
-      {open && <div className="border-t border-slate-100 p-4 dark:border-slate-700/60">{children}</div>}
+      {open && <div className="border-t border-slate-200/70 p-4 dark:border-slate-800/80">{children}</div>}
     </div>
   );
 }
@@ -96,7 +96,7 @@ export function AddButton({ children, onClick }: { children: ReactNode; onClick:
     <button
       type="button"
       onClick={onClick}
-      className="mt-4 min-h-11 rounded-xl border border-blue-200/80 bg-blue-50/50 px-4 text-sm font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-50 dark:border-blue-400/30 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:border-blue-400/50 dark:hover:bg-blue-500/20"
+      className="mt-4 min-h-11 rounded-xl border border-blue-200/90 bg-blue-50/70 px-4 text-sm font-semibold text-blue-700 shadow-[0_1px_2px_rgba(37,99,235,0.05)] transition hover:border-blue-300 hover:bg-blue-100/70 dark:border-blue-400/30 dark:bg-blue-500/15 dark:text-blue-300 dark:hover:border-blue-400/50 dark:hover:bg-blue-500/25"
     >
       {children}
     </button>
@@ -120,16 +120,16 @@ export function TagInput({ label, values, onChange, placeholder, suggestionKey }
   return (
     <div>
       <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
-      <div className="mt-1.5 rounded-xl border border-slate-200/80 bg-white p-2 shadow-sm dark:border-slate-700/80 dark:bg-slate-800">
+      <div className="mt-1.5 rounded-xl border border-slate-200/90 bg-white/90 p-2 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-700/80 dark:bg-[#1A2234]/90">
         <div className="flex flex-wrap gap-2">
           {values.map((item) => (
-            <span key={item} className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700 dark:bg-blue-500/15 dark:text-blue-300">
+            <span key={item} className="inline-flex items-center gap-1.5 rounded-full bg-blue-50/90 px-3 py-1 text-sm font-medium text-blue-700 dark:bg-blue-500/20 dark:text-blue-300">
               {item}
               <button
                 type="button"
                 onClick={() => onChange(values.filter((valueItem) => valueItem !== item))}
                 aria-label={`Remove ${item}`}
-                className="flex h-4 w-4 items-center justify-center rounded-full text-blue-400 transition hover:bg-blue-100 hover:text-blue-600 dark:text-blue-400 dark:hover:bg-blue-500/20 dark:hover:text-blue-200"
+                className="flex h-4 w-4 items-center justify-center rounded-full text-blue-400 transition hover:bg-blue-100 hover:text-blue-600 dark:text-blue-400 dark:hover:bg-blue-500/30 dark:hover:text-blue-200"
               >
                 ×
               </button>
@@ -148,7 +148,7 @@ export function TagInput({ label, values, onChange, placeholder, suggestionKey }
           <button
             type="button"
             onClick={add}
-            className="rounded-lg bg-blue-50 px-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-500/15 dark:text-blue-300 dark:hover:bg-blue-500/25"
+            className="rounded-lg bg-blue-50 px-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-500/20 dark:text-blue-300 dark:hover:bg-blue-500/30"
           >
             Add
           </button>

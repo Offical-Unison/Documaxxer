@@ -42,10 +42,10 @@ export function OptionalResumeSections() {
           return (
             <article
               key={section.key}
-              className={`flex min-h-44 flex-col rounded-2xl border p-5 transition ${
+              className={`flex min-h-44 flex-col rounded-2xl border p-5 transition-all duration-200 hover:-translate-y-1 ${
                 section.recommended
-                  ? "border-blue-200/80 bg-blue-50/50 shadow-[0_4px_16px_rgba(37,99,235,0.06)] dark:border-blue-400/30 dark:bg-blue-500/10"
-                  : "border-slate-200/80 bg-white/60 shadow-sm dark:border-slate-700/80 dark:bg-slate-800/60"
+                  ? "border-blue-200 bg-blue-50/70 shadow-[0_4px_20px_rgba(37,99,235,0.06)] hover:shadow-[0_8px_25px_rgba(37,99,235,0.12)] dark:border-blue-400/40 dark:bg-blue-500/15 dark:shadow-[0_4px_20px_rgba(37,99,235,0.1)]"
+                  : "border-slate-200/90 bg-white/80 shadow-[0_1px_3px_rgba(15,23,42,0.03)] hover:border-slate-300 hover:shadow-md dark:border-slate-800/80 dark:bg-[#161D2B]/80"
               }`}
             >
               <div className="flex items-start justify-between gap-3">
@@ -59,8 +59,11 @@ export function OptionalResumeSections() {
               <p className="mt-2.5 text-sm leading-6 text-slate-500 dark:text-slate-400">{section.description}</p>
               <div className="mt-auto pt-5">
                 {added ? (
-                  <span className="inline-flex min-h-10 items-center rounded-xl bg-green-50 px-3.5 text-sm font-semibold text-green-700 dark:bg-green-500/15 dark:text-green-300">
-                    ✓ Added
+                  <span className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-green-50 px-3.5 text-sm font-semibold text-green-700 dark:bg-green-500/15 dark:text-green-300">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+                      <path d="M3.5 8.5l3 3 6-6" />
+                    </svg>
+                    Added
                   </span>
                 ) : (
                   <button
@@ -152,12 +155,16 @@ function ProjectEditor({ item, index, onChange, onRemove }: { item: Project; ind
 }
 
 function Certifications({ items, onChange }: { items: Certification[]; onChange: (items: Certification[]) => void }) {
-  return <><div className="space-y-3">{items.map((item, index) => <CertificationEditor key={item.id} item={item} index={index} onChange={(next) => onChange(items.map((entry) => entry.id === next.id ? next : entry))} onRemove={() => onChange(items.filter((entry) => entry.id !== item.id))} />)}</div><AddButton onClick={() => onChange([...items, { id: makeId(), name: "", date: "" }])}>+ Add</AddButton></>;
+  return <><div className="space-y-3">{items.map((item, index) => <CertificationEditor key={item.id} item={item} index={index} onChange={(next) => onChange(items.map((entry) => entry.id === next.id ? next : entry))} onRemove={() => onChange(items.filter((entry) => entry.id !== item.id))} />)}</div><AddButton onClick={() => onChange([...items, { id: makeId(), name: "", issuingOrganization: "", date: "" }])}>+ Add</AddButton></>;
 }
 
 function CertificationEditor({ item, index, onChange, onRemove }: { item: Certification; index: number; onChange: (item: Certification) => void; onRemove: () => void }) {
   const update = <K extends keyof Certification>(key: K, value: Certification[K]) => onChange({ ...item, [key]: value });
-  return <EntryCard title={item.name || `Certification ${index + 1}`} onRemove={onRemove}><div className="grid gap-4 sm:grid-cols-2"><Field label="Certificate name" value={item.name} onChange={(event) => update("name", event.target.value)} placeholder="AWS Certified Cloud Practitioner" suggestionKey="certifications.name" /><PartialDateField label="Date" value={item.date} onChange={(value) => update("date", value)} /></div></EntryCard>;
+  return <EntryCard title={item.name || `Certification ${index + 1}`} onRemove={onRemove}><div className="grid gap-4 sm:grid-cols-2">
+    <Field label="Certificate name" value={item.name} onChange={(event) => update("name", event.target.value)} placeholder="AWS Certified Cloud Practitioner" suggestionKey="certifications.name" />
+    <Field label="Issuing Organization" value={item.issuingOrganization ?? ""} onChange={(event) => update("issuingOrganization", event.target.value)} placeholder="e.g. Amazon Web Services" />
+    <PartialDateField label="Date" value={item.date} onChange={(value) => update("date", value)} />
+  </div></EntryCard>;
 }
 
 function Awards({ items, onChange }: { items: Award[]; onChange: (items: Award[]) => void }) {

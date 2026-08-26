@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Card } from "@/components/ui/card";
 import { ResumePreview } from "@/components/builder/resume-preview";
@@ -41,7 +41,7 @@ export function ResumePreviewContainer() {
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="mt-1 inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-slate-200/80 bg-white/80 px-3 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-700/80 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:border-blue-400/40 dark:hover:bg-blue-500/10 dark:hover:text-blue-300"
+          className="mt-1 inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-slate-200/80 bg-white/80 px-3 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-700/80 dark:bg-[#1A2234]/90 dark:text-slate-300 dark:hover:border-blue-400/40 dark:hover:bg-blue-500/15 dark:hover:text-blue-300"
         >
           <ExpandIcon />
           Expand
@@ -77,8 +77,10 @@ export function ResumePreviewContainer() {
 }
 
 function ExpandedPreviewModal({ pageIndex, onPageIndexChange, onClose }: { pageIndex: number; onPageIndexChange: (index: number) => void; onClose: () => void }) {
+  const stableOnClose = useCallback(() => onClose(), [onClose]);
+
   useEffect(() => {
-    const handleKey = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    const handleKey = (event: KeyboardEvent) => { if (event.key === "Escape") stableOnClose(); };
     document.addEventListener("keydown", handleKey);
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -86,25 +88,36 @@ function ExpandedPreviewModal({ pageIndex, onPageIndexChange, onClose }: { pageI
       document.removeEventListener("keydown", handleKey);
       document.body.style.overflow = previousOverflow;
     };
-  }, [onClose]);
+  }, [stableOnClose]);
 
   if (typeof document === "undefined") return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8" role="dialog" aria-modal="true" aria-label="Expanded resume preview">
-      <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative flex h-full max-h-[90vh] w-full max-w-4xl flex-col items-center justify-center">
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close expanded preview"
-          className="absolute -top-3 right-0 flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-semibold text-slate-700 shadow-md transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 sm:-top-4 sm:-right-4"
-        >
-          ×
-        </button>
-        <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-2xl">
-          <ResumePreview pageIndex={pageIndex} onPageIndexChange={onPageIndexChange} maxHeight="86vh" />
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center" role="dialog" aria-modal="true" aria-label="Expanded resume preview">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity" onClick={stableOnClose} />
+
+      {/* Modal container — flex-col with close button at top and page nav pinned at bottom */}
+      <div className="relative z-10 flex w-full max-w-4xl flex-col items-center gap-3 px-4 py-6 sm:px-8 sm:py-8 animate-fade-in-scale" style={{ maxHeight: "100vh" }}>
+        {/* Top bar: close button only */}
+        <div className="flex w-full items-center justify-end">
+          <button
+            type="button"
+            onClick={stableOnClose}
+            aria-label="Close expanded preview"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-semibold text-slate-700 shadow-md transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            ×
+          </button>
         </div>
+
+        {/* Resume area — automatically scales to fit available space */}
+        <div className="flex-1 min-h-0 w-full flex items-center justify-center">
+          <ResumePreview pageIndex={pageIndex} onPageIndexChange={onPageIndexChange} maxHeight="100%" hideFooter className="h-full w-full" />
+        </div>
+
+        {/* Page nav + word count pinned below scroll area */}
+        <ResumePreview pageIndex={pageIndex} onPageIndexChange={onPageIndexChange} footerOnly />
       </div>
     </div>,
     document.body

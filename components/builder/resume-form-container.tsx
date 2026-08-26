@@ -97,7 +97,7 @@ export function ResumeFormContainer() {
 
       <form className="mt-8" onSubmit={(event) => { event.preventDefault(); next(); }} noValidate>
         {currentStep === 0 && (
-          <Section title="Choose a template" description="Pick a starting look — you can switch anytime from the preview panel.">
+          <Section title="Choose a template" description="Pick a starting look - you can switch anytime from the preview panel.">
             <TemplatePicker
               selectedId={state.selectedTemplateId}
               onSelect={(id: TemplateId) => dispatch({ type: "SET_TEMPLATE", payload: id })}
@@ -220,7 +220,7 @@ function ExperienceEditor({ item, index, showErrors, onChange, onRemove }: { ite
 }
 
 function blankEducation(educationType: Education["educationType"]): Education {
-  return { id: makeId(), educationType, institution: "", degree: "", fieldOfStudy: "", location: "", startDate: "", endDate: "", current: false, awards: [] };
+  return { id: makeId(), educationType, institution: "", degree: "", fieldOfStudy: "", location: "", startDate: "", endDate: "", current: false, awards: [], gradeLabel: "", gradeValue: "" };
 }
 
 function EducationEditor({ item, index, showErrors, onChange, onRemove }: { item: Education; index: number; showErrors: boolean; onChange: (item: Education) => void; onRemove: () => void }) {
@@ -282,6 +282,15 @@ function EducationEditor({ item, index, showErrors, onChange, onRemove }: { item
           bulletMark={false}
         />
         <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">Optional. Shown together on one line, separated by &quot;•&quot;.</p>
+      </div>
+
+      <div className="mt-6 border-t border-slate-200/60 pt-5 dark:border-slate-700/60">
+        <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Academic Grade (optional)</p>
+        <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">Shown under the education dates. Leave empty to hide.</p>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          <Field label="Grade label" value={item.gradeLabel ?? ""} onChange={(event) => update("gradeLabel", event.target.value)} placeholder="GPA" />
+          <Field label="Grade value" value={item.gradeValue ?? ""} onChange={(event) => update("gradeValue", event.target.value)} placeholder="e.g. 1.50" />
+        </div>
       </div>
     </EntryCard>
   );

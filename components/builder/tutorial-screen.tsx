@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 const TUTORIAL_STEPS = [
   { title: "Choose a template", description: "Pick a resume layout that fits your style. You can switch anytime from the preview panel." },
-  { title: "Fill in your information", description: "Work through the guided sections — your details, experience, education, skills, and any extras." },
+  { title: "Fill in your information", description: "Work through the guided sections - your details, experience, education, skills, and any extras." },
   { title: "Preview your resume", description: "Watch the live preview update as you type, so you always know exactly how it will look." },
   { title: "Generate and download", description: "When you're ready, generate your resume as a polished PDF or a fully editable Word document." },
 ];

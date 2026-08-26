@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+@source "../app";
+@source "../components";
+@source "../lib";
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer utilities {
@@ -7,7 +11,7 @@
     @apply mx-auto w-full max-w-7xl px-5 sm:px-8;
   }
   .eyebrow {
-    @apply text-xs font-semibold uppercase tracking-widest text-blue-600 dark:text-blue-400;
+    @apply text-[10px] font-semibold uppercase tracking-[0.2em] text-blue-500 dark:text-blue-400;
   }
 }
 
@@ -16,8 +20,8 @@ html {
 }
 
 body {
-  @apply bg-[#F5F7FA] text-slate-900 dark:bg-slate-950 dark:text-slate-100;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  @apply bg-white text-slate-950 dark:bg-[#0B0F19] dark:text-slate-50;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 :focus-visible {
@@ -26,8 +30,63 @@ body {
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { @apply rounded-full bg-slate-300 dark:bg-slate-700; }
-::-webkit-scrollbar-thumb:hover { @apply bg-slate-400 dark:bg-slate-600; }
+::-webkit-scrollbar-thumb { @apply rounded-full bg-blue-200 dark:bg-blue-900; }
+::-webkit-scrollbar-thumb:hover { @apply bg-blue-300 dark:bg-blue-800; }
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in-scale {
+  animation: fadeInScale 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-float-slow {
+  animation: floatSlow 7s ease-in-out infinite;
+}
+
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+
+@supports (animation-timeline: view()) {
+  .scroll-reveal {
+    animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-timeline: view();
+    animation-range: entry 10% cover 30%;
+  }
+}
 
 .print-only { display: none; }
 
@@ -43,6 +102,31 @@ body {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-  .print-only a { color: #000000 !important; text-decoration: underline; }
-  .print-only { display: block; position: absolute; top: 0; left: 0; width: 210mm; }
+  .print-only h2,
+  .print-only h3,
+  .print-only p,
+  .print-only li,
+  .print-only span,
+  .print-only a {
+    color: #000000 !important;
+  }
+  .print-only a { text-decoration: underline; }
+  .print-only [style*="border"],
+  .print-only h3 {
+    border-color: #000000 !important;
+  }
+  .print-only header {
+    border-color: #000000 !important;
+  }
+  .print-only {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 210mm;
+  }
+  /* Each page div inside print-only should not clip content */
+  .print-only > div[style*="width"] {
+    break-inside: avoid;
+  }
 }

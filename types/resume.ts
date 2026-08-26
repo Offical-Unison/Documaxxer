@@ -39,6 +39,8 @@ export interface Education {
   endDate: string;
   current: boolean;
   awards: EducationAward[];
+  gradeLabel?: string;
+  gradeValue?: string;
 }
 
 export interface Project {
@@ -49,7 +51,7 @@ export interface Project {
   highlights: string[];
 }
 
-export interface Certification { id: string; name: string; date: string; }
+export interface Certification { id: string; name: string; issuingOrganization?: string; date: string; }
 export interface Language { id: string; name: string; proficiency: string; }
 
 export interface Award {

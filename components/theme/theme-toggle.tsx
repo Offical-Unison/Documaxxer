@@ -29,10 +29,10 @@ export function ThemeToggle() {
       role="switch"
       aria-checked={isDark}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      className="relative inline-flex h-9 w-16 shrink-0 items-center rounded-full border border-slate-200/80 bg-white/70 transition-colors dark:border-slate-700/80 dark:bg-slate-800/80"
+      className="group relative inline-flex h-9 w-16 shrink-0 cursor-pointer items-center rounded-full border border-blue-100 bg-blue-50/60 transition-colors dark:border-blue-900/60 dark:bg-blue-950/40"
     >
       <span
-        className={`absolute left-1 flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm transition-transform duration-200 dark:bg-blue-500 ${
+        className={`absolute left-1 flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm transition-all duration-300 group-hover:scale-105 group-hover:rotate-12 dark:bg-blue-500 ${
           isDark ? "translate-x-[28px]" : "translate-x-0"
         }`}
       >

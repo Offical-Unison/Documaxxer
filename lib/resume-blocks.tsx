@@ -2,26 +2,29 @@ import type { ReactNode } from "react";
 import { formatDateRange, formatPartialDate, sortByDateDesc, sortEntriesByRecency } from "@/lib/format";
 import type { TemplateId } from "@/lib/templates";
 import type { Education, Experience, Project, ResumeData, VolunteerExperience } from "@/types/resume";
+import {
+  sectionHeadingStyle, entryTitleStyle, entrySubtitleStyle,
+  bodyStyle, dateStyle,
+} from "@/lib/resume-typography";
 
 export const PAGE_WIDTH_MM = 210;
 export const PAGE_HEIGHT_MM = 297;
 export const MARGIN_MM = 20;
 export const CONTENT_WIDTH_MM = PAGE_WIDTH_MM - MARGIN_MM * 2;
 export const CONTENT_HEIGHT_MM = PAGE_HEIGHT_MM - MARGIN_MM * 2;
-const FONT_STACK_SERIF = "Georgia, 'Times New Roman', serif";
-const FONT_STACK_SANS = "'Segoe UI', Helvetica, Arial, sans-serif";
 
 export interface TemplateTheme {
   fontStack: string;
   headerAlign: "left" | "center";
-  labelColor: string;
-  ruleColor: string;
 }
 
+const FONT_STACK_SERIF = "Georgia, 'Times New Roman', serif";
+const FONT_STACK_SANS = "'Segoe UI', Helvetica, Arial, sans-serif";
+
 export const TEMPLATE_THEMES: Record<TemplateId, TemplateTheme> = {
-  classic: { fontStack: FONT_STACK_SERIF, headerAlign: "center", labelColor: "text-black", ruleColor: "border-slate-300" },
-  modern: { fontStack: FONT_STACK_SANS, headerAlign: "left", labelColor: "text-black", ruleColor: "border-blue-200" },
-  sidebar: { fontStack: FONT_STACK_SANS, headerAlign: "left", labelColor: "text-black", ruleColor: "border-blue-200" },
+  classic: { fontStack: FONT_STACK_SERIF, headerAlign: "center" },
+  modern: { fontStack: FONT_STACK_SANS, headerAlign: "left" },
+  sidebar: { fontStack: FONT_STACK_SANS, headerAlign: "left" },
 };
 
 const RAIL_SECTION_PREFIXES = ["education", "skills", "languages"];
@@ -42,14 +45,17 @@ export interface PreviewBlock {
   node: ReactNode;
 }
 
-export function EntryHeading({ primary, secondary, dateRange }: { primary: string; secondary?: string; dateRange?: string }) {
+export function EntryHeading({ primary, secondary, dateRange, subItems }: { primary: ReactNode; secondary?: string; dateRange?: string; subItems?: ReactNode }) {
   return (
-    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", justifyContent: "space-between", gap: "0 12px" }}>
       <div>
-        <p className="text-sm font-semibold text-black">{primary}</p>
-        {secondary && <p className="text-sm text-black">{secondary}</p>}
+        <p style={entryTitleStyle}>{primary}</p>
+        {secondary && <p style={entrySubtitleStyle}>{secondary}</p>}
       </div>
-      {dateRange && <p className="shrink-0 text-xs font-medium text-black">{dateRange}</p>}
+      <div style={{ flexShrink: 0, textAlign: "right" }}>
+        {dateRange && <p style={dateStyle}>{dateRange}</p>}
+        {subItems}
+      </div>
     </div>
   );
 }
@@ -57,15 +63,15 @@ export function EntryHeading({ primary, secondary, dateRange }: { primary: strin
 export const hasExperienceContent = (item: Experience) => item.employer.trim() || item.role.trim();
 export const hasEducationContent = (item: Education) => item.institution.trim();
 
-function sectionHeader(key: string, title: string, theme: TemplateTheme): PreviewBlock {
+function sectionHeader(key: string, title: string): PreviewBlock {
   return {
     id: `${key}-header`,
     type: "header",
-    node: <h3 className={`mt-5 border-b ${theme.ruleColor} pb-1 text-xs font-bold uppercase tracking-wider ${theme.labelColor}`}>{title}</h3>,
+    node: <h3 style={sectionHeadingStyle}>{title}</h3>,
   };
 }
 function sectionContent(id: string, node: ReactNode): PreviewBlock {
-  return { id, type: "content", node: <div className="mt-2.5">{node}</div> };
+  return { id, type: "content", node: <div style={{ marginTop: "8px" }}>{node}</div> };
 }
 
 export function normalizeUrl(url: string): string {
@@ -74,7 +80,7 @@ export function normalizeUrl(url: string): string {
 }
 
 /** Builds an ordered, flat list of atomic preview blocks (never split across pages). */
-export function buildBlocks(resume: ResumeData, theme: TemplateTheme): PreviewBlock[] {
+export function buildBlocks(resume: ResumeData): PreviewBlock[] {
   const blocks: PreviewBlock[] = [];
   const { professionalSummary, sectionTitles } = resume;
 
@@ -82,41 +88,56 @@ export function buildBlocks(resume: ResumeData, theme: TemplateTheme): PreviewBl
   const education = sortEntriesByRecency(resume.education.filter(hasEducationContent));
 
   if (professionalSummary.trim()) {
-    blocks.push(sectionHeader("summary", sectionTitles.summary, theme));
-    blocks.push(sectionContent("summary-content", <p className="text-sm leading-6 text-black">{professionalSummary}</p>));
+    blocks.push(sectionHeader("summary", sectionTitles.summary));
+    blocks.push(sectionContent("summary-content", <p style={bodyStyle}>{professionalSummary}</p>));
   }
 
   if (experiences.length > 0) {
-    blocks.push(sectionHeader("experience", sectionTitles.experience, theme));
+    blocks.push(sectionHeader("experience", sectionTitles.experience));
     experiences.forEach((item) => {
       const highlights = item.highlights.filter((line) => line.trim());
       blocks.push(sectionContent(`experience-${item.id}`, (
         <div>
           <EntryHeading primary={item.role || "—"} secondary={[item.employer, item.location].filter(Boolean).join(", ")} dateRange={formatDateRange(item.startDate, item.endDate, item.current)} />
-          {highlights.length > 0 && <ul className="mt-1 list-disc space-y-0.5 pl-4 text-sm leading-6 text-black">{highlights.map((line, i) => <li key={i}>{line}</li>)}</ul>}
+          {highlights.length > 0 && (
+            <ul style={{ marginTop: "4px", paddingLeft: "16px", listStyleType: "disc", ...bodyStyle }}>
+              {highlights.map((line, i) => <li key={i} style={{ paddingLeft: "2px", marginBottom: "2px" }}>{line}</li>)}
+            </ul>
+          )}
         </div>
       )));
     });
   }
 
   if (education.length > 0) {
-    blocks.push(sectionHeader("education", sectionTitles.education, theme));
+    blocks.push(sectionHeader("education", sectionTitles.education));
     education.forEach((item) => {
       const awards = item.awards.filter((award) => award.name.trim());
+      const gradeLabel = item.gradeLabel?.trim();
+      const gradeValue = item.gradeValue?.trim();
+      const rightSecondary = gradeLabel && gradeValue ? `${gradeLabel}: ${gradeValue}` : undefined;
+      const subItemsNode = rightSecondary ? (
+        <p style={{ ...bodyStyle, marginTop: "0" }}>{rightSecondary}</p>
+      ) : null;
       blocks.push(sectionContent(`education-${item.id}`, (
         <div>
-          <EntryHeading primary={item.institution} secondary={[item.degree, item.fieldOfStudy].filter(Boolean).join(", ")} dateRange={formatDateRange(item.startDate, item.endDate, item.current)} />
-          {awards.length > 0 && <p className="mt-1 text-xs text-black">{awards.map((award) => award.name).join(" • ")}</p>}
+          <EntryHeading
+            primary={item.institution}
+            secondary={[item.degree, item.fieldOfStudy].filter(Boolean).join(", ")}
+            dateRange={formatDateRange(item.startDate, item.endDate, item.current)}
+            subItems={subItemsNode}
+          />
+          {awards.length > 0 && <p style={{ ...bodyStyle, marginTop: "4px" }}>{awards.map((award) => award.name).join(" • ")}</p>}
         </div>
       )));
     });
   }
 
   if (resume.skills.length > 0) {
-    blocks.push(sectionHeader("skills", sectionTitles.skills, theme));
+    blocks.push(sectionHeader("skills", sectionTitles.skills));
     blocks.push(sectionContent("skills-content", (
-      <ul className="list-disc space-y-0.5 pl-4 text-sm leading-6 text-black">
-        {resume.skills.map((skill) => <li key={skill}>{skill}</li>)}
+      <ul style={{ paddingLeft: "16px", listStyleType: "disc", ...bodyStyle }}>
+        {resume.skills.map((skill) => <li key={skill} style={{ paddingLeft: "2px", marginBottom: "2px" }}>{skill}</li>)}
       </ul>
     )));
   }
@@ -126,13 +147,24 @@ export function buildBlocks(resume: ResumeData, theme: TemplateTheme): PreviewBl
       const hasProjectContent = (item: Project) => item.name.trim();
       const projects = sortByDateDesc(resume.projects.filter(hasProjectContent));
       if (projects.length === 0) return;
-      blocks.push(sectionHeader("projects", sectionTitles.projects, theme));
+      blocks.push(sectionHeader("projects", sectionTitles.projects));
       projects.forEach((item) => {
         const highlights = item.highlights.filter((line) => line.trim());
+        const techLine = item.technologies.filter(Boolean).join(", ");
+        const primaryNode = (
+          <span>
+            {item.name}
+            {techLine && <span style={{ fontWeight: "normal" }}> | {techLine}</span>}
+          </span>
+        );
         blocks.push(sectionContent(`project-${item.id}`, (
           <div>
-            <EntryHeading primary={[item.name, item.technologies.join(", ")].filter(Boolean).join(" | ")} dateRange={formatPartialDate(item.date)} />
-            {highlights.length > 0 && <ul className="mt-1 list-disc space-y-0.5 pl-4 text-sm leading-6 text-black">{highlights.map((line, i) => <li key={i}>{line}</li>)}</ul>}
+            <EntryHeading primary={primaryNode} dateRange={formatPartialDate(item.date)} />
+            {highlights.length > 0 && (
+              <div style={{ marginTop: "4px" }}>
+                {highlights.map((line, i) => <p key={i} style={{ ...bodyStyle, marginBottom: "2px" }}>{line}</p>)}
+              </div>
+            )}
           </div>
         )));
       });
@@ -140,19 +172,31 @@ export function buildBlocks(resume: ResumeData, theme: TemplateTheme): PreviewBl
     if (sectionKey === "certifications") {
       const certifications = sortByDateDesc(resume.certifications.filter((item) => item.name.trim()));
       if (certifications.length === 0) return;
-      blocks.push(sectionHeader("certifications", sectionTitles.certifications, theme));
-      certifications.forEach((item) => blocks.push(sectionContent(`certification-${item.id}`, <EntryHeading primary={item.name} dateRange={formatPartialDate(item.date)} />)));
+      blocks.push(sectionHeader("certifications", sectionTitles.certifications));
+      certifications.forEach((item) => {
+        const org = item.issuingOrganization?.trim();
+        blocks.push(sectionContent(`certification-${item.id}`, (
+          <div>
+            <EntryHeading primary={item.name} dateRange={formatPartialDate(item.date)} />
+            {org && <p style={{ ...bodyStyle, marginTop: "2px" }}>{org}</p>}
+          </div>
+        )));
+      });
     }
     if (sectionKey === "awards") {
       const awards = sortByDateDesc(resume.awards.filter((item) => item.title.trim()));
       if (awards.length === 0) return;
-      blocks.push(sectionHeader("awards", sectionTitles.awards, theme));
+      blocks.push(sectionHeader("awards", sectionTitles.awards));
       awards.forEach((item) => {
         const highlights = item.highlights.filter((line) => line.trim());
         blocks.push(sectionContent(`award-${item.id}`, (
           <div>
             <EntryHeading primary={item.title} dateRange={formatPartialDate(item.date)} />
-            {highlights.length > 0 && <ul className="mt-1 list-disc space-y-0.5 pl-4 text-sm leading-6 text-black">{highlights.map((line, i) => <li key={i}>{line}</li>)}</ul>}
+            {highlights.length > 0 && (
+              <div style={{ marginTop: "4px" }}>
+                {highlights.map((line, i) => <p key={i} style={{ ...bodyStyle, marginBottom: "2px" }}>{line}</p>)}
+              </div>
+            )}
           </div>
         )));
       });
@@ -161,13 +205,17 @@ export function buildBlocks(resume: ResumeData, theme: TemplateTheme): PreviewBl
       const hasVolunteerContent = (item: VolunteerExperience) => item.organization.trim() || item.role.trim();
       const volunteering = sortByDateDesc(resume.volunteerExperiences.filter(hasVolunteerContent));
       if (volunteering.length === 0) return;
-      blocks.push(sectionHeader("volunteering", sectionTitles.volunteerExperiences, theme));
+      blocks.push(sectionHeader("volunteering", sectionTitles.volunteerExperiences));
       volunteering.forEach((item) => {
         const highlights = item.highlights.filter((line) => line.trim());
         blocks.push(sectionContent(`volunteer-${item.id}`, (
           <div>
             <EntryHeading primary={[item.role, item.organization].filter(Boolean).join(" | ")} dateRange={formatPartialDate(item.date)} />
-            {highlights.length > 0 && <ul className="mt-1 list-disc space-y-0.5 pl-4 text-sm leading-6 text-black">{highlights.map((line, i) => <li key={i}>{line}</li>)}</ul>}
+            {highlights.length > 0 && (
+              <div style={{ marginTop: "4px" }}>
+                {highlights.map((line, i) => <p key={i} style={{ ...bodyStyle, marginBottom: "2px" }}>{line}</p>)}
+              </div>
+            )}
           </div>
         )));
       });
@@ -175,19 +223,23 @@ export function buildBlocks(resume: ResumeData, theme: TemplateTheme): PreviewBl
     if (sectionKey === "languages") {
       const languages = resume.languages.filter((item) => item.name.trim());
       if (languages.length === 0) return;
-      blocks.push(sectionHeader("languages", sectionTitles.languages, theme));
-      blocks.push(sectionContent("languages-content", <p className="text-sm leading-6 text-black">{languages.map((item) => (item.proficiency ? `${item.name} (${item.proficiency})` : item.name)).join(" • ")}</p>));
+      blocks.push(sectionHeader("languages", sectionTitles.languages));
+      blocks.push(sectionContent("languages-content", <p style={bodyStyle}>{languages.map((item) => (item.proficiency ? `${item.name} (${item.proficiency})` : item.name)).join(" • ")}</p>));
     }
     if (sectionKey === "other") {
       const entries = sortByDateDesc(resume.otherEntries.filter((entry) => entry.name.trim()));
       if (entries.length === 0) return;
-      blocks.push(sectionHeader("other", sectionTitles.other, theme));
+      blocks.push(sectionHeader("other", sectionTitles.other));
       entries.forEach((entry) => {
         const highlights = entry.highlights.filter((line) => line.trim());
         blocks.push(sectionContent(`other-entry-${entry.id}`, (
           <div>
             <EntryHeading primary={entry.name} dateRange={formatPartialDate(entry.date)} />
-            {highlights.length > 0 && <ul className="mt-1 list-disc space-y-0.5 pl-4 text-sm leading-6 text-black">{highlights.map((line, i) => <li key={i}>{line}</li>)}</ul>}
+            {highlights.length > 0 && (
+              <div style={{ marginTop: "4px" }}>
+                {highlights.map((line, i) => <p key={i} style={{ ...bodyStyle, marginBottom: "2px" }}>{line}</p>)}
+              </div>
+            )}
           </div>
         )));
       });

@@ -24,7 +24,7 @@ export function BulletListInput({ label, values, onChange, placeholder = "Add a 
               value={value}
               onChange={(event) => update(index, event.target.value)}
               placeholder={placeholder}
-              className="min-h-10 flex-1 rounded-lg border border-slate-200/80 bg-white px-3 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none dark:border-slate-700/80 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500"
+              className="min-h-10 flex-1 rounded-lg border border-slate-200/80 bg-white px-3 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none dark:border-slate-700/80 dark:bg-[#1A2234]/90 dark:text-slate-100 dark:placeholder:text-slate-500"
             />
             <button
               type="button"

@@ -15,7 +15,7 @@ export function GenerateButton() {
     setDocxError(null);
     setIsExportingDocx(true);
     try {
-      await exportResumeToDocx(state.resume);
+      await exportResumeToDocx(state.resume, state.selectedFontId ?? undefined);
     } catch {
       setDocxError("Couldn't generate the Word document. Please try again.");
     } finally {
@@ -29,7 +29,7 @@ export function GenerateButton() {
         <button
           type="button"
           onClick={handlePdf}
-          className="min-h-11 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400"
+          className="min-h-11 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 dark:shadow-[0_2px_12px_rgba(37,99,235,0.35)]"
         >
           Download PDF
         </button>
@@ -37,7 +37,7 @@ export function GenerateButton() {
           type="button"
           onClick={handleDocx}
           disabled={isExportingDocx}
-          className="min-h-11 rounded-xl bg-slate-800 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-900 disabled:opacity-60 dark:bg-slate-700 dark:hover:bg-slate-600"
+          className="min-h-11 rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(15,23,42,0.15)] transition hover:bg-slate-950 disabled:opacity-60 dark:border dark:border-slate-700/80 dark:bg-[#1A2234] dark:hover:bg-[#222B3F] dark:text-slate-200"
         >
           {isExportingDocx ? "Preparing…" : "Download Word (.docx)"}
         </button>

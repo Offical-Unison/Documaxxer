@@ -2,7 +2,7 @@ import { BuilderHeader } from "@/components/builder/builder-header";
 import { ProgressBar } from "@/components/builder/progress-bar";
 import { ResumeFormContainer } from "@/components/builder/resume-form-container";
 import { ResumePreviewContainer } from "@/components/builder/resume-preview-container";
-import { ResumePrintView } from "@/components/builder/resume-print-view";
+import { ResumeAllPages } from "@/components/builder/resume-preview";
 
 export default function BuilderPage() {
   return (
@@ -19,7 +19,7 @@ export default function BuilderPage() {
         </div>
       </div>
     </main>
-    <ResumePrintView />
+    <ResumeAllPages />
     </>
   );
 }
