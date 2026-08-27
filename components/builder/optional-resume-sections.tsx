@@ -6,7 +6,7 @@ import { BulletListInput } from "@/components/builder/bullet-list";
 import { PartialDateField } from "@/components/builder/date-input";
 import { EditableTitle } from "@/components/builder/editable-title";
 import { useResumeContext } from "@/context/resume-context";
-import type { Award, Certification, Language, OptionalSectionKey, OtherEntry, Project, VolunteerExperience } from "@/types/resume";
+import type { Award, Certification, Language, OptionalSectionKey, OtherEntry, Project, Publication, Presentation, ResearchExperience, VolunteerExperience } from "@/types/resume";
 
 const makeId = () => crypto.randomUUID();
 
@@ -16,6 +16,9 @@ const sectionOptions: { key: OptionalSectionKey; label: string; description: str
   { key: "awards", label: "Awards", description: "Highlight academic or professional achievements." },
   { key: "volunteerExperiences", label: "Volunteer Experience", description: "Include relevant volunteer work and organizations." },
   { key: "languages", label: "Languages", description: "List languages and your proficiency level." },
+  { key: "publications", label: "Publications", description: "List your published papers, articles, or books." },
+  { key: "presentations", label: "Presentations", description: "Highlight conferences, talks, or posters." },
+  { key: "researchExperiences", label: "Research Experience", description: "Detail your academic or professional research roles." },
   { key: "other", label: "Other", description: "Add a custom section such as leadership, publications, or activities." },
 ];
 
@@ -134,6 +137,9 @@ function OptionalSection({ section, onRemove }: { section: OptionalSectionKey; o
         {section === "awards" && <Awards items={resume.awards} onChange={(payload) => dispatch({ type: "SET_AWARDS", payload })} />}
         {section === "volunteerExperiences" && <Volunteering items={resume.volunteerExperiences} onChange={(payload) => dispatch({ type: "SET_VOLUNTEER_EXPERIENCES", payload })} />}
         {section === "languages" && <Languages items={resume.languages} onChange={(payload) => dispatch({ type: "SET_LANGUAGES", payload })} />}
+        {section === "publications" && <Publications items={resume.publications} onChange={(payload) => dispatch({ type: "SET_PUBLICATIONS", payload })} />}
+        {section === "presentations" && <Presentations items={resume.presentations} onChange={(payload) => dispatch({ type: "SET_PRESENTATIONS", payload })} />}
+        {section === "researchExperiences" && <ResearchExperiences items={resume.researchExperiences} onChange={(payload) => dispatch({ type: "SET_RESEARCH_EXPERIENCES", payload })} />}
         {section === "other" && <Other entries={resume.otherEntries} onChange={(entries) => dispatch({ type: "SET_OTHER_ENTRIES", payload: entries })} />}
       </div>
     </section>
@@ -200,4 +206,31 @@ function Other({ entries, onChange }: { entries: OtherEntry[]; onChange: (entrie
 function OtherEntryEditor({ item, index, onChange, onRemove }: { item: OtherEntry; index: number; onChange: (item: OtherEntry) => void; onRemove: () => void }) {
   const update = <K extends keyof OtherEntry>(key: K, value: OtherEntry[K]) => onChange({ ...item, [key]: value });
   return <EntryCard title={item.name || `Entry ${index + 1}`} onRemove={onRemove}><div className="grid gap-4 sm:grid-cols-2"><Field label="Entry name" value={item.name} onChange={(event) => update("name", event.target.value)} placeholder="Student Organization Officer" suggestionKey="other.name" /><PartialDateField label="Date" value={item.date} onChange={(value) => update("date", value)} /><div className="sm:col-span-2"><BulletListInput label="Description" values={item.highlights} onChange={(value) => update("highlights", value)} placeholder="Describe what you did." addLabel="+ Add" /></div></div></EntryCard>;
+}
+
+function Publications({ items, onChange }: { items: Publication[]; onChange: (items: Publication[]) => void }) {
+  return <><div className="space-y-3">{items.map((item, index) => <PublicationEditor key={item.id} item={item} index={index} onChange={(next) => onChange(items.map((entry) => entry.id === next.id ? next : entry))} onRemove={() => onChange(items.filter((entry) => entry.id !== item.id))} />)}</div><AddButton onClick={() => onChange([...items, { id: makeId(), title: "", authors: "", publisher: "", date: "", url: "", highlights: [] }])}>+ Add</AddButton></>;
+}
+
+function PublicationEditor({ item, index, onChange, onRemove }: { item: Publication; index: number; onChange: (item: Publication) => void; onRemove: () => void }) {
+  const update = <K extends keyof Publication>(key: K, value: Publication[K]) => onChange({ ...item, [key]: value });
+  return <EntryCard title={item.title || `Publication ${index + 1}`} onRemove={onRemove}><div className="grid gap-4 sm:grid-cols-2"><Field label="Title" value={item.title} onChange={(event) => update("title", event.target.value)} placeholder="Paper Title" /><Field label="Authors" value={item.authors} onChange={(event) => update("authors", event.target.value)} placeholder="Doe, J., Smith, A." /><Field label="Publisher / Journal" value={item.publisher} onChange={(event) => update("publisher", event.target.value)} placeholder="Nature" /><PartialDateField label="Date" value={item.date} onChange={(value) => update("date", value)} /><Field label="URL" value={item.url} onChange={(event) => update("url", event.target.value)} placeholder="https://doi.org/..." /><div className="sm:col-span-2"><BulletListInput label="Description" values={item.highlights} onChange={(value) => update("highlights", value)} placeholder="Brief summary of the publication." addLabel="+ Add" /></div></div></EntryCard>;
+}
+
+function Presentations({ items, onChange }: { items: Presentation[]; onChange: (items: Presentation[]) => void }) {
+  return <><div className="space-y-3">{items.map((item, index) => <PresentationEditor key={item.id} item={item} index={index} onChange={(next) => onChange(items.map((entry) => entry.id === next.id ? next : entry))} onRemove={() => onChange(items.filter((entry) => entry.id !== item.id))} />)}</div><AddButton onClick={() => onChange([...items, { id: makeId(), title: "", event: "", location: "", date: "", highlights: [] }])}>+ Add</AddButton></>;
+}
+
+function PresentationEditor({ item, index, onChange, onRemove }: { item: Presentation; index: number; onChange: (item: Presentation) => void; onRemove: () => void }) {
+  const update = <K extends keyof Presentation>(key: K, value: Presentation[K]) => onChange({ ...item, [key]: value });
+  return <EntryCard title={item.title || `Presentation ${index + 1}`} onRemove={onRemove}><div className="grid gap-4 sm:grid-cols-2"><Field label="Topic / Title" value={item.title} onChange={(event) => update("title", event.target.value)} placeholder="The Future of Web Dev" /><Field label="Event / Conference" value={item.event} onChange={(event) => update("event", event.target.value)} placeholder="React Conf 2024" /><Field label="Location" value={item.location} onChange={(event) => update("location", event.target.value)} placeholder="San Francisco, CA" /><PartialDateField label="Date" value={item.date} onChange={(value) => update("date", value)} /><div className="sm:col-span-2"><BulletListInput label="Description" values={item.highlights} onChange={(value) => update("highlights", value)} placeholder="Brief summary of the presentation." addLabel="+ Add" /></div></div></EntryCard>;
+}
+
+function ResearchExperiences({ items, onChange }: { items: ResearchExperience[]; onChange: (items: ResearchExperience[]) => void }) {
+  return <><div className="space-y-3">{items.map((item, index) => <ResearchExperienceEditor key={item.id} item={item} index={index} onChange={(next) => onChange(items.map((entry) => entry.id === next.id ? next : entry))} onRemove={() => onChange(items.filter((entry) => entry.id !== item.id))} />)}</div><AddButton onClick={() => onChange([...items, { id: makeId(), role: "", organization: "", project: "", date: "", highlights: [] }])}>+ Add</AddButton></>;
+}
+
+function ResearchExperienceEditor({ item, index, onChange, onRemove }: { item: ResearchExperience; index: number; onChange: (item: ResearchExperience) => void; onRemove: () => void }) {
+  const update = <K extends keyof ResearchExperience>(key: K, value: ResearchExperience[K]) => onChange({ ...item, [key]: value });
+  return <EntryCard title={item.role || `Research Experience ${index + 1}`} onRemove={onRemove}><div className="grid gap-4 sm:grid-cols-2"><Field label="Role" value={item.role} onChange={(event) => update("role", event.target.value)} placeholder="Research Assistant" /><Field label="Organization / Lab" value={item.organization} onChange={(event) => update("organization", event.target.value)} placeholder="University Research Lab" /><Field label="Project Name" value={item.project} onChange={(event) => update("project", event.target.value)} placeholder="AI Robotics" /><PartialDateField label="Date" value={item.date} onChange={(value) => update("date", value)} /><div className="sm:col-span-2"><BulletListInput label="Description" values={item.highlights} onChange={(value) => update("highlights", value)} placeholder="Describe your research contributions." addLabel="+ Add" /></div></div></EntryCard>;
 }

@@ -17,12 +17,12 @@ function DocumentLogoIcon() {
 export function BuilderHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-blue-100 bg-white/90 shadow-[0_1px_3px_rgba(15,23,42,0.04)] backdrop-blur-xl transition-colors dark:border-blue-950/40 dark:bg-[#0B0F19]/90">
-      <div className="section-shell flex h-16 items-center justify-between">
+      <div className="flex h-16 w-full items-center justify-between px-5 sm:px-8">
         <div className="flex items-center gap-4">
           <Link href="/" className="group flex items-center gap-2.5 transition-opacity hover:opacity-90">
             <DocumentLogoIcon />
             <span className="text-lg font-bold tracking-tight text-slate-950 dark:text-slate-50">
-              Resum<span className="text-blue-600 dark:text-blue-400">axxer</span>
+              Docum<span className="text-blue-600 dark:text-blue-400">axxer</span>
             </span>
           </Link>
         </div>

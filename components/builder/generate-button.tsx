@@ -15,9 +15,9 @@ export function GenerateButton() {
     setDocxError(null);
     setIsExportingDocx(true);
     try {
-      await exportResumeToDocx(state.resume, state.selectedFontId ?? undefined);
+      await exportResumeToDocx(state.resume, state.selectedFontId ?? undefined, state.documentType);
     } catch {
-      setDocxError("Couldn't generate the Word document. Please try again.");
+      setDocxError(`Couldn't generate the Word document. Please try again.`);
     } finally {
       setIsExportingDocx(false);
     }

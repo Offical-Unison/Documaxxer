@@ -81,7 +81,7 @@ function useResumePages(): UseResumePagesResult {
     )
     : null;
 
-  const blocks = useMemo(() => buildBlocks(resume), [resume]);
+  const blocks = useMemo(() => buildBlocks(resume, state.documentType), [resume, state.documentType]);
   const { rail: railBlocks, main: mainBlocks } = useMemo(
     () => (isSidebar ? splitForSidebar(blocks) : { rail: [] as PreviewBlock[], main: blocks }),
     [blocks, isSidebar]
@@ -319,8 +319,14 @@ export function ResumePreview({ pageIndex, onPageIndexChange, maxHeight = "70vh"
     <div className={className ? `${className} flex flex-col` : "flex flex-col"}>
       {measuringContainer}
 
-      <div className="w-full flex-1 min-h-0 flex items-center justify-center" style={{ maxHeight: maxHeight === "none" ? undefined : maxHeight }}>
-        <div className="w-full h-full flex items-center justify-center" style={{ aspectRatio: maxHeight !== "100%" ? `${PAGE_WIDTH_MM} / ${PAGE_HEIGHT_MM}` : undefined }}>
+      <div 
+        className={`w-full flex items-center justify-center ${maxHeight !== "none" ? "flex-1 min-h-0" : ""}`} 
+        style={{ maxHeight: maxHeight === "none" ? undefined : maxHeight }}
+      >
+        <div 
+          className={`w-full flex items-center justify-center ${maxHeight !== "none" ? "h-full" : ""}`} 
+          style={{ aspectRatio: maxHeight !== "100%" ? `${PAGE_WIDTH_MM} / ${PAGE_HEIGHT_MM}` : undefined }}
+        >
           <A4Page fontStack={fontStack}>
             <ResumePageContent
               pageIndex={safeIndex}

@@ -25,6 +25,9 @@ export const TEMPLATE_THEMES: Record<TemplateId, TemplateTheme> = {
   classic: { fontStack: FONT_STACK_SERIF, headerAlign: "center" },
   modern: { fontStack: FONT_STACK_SANS, headerAlign: "left" },
   sidebar: { fontStack: FONT_STACK_SANS, headerAlign: "left" },
+  "academic-cv": { fontStack: FONT_STACK_SERIF, headerAlign: "center" },
+  "professional-cv": { fontStack: FONT_STACK_SANS, headerAlign: "left" },
+  "modern-cv": { fontStack: FONT_STACK_SANS, headerAlign: "left" },
 };
 
 const RAIL_SECTION_PREFIXES = ["education", "skills", "languages"];
@@ -80,7 +83,7 @@ export function normalizeUrl(url: string): string {
 }
 
 /** Builds an ordered, flat list of atomic preview blocks (never split across pages). */
-export function buildBlocks(resume: ResumeData): PreviewBlock[] {
+export function buildBlocks(resume: ResumeData, documentType: "resume" | "cv" = "resume"): PreviewBlock[] {
   const blocks: PreviewBlock[] = [];
   const { professionalSummary, sectionTitles } = resume;
 
@@ -92,7 +95,8 @@ export function buildBlocks(resume: ResumeData): PreviewBlock[] {
     blocks.push(sectionContent("summary-content", <p style={bodyStyle}>{professionalSummary}</p>));
   }
 
-  if (experiences.length > 0) {
+  const renderExperiences = () => {
+    if (experiences.length === 0) return;
     blocks.push(sectionHeader("experience", sectionTitles.experience));
     experiences.forEach((item) => {
       const highlights = item.highlights.filter((line) => line.trim());
@@ -107,9 +111,10 @@ export function buildBlocks(resume: ResumeData): PreviewBlock[] {
         </div>
       )));
     });
-  }
+  };
 
-  if (education.length > 0) {
+  const renderEducation = () => {
+    if (education.length === 0) return;
     blocks.push(sectionHeader("education", sectionTitles.education));
     education.forEach((item) => {
       const awards = item.awards.filter((award) => award.name.trim());
@@ -131,18 +136,76 @@ export function buildBlocks(resume: ResumeData): PreviewBlock[] {
         </div>
       )));
     });
-  }
+  };
 
-  if (resume.skills.length > 0) {
+  const renderSkills = () => {
+    if (resume.skills.length === 0) return;
     blocks.push(sectionHeader("skills", sectionTitles.skills));
     blocks.push(sectionContent("skills-content", (
       <ul style={{ paddingLeft: "16px", listStyleType: "disc", ...bodyStyle }}>
         {resume.skills.map((skill) => <li key={skill} style={{ paddingLeft: "2px", marginBottom: "2px" }}>{skill}</li>)}
       </ul>
     )));
+  };
+
+  const renderResearch = () => {
+    const research = sortByDateDesc(resume.researchExperiences.filter((item) => item.role.trim() || item.project.trim()));
+    if (research.length === 0) return;
+    blocks.push(sectionHeader("researchExperiences", sectionTitles.researchExperiences));
+    research.forEach((item) => {
+      const highlights = item.highlights.filter((line) => line.trim());
+      blocks.push(sectionContent(`research-${item.id}`, (
+        <div>
+          <EntryHeading primary={item.role} secondary={[item.organization, item.project].filter(Boolean).join(" | ")} dateRange={formatPartialDate(item.date)} />
+          {highlights.length > 0 && (
+            <div style={{ marginTop: "4px" }}>
+              {highlights.map((line, i) => <p key={i} style={{ ...bodyStyle, marginBottom: "2px" }}>{line}</p>)}
+            </div>
+          )}
+        </div>
+      )));
+    });
+  };
+
+  const renderPublications = () => {
+    const publications = sortByDateDesc(resume.publications.filter((item) => item.title.trim()));
+    if (publications.length === 0) return;
+    blocks.push(sectionHeader("publications", sectionTitles.publications));
+    publications.forEach((item) => {
+      const highlights = item.highlights.filter((line) => line.trim());
+      blocks.push(sectionContent(`publication-${item.id}`, (
+        <div>
+          <EntryHeading primary={item.title} secondary={item.publisher} dateRange={formatPartialDate(item.date)} />
+          {item.authors.trim() && <p style={{ ...bodyStyle, marginTop: "2px" }}>Authors: {item.authors}</p>}
+          {item.url.trim() && <p style={{ ...bodyStyle, marginTop: "2px" }}><a href={normalizeUrl(item.url)} target="_blank" rel="noreferrer" style={{color: "inherit", textDecoration: "underline"}}>{item.url}</a></p>}
+          {highlights.length > 0 && (
+            <div style={{ marginTop: "4px" }}>
+              {highlights.map((line, i) => <p key={i} style={{ ...bodyStyle, marginBottom: "2px" }}>{line}</p>)}
+            </div>
+          )}
+        </div>
+      )));
+    });
+  };
+
+  if (documentType === "cv") {
+    renderEducation();
+    renderExperiences();
+    renderResearch();
+    renderPublications();
+    renderSkills();
+  } else {
+    renderExperiences();
+    renderEducation();
+    renderSkills();
   }
 
-  resume.optionalSections.forEach((sectionKey) => {
+  let optionalSectionsToRender = resume.optionalSections;
+  if (documentType === "cv") {
+    optionalSectionsToRender = optionalSectionsToRender.filter(s => s !== "researchExperiences" && s !== "publications");
+  }
+
+  optionalSectionsToRender.forEach((sectionKey) => {
     if (sectionKey === "projects") {
       const hasProjectContent = (item: Project) => item.name.trim();
       const projects = sortByDateDesc(resume.projects.filter(hasProjectContent));
@@ -225,6 +288,63 @@ export function buildBlocks(resume: ResumeData): PreviewBlock[] {
       if (languages.length === 0) return;
       blocks.push(sectionHeader("languages", sectionTitles.languages));
       blocks.push(sectionContent("languages-content", <p style={bodyStyle}>{languages.map((item) => (item.proficiency ? `${item.name} (${item.proficiency})` : item.name)).join(" • ")}</p>));
+    }
+    if (sectionKey === "publications" && documentType === "resume") {
+      const publications = sortByDateDesc(resume.publications.filter((item) => item.title.trim()));
+      if (publications.length === 0) return;
+      blocks.push(sectionHeader("publications", sectionTitles.publications));
+      publications.forEach((item) => {
+        const highlights = item.highlights.filter((line) => line.trim());
+        blocks.push(sectionContent(`publication-${item.id}`, (
+          <div>
+            <EntryHeading primary={item.title} secondary={item.publisher} dateRange={formatPartialDate(item.date)} />
+            {item.authors.trim() && <p style={{ ...bodyStyle, marginTop: "2px" }}>Authors: {item.authors}</p>}
+            {item.url.trim() && <p style={{ ...bodyStyle, marginTop: "2px" }}><a href={normalizeUrl(item.url)} target="_blank" rel="noreferrer" style={{color: "inherit", textDecoration: "underline"}}>{item.url}</a></p>}
+            {highlights.length > 0 && (
+              <div style={{ marginTop: "4px" }}>
+                {highlights.map((line, i) => <p key={i} style={{ ...bodyStyle, marginBottom: "2px" }}>{line}</p>)}
+              </div>
+            )}
+          </div>
+        )));
+      });
+    }
+    if (sectionKey === "presentations") {
+      const presentations = sortByDateDesc(resume.presentations.filter((item) => item.title.trim()));
+      if (presentations.length === 0) return;
+      blocks.push(sectionHeader("presentations", sectionTitles.presentations));
+      presentations.forEach((item) => {
+        const highlights = item.highlights.filter((line) => line.trim());
+        blocks.push(sectionContent(`presentation-${item.id}`, (
+          <div>
+            <EntryHeading primary={item.title} secondary={item.event} dateRange={formatPartialDate(item.date)} />
+            {item.location.trim() && <p style={{ ...bodyStyle, marginTop: "2px" }}>Location: {item.location}</p>}
+            {highlights.length > 0 && (
+              <div style={{ marginTop: "4px" }}>
+                {highlights.map((line, i) => <p key={i} style={{ ...bodyStyle, marginBottom: "2px" }}>{line}</p>)}
+              </div>
+            )}
+          </div>
+        )));
+      });
+    }
+    if (sectionKey === "researchExperiences" && documentType === "resume") {
+      const research = sortByDateDesc(resume.researchExperiences.filter((item) => item.role.trim() || item.project.trim()));
+      if (research.length === 0) return;
+      blocks.push(sectionHeader("researchExperiences", sectionTitles.researchExperiences));
+      research.forEach((item) => {
+        const highlights = item.highlights.filter((line) => line.trim());
+        blocks.push(sectionContent(`research-${item.id}`, (
+          <div>
+            <EntryHeading primary={item.role} secondary={[item.organization, item.project].filter(Boolean).join(" | ")} dateRange={formatPartialDate(item.date)} />
+            {highlights.length > 0 && (
+              <div style={{ marginTop: "4px" }}>
+                {highlights.map((line, i) => <p key={i} style={{ ...bodyStyle, marginBottom: "2px" }}>{line}</p>)}
+              </div>
+            )}
+          </div>
+        )));
+      });
     }
     if (sectionKey === "other") {
       const entries = sortByDateDesc(resume.otherEntries.filter((entry) => entry.name.trim()));

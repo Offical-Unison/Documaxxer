@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
 import { AddButton, EntryCard, Field, TagInput, Textarea } from "@/components/builder/form-controls";
 import { BulletListInput } from "@/components/builder/bullet-list";
 import { PartialDateField } from "@/components/builder/date-input";
@@ -9,15 +8,12 @@ import { LinkListInput } from "@/components/builder/link-list";
 import { PhoneField } from "@/components/builder/phone-input";
 import { EditableTitle } from "@/components/builder/editable-title";
 import { OptionalResumeSections } from "@/components/builder/optional-resume-sections";
-import { TemplatePicker } from "@/components/builder/template-picker";
 import { useResumeContext } from "@/context/resume-context";
 import { isValidPhoneNumber } from "@/lib/phone";
-import type { TemplateId } from "@/lib/templates";
-import type { Education, Experience, PersonalDetails } from "@/types/resume";
+import { getDocumentSteps } from "@/lib/document-config";
+import type { Education, Experience, PersonalDetails, ResearchExperience, Publication } from "@/types/resume";
 
 const makeId = () => crypto.randomUUID();
-const steps = ["Template", "Personal Information + Summary", "Work Experience", "Education", "Skills", "Additional Sections"];
-const LAST_STEP = steps.length - 1;
 
 const SECTION_HEADING_CLASS = "text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-2xl";
 
@@ -34,8 +30,12 @@ function Section({ title, description, children }: { title: React.ReactNode; des
 export function ResumeFormContainer() {
   const { state, dispatch } = useResumeContext();
   const { resume } = state;
+  const steps = getDocumentSteps(state.documentType);
+  const LAST_STEP = steps.length - 1;
   const savedStep = Number(state.activeSection);
   const currentStep = savedStep >= 0 && savedStep <= LAST_STEP ? savedStep : 0;
+  const currentStepConfig = steps[currentStep] || steps[0];
+  const stepId = currentStepConfig.id;
   const [showErrors, setShowErrors] = useState(false);
   const personal = resume.personalDetails;
   const primarySkills = resume.skills;
@@ -53,7 +53,20 @@ export function ResumeFormContainer() {
   const hasExperienceErrors = resume.experiences.some((item) => !item.employer.trim() || !item.role.trim() || !item.location.trim() || !item.startDate || (!item.current && !item.endDate) || !item.highlights.some((line) => line.trim()));
   const hasEducationErrors = resume.education.length === 0 || resume.education.some((item) => !item.institution.trim() || !item.degree.trim() || (item.educationType === "college" && !item.fieldOfStudy.trim()) || !item.startDate || (!item.current && !item.endDate));
   const hasSkillsErrors = primarySkills.length === 0;
-  const invalidStep = () => currentStep === 1 ? hasPersonalErrors : currentStep === 2 ? hasExperienceErrors : currentStep === 3 ? hasEducationErrors : currentStep === 4 ? hasSkillsErrors : false;
+  const hasResearchErrors = resume.researchExperiences.some((item) => !item.role.trim() || !item.organization.trim() || !item.project.trim() || !item.date);
+  const hasPublicationErrors = resume.publications.some((item) => !item.title.trim() || !item.authors.trim() || !item.publisher.trim() || !item.date);
+  
+  const invalidStep = () => {
+    switch (stepId) {
+      case "personal": return hasPersonalErrors;
+      case "experience": return hasExperienceErrors;
+      case "education": return hasEducationErrors;
+      case "skills": return hasSkillsErrors;
+      case "research": return hasResearchErrors;
+      case "publications": return hasPublicationErrors;
+      default: return false;
+    }
+  };
   const goTo = (nextStep: number) => { setShowErrors(false); dispatch({ type: "SET_ACTIVE_SECTION", payload: String(nextStep) }); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const next = () => {
     if (invalidStep()) { setShowErrors(true); return; }
@@ -62,7 +75,7 @@ export function ResumeFormContainer() {
   };
 
   return (
-    <Card aria-labelledby="form-title" className="min-w-0">
+    <div aria-labelledby="form-title" className="min-w-0 pb-12">
       <div className="flex flex-col gap-3 border-b border-slate-200/60 pb-5 dark:border-slate-700/60 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="eyebrow">Resume content</p>
@@ -72,40 +85,43 @@ export function ResumeFormContainer() {
       </div>
 
       <nav className="mt-5" aria-label="Resume form sections">
-        <ol className="flex flex-wrap gap-2">
-          {steps.map((step, number) => (
-            <li key={step}>
-              <button
-                type="button"
-                onClick={() => number < currentStep && goTo(number)}
-                disabled={number > currentStep}
-                aria-current={number === currentStep ? "step" : undefined}
-                className={`rounded-full px-3.5 py-2 text-xs font-semibold transition ${
-                  number === currentStep
-                    ? "bg-blue-600 text-white shadow-sm dark:bg-blue-500"
-                    : number < currentStep
-                      ? "bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-500/15 dark:text-blue-300 dark:hover:bg-blue-500/25"
-                      : "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500"
-                }`}
-              >
-                {number === 0 ? step : `${number}. ${step}`}
-              </button>
-            </li>
-          ))}
+        <ol className="flex flex-wrap items-center gap-1 sm:gap-2">
+          {steps.map((step, number) => {
+            const isCompleted = number < currentStep;
+            const isCurrent = number === currentStep;
+            return (
+              <li key={step.id} className="flex items-center">
+                <button
+                  type="button"
+                  onClick={() => number < currentStep && goTo(number)}
+                  disabled={number > currentStep}
+                  aria-current={isCurrent ? "step" : undefined}
+                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition sm:px-3.5 sm:py-2 ${
+                    isCurrent
+                      ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
+                      : isCompleted
+                        ? "bg-transparent text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                        : "bg-transparent text-slate-400 dark:text-slate-600"
+                  }`}
+                >
+                  {isCompleted ? (
+                    <span className="text-[10px]">✓</span>
+                  ) : isCurrent ? (
+                    <span className="text-[10px]">●</span>
+                  ) : (
+                    <span className="text-[10px]">○</span>
+                  )}
+                  {step.label}
+                </button>
+                {number < LAST_STEP && <span className="mx-0.5 text-slate-300 dark:text-slate-700 sm:mx-1">→</span>}
+              </li>
+            );
+          })}
         </ol>
       </nav>
 
-      <form className="mt-8" onSubmit={(event) => { event.preventDefault(); next(); }} noValidate>
-        {currentStep === 0 && (
-          <Section title="Choose a template" description="Pick a starting look - you can switch anytime from the preview panel.">
-            <TemplatePicker
-              selectedId={state.selectedTemplateId}
-              onSelect={(id: TemplateId) => dispatch({ type: "SET_TEMPLATE", payload: id })}
-            />
-          </Section>
-        )}
-
-        {currentStep === 1 && (
+      <form className="mt-8 pb-20" onSubmit={(event) => { event.preventDefault(); next(); }} noValidate>
+        {stepId === "personal" && (
           <Section title={<EditableTitle as="h2" className={SECTION_HEADING_CLASS} title={titleFor("personal")} onSave={renameTitle("personal")} />} description="Start with the details recruiters use to contact you.">
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="First name" required value={personal.firstName} onChange={(event) => updatePersonal({ firstName: event.target.value })} error={showErrors && !personal.firstName.trim() ? "First name is required." : undefined} placeholder="John" />
@@ -133,7 +149,7 @@ export function ResumeFormContainer() {
           </Section>
         )}
 
-        {currentStep === 2 && (
+        {stepId === "experience" && (
           <Section title={<EditableTitle as="h2" className={SECTION_HEADING_CLASS} title={titleFor("experience")} onSave={renameTitle("experience")} />} description="This section is optional. Add roles that best demonstrate your impact.">
             <div className="space-y-3">
               {resume.experiences.map((item, index) => (
@@ -144,7 +160,7 @@ export function ResumeFormContainer() {
           </Section>
         )}
 
-        {currentStep === 3 && (
+        {stepId === "education" && (
           <Section title={<EditableTitle as="h2" className={SECTION_HEADING_CLASS} title={titleFor("education")} onSave={renameTitle("education")} />} description="Add at least one college, university, or high school entry.">
             <div className="space-y-3">
               {resume.education.map((item, index) => (
@@ -158,37 +174,61 @@ export function ResumeFormContainer() {
           </Section>
         )}
 
-        {currentStep === 4 && (
+        {stepId === "skills" && (
           <Section title={<EditableTitle as="h2" className={SECTION_HEADING_CLASS} title={titleFor("skills")} onSave={renameTitle("skills")} />} description="Add the individual skills most relevant to the role you want.">
             <TagInput label="Skills" values={primarySkills} onChange={(values) => dispatch({ type: "SET_SKILLS", payload: values })} placeholder="Type a skill and press Enter" suggestionKey="skills" />
             {showErrors && hasSkillsErrors && <p className="mt-2 text-sm text-red-600 dark:text-red-400">Add at least one skill to continue.</p>}
           </Section>
         )}
 
-        {currentStep === 5 && (
+        {stepId === "research" && (
+          <Section title={<EditableTitle as="h2" className={SECTION_HEADING_CLASS} title={titleFor("researchExperiences")} onSave={renameTitle("researchExperiences")} />} description="Add your research experience and relevant projects.">
+            <div className="space-y-3">
+              {resume.researchExperiences.map((item, index) => (
+                <ResearchEditor key={item.id} item={item} index={index} showErrors={showErrors} onChange={(nextItem) => dispatch({ type: "SET_RESEARCH_EXPERIENCES", payload: resume.researchExperiences.map((entry) => entry.id === nextItem.id ? nextItem : entry) })} onRemove={() => dispatch({ type: "SET_RESEARCH_EXPERIENCES", payload: resume.researchExperiences.filter((entry) => entry.id !== item.id) })} />
+              ))}
+            </div>
+            <AddButton onClick={() => dispatch({ type: "SET_RESEARCH_EXPERIENCES", payload: [...resume.researchExperiences, { id: makeId(), role: "", organization: "", project: "", date: "", highlights: [] }] })}>+ Add</AddButton>
+          </Section>
+        )}
+
+        {stepId === "publications" && (
+          <Section title={<EditableTitle as="h2" className={SECTION_HEADING_CLASS} title={titleFor("publications")} onSave={renameTitle("publications")} />} description="Add your published papers and articles.">
+            <div className="space-y-3">
+              {resume.publications.map((item, index) => (
+                <PublicationEditor key={item.id} item={item} index={index} showErrors={showErrors} onChange={(nextItem) => dispatch({ type: "SET_PUBLICATIONS", payload: resume.publications.map((entry) => entry.id === nextItem.id ? nextItem : entry) })} onRemove={() => dispatch({ type: "SET_PUBLICATIONS", payload: resume.publications.filter((entry) => entry.id !== item.id) })} />
+              ))}
+            </div>
+            <AddButton onClick={() => dispatch({ type: "SET_PUBLICATIONS", payload: [...resume.publications, { id: makeId(), title: "", authors: "", publisher: "", date: "", url: "", highlights: [] }] })}>+ Add</AddButton>
+          </Section>
+        )}
+
+        {stepId === "additional" && (
           <Section title="Additional Sections" description="Choose sections that strengthen your resume. These are optional, so add only what is relevant to you.">
             <OptionalResumeSections />
           </Section>
         )}
 
-        <div className="mt-9 flex items-center justify-between border-t border-slate-200/60 pt-5 dark:border-slate-700/60">
-          <button
-            type="button"
-            onClick={() => goTo(currentStep - 1)}
-            disabled={currentStep === 0}
-            className="min-h-11 rounded-xl border border-slate-200/80 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700/80 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-          >
-            ← Previous
-          </button>
-          <button
-            type="submit"
-            className="min-h-11 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.98] dark:bg-blue-500 dark:hover:bg-blue-400"
-          >
-            {currentStep < LAST_STEP ? "Next" : "Finish →"}
-          </button>
+        <div className="fixed bottom-0 left-0 right-0 z-20 flex items-center justify-between border-t border-slate-200 bg-white/90 px-5 py-4 backdrop-blur-xl dark:border-slate-800 dark:bg-[#0B0F19]/90 sm:px-8 xl:absolute xl:bottom-0 xl:left-0 xl:right-0 xl:border-r">
+          <div className="mx-auto flex w-full max-w-3xl items-center justify-between">
+            <button
+              type="button"
+              onClick={() => goTo(currentStep - 1)}
+              disabled={currentStep === 0}
+              className="min-h-11 rounded-xl border border-slate-200/80 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700/80 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            >
+              ← Back
+            </button>
+            <button
+              type="submit"
+              className="min-h-11 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.98] dark:bg-blue-500 dark:hover:bg-blue-400"
+            >
+              {currentStep < LAST_STEP ? "Continue →" : "Finish →"}
+            </button>
+          </div>
         </div>
       </form>
-    </Card>
+    </div>
   );
 }
 
@@ -290,6 +330,41 @@ function EducationEditor({ item, index, showErrors, onChange, onRemove }: { item
         <div className="mt-3 grid gap-4 sm:grid-cols-2">
           <Field label="Grade label" value={item.gradeLabel ?? ""} onChange={(event) => update("gradeLabel", event.target.value)} placeholder="GPA" />
           <Field label="Grade value" value={item.gradeValue ?? ""} onChange={(event) => update("gradeValue", event.target.value)} placeholder="e.g. 1.50" />
+        </div>
+      </div>
+    </EntryCard>
+  );
+}
+
+function ResearchEditor({ item, index, showErrors, onChange, onRemove }: { item: ResearchExperience; index: number; showErrors: boolean; onChange: (item: ResearchExperience) => void; onRemove: () => void }) {
+  const update = <K extends keyof ResearchExperience>(key: K, value: ResearchExperience[K]) => onChange({ ...item, [key]: value });
+  return (
+    <EntryCard title={item.role || item.organization || `Research ${index + 1}`} onRemove={onRemove}>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Role" required value={item.role} onChange={(event) => update("role", event.target.value)} error={showErrors && !item.role.trim() ? "Role is required." : undefined} placeholder="Research Assistant" />
+        <Field label="Organization" required value={item.organization} onChange={(event) => update("organization", event.target.value)} error={showErrors && !item.organization.trim() ? "Organization is required." : undefined} placeholder="University Name" />
+        <Field label="Project" required value={item.project} onChange={(event) => update("project", event.target.value)} error={showErrors && !item.project.trim() ? "Project is required." : undefined} placeholder="AI Research Lab" />
+        <PartialDateField label="Date" required value={item.date} onChange={(value) => update("date", value)} error={showErrors && !item.date ? "Date is required." : undefined} />
+        <div className="sm:col-span-2">
+          <BulletListInput label="Description" values={item.highlights} onChange={(value) => update("highlights", value)} placeholder="Describe your research contributions" addLabel="+ Add" />
+        </div>
+      </div>
+    </EntryCard>
+  );
+}
+
+function PublicationEditor({ item, index, showErrors, onChange, onRemove }: { item: Publication; index: number; showErrors: boolean; onChange: (item: Publication) => void; onRemove: () => void }) {
+  const update = <K extends keyof Publication>(key: K, value: Publication[K]) => onChange({ ...item, [key]: value });
+  return (
+    <EntryCard title={item.title || `Publication ${index + 1}`} onRemove={onRemove}>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Title" required value={item.title} onChange={(event) => update("title", event.target.value)} error={showErrors && !item.title.trim() ? "Title is required." : undefined} placeholder="Paper Title" />
+        <Field label="Authors" required value={item.authors} onChange={(event) => update("authors", event.target.value)} error={showErrors && !item.authors.trim() ? "Authors is required." : undefined} placeholder="Doe J., Smith A." />
+        <Field label="Publisher / Journal" required value={item.publisher} onChange={(event) => update("publisher", event.target.value)} error={showErrors && !item.publisher.trim() ? "Publisher is required." : undefined} placeholder="IEEE" />
+        <PartialDateField label="Date" required value={item.date} onChange={(value) => update("date", value)} error={showErrors && !item.date ? "Date is required." : undefined} />
+        <Field label="URL" value={item.url} onChange={(event) => update("url", event.target.value)} placeholder="https://doi.org/..." className="sm:col-span-2" />
+        <div className="sm:col-span-2">
+          <BulletListInput label="Description" values={item.highlights} onChange={(value) => update("highlights", value)} placeholder="Brief description or key findings" addLabel="+ Add" />
         </div>
       </div>
     </EntryCard>

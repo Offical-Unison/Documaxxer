@@ -76,7 +76,35 @@ export interface OtherEntry {
   highlights: string[];
 }
 
-export type OptionalSectionKey = "projects" | "certifications" | "awards" | "volunteerExperiences" | "languages" | "other";
+export interface Publication {
+  id: string;
+  title: string;
+  authors: string;
+  publisher: string;
+  date: string;
+  url: string;
+  highlights: string[];
+}
+
+export interface Presentation {
+  id: string;
+  title: string;
+  event: string;
+  location: string;
+  date: string;
+  highlights: string[];
+}
+
+export interface ResearchExperience {
+  id: string;
+  role: string;
+  organization: string;
+  project: string;
+  date: string;
+  highlights: string[];
+}
+
+export type OptionalSectionKey = "projects" | "certifications" | "awards" | "volunteerExperiences" | "languages" | "publications" | "presentations" | "researchExperiences" | "other";
 export type SectionId = "personal" | "summary" | "experience" | "education" | "skills" | OptionalSectionKey;
 
 export interface ResumeData {
@@ -90,12 +118,16 @@ export interface ResumeData {
   languages: Language[];
   awards: Award[];
   volunteerExperiences: VolunteerExperience[];
+  publications: Publication[];
+  presentations: Presentation[];
+  researchExperiences: ResearchExperience[];
   otherEntries: OtherEntry[];
   optionalSections: OptionalSectionKey[];
   sectionTitles: Record<SectionId, string>;
 }
 
 export interface ResumeState {
+  documentType: "resume" | "cv";
   resume: ResumeData;
   activeSection: string | null;
   selectedTemplateId: string | null;

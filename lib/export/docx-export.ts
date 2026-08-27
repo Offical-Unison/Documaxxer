@@ -83,9 +83,9 @@ function plainLine(text: string, fontName: string): Paragraph {
 
 
 /** Builds a genuinely editable .docx (real OOXML paragraphs/runs, no image or PDF conversion) and triggers a browser download. */
-export async function exportResumeToDocx(resume: ResumeData, selectedFontId?: string): Promise<void> {
+export async function exportResumeToDocx(resume: ResumeData, selectedFontId?: string, documentType: "resume" | "cv" = "resume"): Promise<void> {
   const personal = resume.personalDetails;
-  const fullName = `${personal.firstName} ${personal.lastName}`.trim() || "Resume";
+  const fullName = `${personal.firstName} ${personal.lastName}`.trim() || (documentType === "cv" ? "CV" : "Resume");
   const dial = COUNTRIES.find((country) => country.code === personal.contact.phoneCountry)?.dial ?? "+63";
   const phoneLine = personal.contact.phoneNumber ? `${dial} ${personal.contact.phoneNumber}` : "";
   const contactLine = [personal.contact.location, personal.contact.email, phoneLine].filter(Boolean).join("  •  ");
@@ -235,10 +235,41 @@ export async function exportResumeToDocx(resume: ResumeData, selectedFontId?: st
         item.highlights.filter((line) => line.trim()).forEach((line) => children.push(plainLine(line, fontName)));
       });
     }
+    if (key === "publications") {
+      const items = sortByDateDesc(resume.publications.filter((entry) => entry.title.trim()));
+      if (items.length === 0) return;
+      children.push(sectionHeading(resume.sectionTitles.publications, fontName));
+      items.forEach((item) => {
+        children.push(...entryHeading(item.title, item.publisher, formatPartialDate(item.date), fontName));
+        if (item.authors.trim()) children.push(plainLine(`Authors: ${item.authors}`, fontName));
+        if (item.url.trim()) children.push(plainLine(`URL: ${item.url}`, fontName));
+        item.highlights.filter((line) => line.trim()).forEach((line) => children.push(plainLine(line, fontName)));
+      });
+    }
+    if (key === "presentations") {
+      const items = sortByDateDesc(resume.presentations.filter((entry) => entry.title.trim()));
+      if (items.length === 0) return;
+      children.push(sectionHeading(resume.sectionTitles.presentations, fontName));
+      items.forEach((item) => {
+        children.push(...entryHeading(item.title, item.event, formatPartialDate(item.date), fontName));
+        if (item.location.trim()) children.push(plainLine(`Location: ${item.location}`, fontName));
+        item.highlights.filter((line) => line.trim()).forEach((line) => children.push(plainLine(line, fontName)));
+      });
+    }
+    if (key === "researchExperiences") {
+      const items = sortByDateDesc(resume.researchExperiences.filter((entry) => entry.role.trim() || entry.project.trim()));
+      if (items.length === 0) return;
+      children.push(sectionHeading(resume.sectionTitles.researchExperiences, fontName));
+      items.forEach((item) => {
+        const secondary = [item.organization, item.project].filter(Boolean).join(" | ");
+        children.push(...entryHeading(item.role, secondary, formatPartialDate(item.date), fontName));
+        item.highlights.filter((line) => line.trim()).forEach((line) => children.push(plainLine(line, fontName)));
+      });
+    }
   });
 
   const doc = new Document({
-    creator: "Resumaxxer",
+    creator: "Documaxxer",
     title: fullName,
     description: "Exported Resume",
     styles: {
@@ -268,7 +299,8 @@ export async function exportResumeToDocx(resume: ResumeData, selectedFontId?: st
     }],
   });
   const blob = await Packer.toBlob(doc);
-  downloadBlob(blob, `${fullName.replace(/\s+/g, "_") || "resume"}.docx`);
+  const suffix = documentType === "cv" ? "_CV" : "_Resume";
+  downloadBlob(blob, `${fullName.replace(/\s+/g, "_") || documentType}${suffix}.docx`);
 }
 
 function downloadBlob(blob: Blob, fileName: string): void {

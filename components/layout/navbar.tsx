@@ -27,7 +27,7 @@ export function Navbar() {
         <Link className="group flex items-center gap-2.5 transition-opacity hover:opacity-80" href="/">
           <DocumentLogoIcon />
           <span className="text-lg font-bold tracking-tight text-slate-950 dark:text-slate-50">
-            Resum<span className="text-blue-600 dark:text-blue-400">axxer</span>
+            Docum<span className="text-blue-600 dark:text-blue-400">axxer</span>
           </span>
         </Link>
         <ThemeToggle />

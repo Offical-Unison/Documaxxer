@@ -7,7 +7,7 @@ import type { ResumeState } from "@/types/resume";
 interface ResumeContextValue { state: ResumeState; dispatch: Dispatch<ResumeAction>; }
 const ResumeContext = createContext<ResumeContextValue | undefined>(undefined);
 
-const STORAGE_KEY = "resummaxer:resume-state:v1";
+const STORAGE_KEY = "documaxxer:document-state:v1";
 const SAVE_DEBOUNCE_MS = 500;
 
 export function ResumeProvider({ children }: { children: ReactNode }) {
@@ -24,6 +24,7 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
         dispatch({ type: "SET_TEMPLATE", payload: saved.selectedTemplateId });
         dispatch({ type: "SET_FONT", payload: saved.selectedFontId });
         dispatch({ type: "SET_ACTIVE_SECTION", payload: saved.activeSection });
+        if (saved.documentType) dispatch({ type: "SET_DOCUMENT_TYPE", payload: saved.documentType });
         if (saved.generateUnlocked) dispatch({ type: "UNLOCK_GENERATE" });
       }
     } catch {

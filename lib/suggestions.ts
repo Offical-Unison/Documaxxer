@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-const STORAGE_KEY = "resummaxer:suggestions:v1";
+const STORAGE_KEY = "documaxxer:suggestions:v1";
 const MAX_PER_FIELD = 20;
 
 type SuggestionStore = Record<string, string[]>;

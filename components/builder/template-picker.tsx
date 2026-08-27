@@ -2,6 +2,8 @@
 
 import { RESUME_TEMPLATES, type TemplateId } from "@/lib/templates";
 
+import { useResumeContext } from "@/context/resume-context";
+
 interface TemplatePickerProps {
   selectedId: string | null;
   onSelect: (id: TemplateId) => void;
@@ -9,9 +11,41 @@ interface TemplatePickerProps {
 }
 
 export function TemplatePicker({ selectedId, onSelect, variant = "grid" }: TemplatePickerProps) {
+  const { state, dispatch } = useResumeContext();
+  const filteredTemplates = RESUME_TEMPLATES.filter(t => t.type === state.documentType);
+
+  const documentTypeToggle = (
+    <div className="mb-4 flex w-full max-w-xs overflow-hidden rounded-lg border border-slate-200/80 bg-slate-100/50 p-1 dark:border-slate-700/80 dark:bg-slate-800/50">
+      <button
+        type="button"
+        onClick={() => dispatch({ type: "SET_DOCUMENT_TYPE", payload: "resume" })}
+        className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
+          state.documentType === "resume"
+            ? "bg-white text-blue-600 shadow-sm dark:bg-[#1A2234] dark:text-blue-400"
+            : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+        }`}
+      >
+        Resume
+      </button>
+      <button
+        type="button"
+        onClick={() => dispatch({ type: "SET_DOCUMENT_TYPE", payload: "cv" })}
+        className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
+          state.documentType === "cv"
+            ? "bg-white text-blue-600 shadow-sm dark:bg-[#1A2234] dark:text-blue-400"
+            : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+        }`}
+      >
+        Curriculum Vitae
+      </button>
+    </div>
+  );
+
   if (variant === "compact") {
     return (
       <div className="w-full">
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">Document Type</p>
+        {documentTypeToggle}
         <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">Template</p>
         <select
           value={selectedId ?? ""}
@@ -24,7 +58,7 @@ export function TemplatePicker({ selectedId, onSelect, variant = "grid" }: Templ
             backgroundSize: "1rem",
           }}
         >
-          {RESUME_TEMPLATES.map((template) => (
+          {filteredTemplates.map((template) => (
             <option key={template.id} value={template.id}>
               {template.name}
             </option>
@@ -35,9 +69,11 @@ export function TemplatePicker({ selectedId, onSelect, variant = "grid" }: Templ
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-3">
-      {RESUME_TEMPLATES.map((template) => {
-        const active = selectedId === template.id;
+    <div>
+      {documentTypeToggle}
+      <div className="grid gap-4 sm:grid-cols-3">
+        {filteredTemplates.map((template) => {
+          const active = selectedId === template.id;
         return (
           <button
             key={template.id}
@@ -64,6 +100,7 @@ export function TemplatePicker({ selectedId, onSelect, variant = "grid" }: Templ
           </button>
         );
       })}
+      </div>
     </div>
   );
 }

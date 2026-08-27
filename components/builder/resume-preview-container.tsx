@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Card } from "@/components/ui/card";
 import { ResumePreview } from "@/components/builder/resume-preview";
 import { GenerateButton } from "@/components/builder/generate-button";
 import { TemplatePicker } from "@/components/builder/template-picker";
@@ -32,47 +31,39 @@ export function ResumePreviewContainer() {
   };
 
   return (
-    <Card aria-labelledby="preview-title" className="xl:sticky xl:top-6 xl:self-start">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="eyebrow">Preview</p>
-          <h2 id="preview-title" className="mt-2 text-xl font-bold tracking-tight text-slate-950 dark:text-slate-50">Your resume</h2>
+    <div aria-labelledby="preview-title" className="flex flex-col pb-12">
+      {/* Floating Toolbar */}
+      <div className="sticky top-6 z-10 mx-auto mb-8 flex w-full max-w-2xl flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white/80 p-3 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-[#121824]/80 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-1 min-w-0 items-center gap-3">
+          <div className="flex-1 min-w-0">
+            <TemplatePicker variant="compact" selectedId={state.selectedTemplateId} onSelect={changeTemplate} />
+          </div>
+          <div className="flex-1 min-w-0 max-w-[140px]">
+            <FontPicker selectedId={state.selectedFontId} onSelect={(id) => dispatch({ type: "SET_FONT", payload: id })} />
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={() => setExpanded(true)}
-          className="mt-1 inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-slate-200/80 bg-white/80 px-3 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-700/80 dark:bg-[#1A2234]/90 dark:text-slate-300 dark:hover:border-blue-400/40 dark:hover:bg-blue-500/15 dark:hover:text-blue-300"
-        >
-          <ExpandIcon />
-          Expand
-        </button>
+        <div className="flex items-center justify-end gap-2 shrink-0 border-t border-slate-200/60 pt-3 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-3 dark:border-slate-700/60">
+          <button
+            type="button"
+            onClick={() => setExpanded(true)}
+            aria-label="Expand preview"
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition-colors hover:bg-slate-200 hover:text-slate-900 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100"
+          >
+            <ExpandIcon />
+          </button>
+          {state.generateUnlocked && (
+            <GenerateButton />
+          )}
+        </div>
       </div>
 
-      <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
-        <div className="min-w-0 flex-1">
-          <TemplatePicker variant="compact" selectedId={state.selectedTemplateId} onSelect={changeTemplate} />
-        </div>
-        <div className="min-w-0 flex-1 sm:max-w-[160px]">
-          <FontPicker selectedId={state.selectedFontId} onSelect={(id) => dispatch({ type: "SET_FONT", payload: id })} />
-        </div>
-      </div>
-
-      <div className="mt-5">
-        <ResumePreview pageIndex={pageIndex} onPageIndexChange={setPageIndex} maxHeight="70vh" />
-      </div>
-
-      <div className="mt-5">
-        {state.generateUnlocked ? (
-          <GenerateButton />
-        ) : (
-          <p className="text-center text-xs text-slate-400 dark:text-slate-500">
-            Finish the form to download your resume.
-          </p>
-        )}
+      {/* Document Area */}
+      <div className="relative mx-auto w-full max-w-[850px]">
+        <ResumePreview pageIndex={pageIndex} onPageIndexChange={setPageIndex} maxHeight="none" />
       </div>
 
       {expanded && <ExpandedPreviewModal pageIndex={pageIndex} onPageIndexChange={setPageIndex} onClose={() => setExpanded(false)} />}
-    </Card>
+    </div>
   );
 }
 
