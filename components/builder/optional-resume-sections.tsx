@@ -6,13 +6,11 @@ import { BulletListInput } from "@/components/builder/bullet-list";
 import { PartialDateField } from "@/components/builder/date-input";
 import { EditableTitle } from "@/components/builder/editable-title";
 import { useResumeContext } from "@/context/resume-context";
-import { Textarea } from "@/components/builder/form-controls";
 import type { Award, Certification, Language, OptionalSectionKey, OtherEntry, Project, Publication, Presentation, ResearchExperience, VolunteerExperience, TeachingExperience, Grant, Membership, OrganizationRole, LeadershipExperience, Reference } from "@/types/resume";
 
 const makeId = () => crypto.randomUUID();
 
 const RESUME_SECTION_OPTIONS: { key: OptionalSectionKey; label: string; description: string; recommended?: boolean }[] = [
-  { key: "summary", label: "Professional Summary", description: "A brief overview of your expertise and goals.", recommended: true },
   { key: "projects", label: "Projects", description: "Showcase personal, academic, or professional projects." },
   { key: "certifications", label: "Certifications", description: "Add certifications, licenses, or completed courses." },
   { key: "awards", label: "Awards & Honors", description: "Highlight academic or professional achievements." },
@@ -24,7 +22,6 @@ const RESUME_SECTION_OPTIONS: { key: OptionalSectionKey; label: string; descript
 ];
 
 const CV_SECTION_OPTIONS: { key: OptionalSectionKey; label: string; description: string; recommended?: boolean }[] = [
-  { key: "summary", label: "Academic Profile", description: "A brief overview of your academic or professional profile.", recommended: true },
   { key: "researchExperiences", label: "Research Experience", description: "Detail your academic or professional research roles." },
   { key: "publications", label: "Publications", description: "List your published papers, articles, or books." },
   { key: "teachingExperiences", label: "Teaching Experience", description: "Highlight your experience as an educator or TA." },
@@ -148,11 +145,6 @@ function OptionalSection({ section, onRemove }: { section: OptionalSectionKey; o
         </button>
       </div>
       <div className="mt-4">
-        {section === "summary" && (
-          <div className="mt-2">
-            <Textarea label="Summary" value={resume.professionalSummary} onChange={(event) => dispatch({ type: "SET_PROFESSIONAL_SUMMARY", payload: event.target.value })} maxLength={600} hint={`${resume.professionalSummary.length}/600 characters`} placeholder="Summarize your expertise, strengths, and the value you bring." />
-          </div>
-        )}
         {section === "projects" && <Projects items={resume.projects} onChange={(payload) => dispatch({ type: "SET_PROJECTS", payload })} />}
         {section === "certifications" && <Certifications items={resume.certifications} onChange={(payload) => dispatch({ type: "SET_CERTIFICATIONS", payload })} />}
         {section === "awards" && <Awards items={resume.awards} onChange={(payload) => dispatch({ type: "SET_AWARDS", payload })} />}

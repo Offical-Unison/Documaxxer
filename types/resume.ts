@@ -153,7 +153,7 @@ export interface Reference {
   contactInfo: string;
 }
 
-export type OptionalSectionKey = "summary" | "projects" | "certifications" | "awards" | "volunteerExperiences" | "languages" | "publications" | "presentations" | "researchExperiences" | "teachingExperiences" | "grants" | "memberships" | "organizations" | "leadership" | "references" | "other";
+export type OptionalSectionKey = "projects" | "certifications" | "awards" | "volunteerExperiences" | "languages" | "publications" | "presentations" | "researchExperiences" | "teachingExperiences" | "grants" | "memberships" | "organizations" | "leadership" | "references" | "other";
 export type SectionId = "personal" | "summary" | "experience" | "education" | "skills" | OptionalSectionKey;
 
 export interface ResumeData {

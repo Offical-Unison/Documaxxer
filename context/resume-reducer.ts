@@ -81,12 +81,12 @@ export type ResumeAction =
   | { type: "SET_PUBLICATIONS"; payload: Publication[] }
   | { type: "SET_PRESENTATIONS"; payload: Presentation[] }
   | { type: "SET_RESEARCH_EXPERIENCES"; payload: ResearchExperience[] }
-  | { type: "SET_TEACHING_EXPERIENCES"; payload: any[] } // Type any to avoid importing all if not strictly typed in action union yet, wait I will import them.
-  | { type: "SET_GRANTS"; payload: any[] }
-  | { type: "SET_MEMBERSHIPS"; payload: any[] }
-  | { type: "SET_ORGANIZATIONS"; payload: any[] }
-  | { type: "SET_LEADERSHIP"; payload: any[] }
-  | { type: "SET_REFERENCES"; payload: any[] }
+  | { type: "SET_TEACHING_EXPERIENCES"; payload: TeachingExperience[] }
+  | { type: "SET_GRANTS"; payload: Grant[] }
+  | { type: "SET_MEMBERSHIPS"; payload: Membership[] }
+  | { type: "SET_ORGANIZATIONS"; payload: OrganizationRole[] }
+  | { type: "SET_LEADERSHIP"; payload: LeadershipExperience[] }
+  | { type: "SET_REFERENCES"; payload: Reference[] }
   | { type: "SET_OTHER_ENTRIES"; payload: OtherEntry[] }
   | { type: "SET_OPTIONAL_SECTIONS"; payload: OptionalSectionKey[] }
   | { type: "SET_SECTION_TITLE"; payload: { id: SectionId; title: string } }

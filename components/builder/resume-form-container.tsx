@@ -138,6 +138,20 @@ export function ResumeFormContainer() {
               <Field label="Location" required value={personal.contact.location} onChange={(event) => updatePersonal({ contact: { location: event.target.value } })} error={showErrors && !personal.contact.location.trim() ? "Location is required." : undefined} placeholder="Cebu, Philippines" suggestionKey="personal.location" />
             </div>
             <div className="mt-6"><LinkListInput values={personal.links} onChange={(links) => updatePersonal({ links })} makeId={makeId} /></div>
+            <div className="mt-8 border-t border-slate-200/60 pt-6 dark:border-slate-700/60">
+              <div className="mb-1.5 flex items-center justify-between">
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Professional Summary</span>
+              </div>
+              <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">Briefly describe your professional background, strengths, and career focus.</p>
+              <textarea
+                className="min-h-28 w-full rounded-xl border border-slate-200/90 bg-white/90 px-3.5 py-2.5 text-sm text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.04)] placeholder:text-slate-400 transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 focus:bg-white focus:outline-none dark:border-slate-700/80 dark:bg-[#1A2234]/90 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-500/20"
+                value={resume.professionalSummary}
+                onChange={(event) => dispatch({ type: "SET_PROFESSIONAL_SUMMARY", payload: event.target.value })}
+                maxLength={600}
+                placeholder="Summarize your expertise, strengths, and the value you bring."
+              />
+              <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">{resume.professionalSummary.length}/600 characters</p>
+            </div>
           </Section>
         )}
 
