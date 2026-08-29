@@ -1,17 +1,16 @@
 "use client";
 
 import { Suspense, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { TemplatePicker } from "@/components/builder/template-picker";
 import { useResumeContext } from "@/context/resume-context";
 import { BuilderHeader } from "@/components/builder/builder-header";
-import { getTemplate, RESUME_TEMPLATES } from "@/lib/templates";
+import { getTemplate, RESUME_TEMPLATES, type TemplateId } from "@/lib/templates";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 function TemplateSelectionContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const { state, dispatch } = useResumeContext();
 
   const typeParam = searchParams.get("type");
@@ -30,7 +29,7 @@ function TemplateSelectionContent() {
     }
   }, [typeParam, dispatch, state.selectedTemplateId]);
 
-  const handleTemplateSelect = (id: any) => {
+  const handleTemplateSelect = (id: TemplateId) => {
     dispatch({ type: "SET_TEMPLATE", payload: id });
   };
 

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { formatDateRange, formatPartialDate, sortByDateDesc, sortEntriesByRecency } from "@/lib/format";
 import type { TemplateId } from "@/lib/templates";
-import type { Education, Experience, Project, ResumeData, VolunteerExperience, TeachingExperience, Grant, Membership, OrganizationRole, LeadershipExperience, Reference } from "@/types/resume";
+import type { Education, Experience, Project, ResumeData, VolunteerExperience } from "@/types/resume";
 import {
   sectionHeadingStyle, entryTitleStyle, entrySubtitleStyle,
   bodyStyle, dateStyle,

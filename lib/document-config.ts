@@ -18,6 +18,6 @@ export const CORE_STEPS: DocumentStep[] = [
   { id: "additional", label: "Additional" },
 ];
 
-export function getDocumentSteps(documentType: "resume" | "cv"): DocumentStep[] {
+export function getDocumentSteps(_documentType: "resume" | "cv"): DocumentStep[] {
   return CORE_STEPS;
 }

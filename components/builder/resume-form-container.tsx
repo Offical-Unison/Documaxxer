@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AddButton, EntryCard, Field, TagInput, Textarea } from "@/components/builder/form-controls";
+import { AddButton, EntryCard, Field, TagInput } from "@/components/builder/form-controls";
 import { BulletListInput } from "@/components/builder/bullet-list";
 import { PartialDateField } from "@/components/builder/date-input";
 import { LinkListInput } from "@/components/builder/link-list";

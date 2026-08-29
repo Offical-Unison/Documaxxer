@@ -11,7 +11,7 @@ interface TemplatePickerProps {
 }
 
 export function TemplatePicker({ selectedId, onSelect, variant = "grid" }: TemplatePickerProps) {
-  const { state, dispatch } = useResumeContext();
+  const { state } = useResumeContext();
   const filteredTemplates = RESUME_TEMPLATES.filter(t => t.type === state.documentType);
 
   if (variant === "compact") {
