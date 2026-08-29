@@ -11,7 +11,7 @@ import { OptionalResumeSections } from "@/components/builder/optional-resume-sec
 import { useResumeContext } from "@/context/resume-context";
 import { isValidPhoneNumber } from "@/lib/phone";
 import { getDocumentSteps } from "@/lib/document-config";
-import type { Education, Experience, PersonalDetails, ResearchExperience, Publication } from "@/types/resume";
+import type { Education, Experience, PersonalDetails } from "@/types/resume";
 
 const makeId = () => crypto.randomUUID();
 
@@ -49,12 +49,11 @@ export function ResumeFormContainer() {
   const setEducation = (items: Education[]) => dispatch({ type: "SET_EDUCATION", payload: items });
 
   const phoneValid = isValidPhoneNumber(personal.contact.phoneCountry, personal.contact.phoneNumber);
-  const hasPersonalErrors = !personal.firstName.trim() || !personal.lastName.trim() || !personal.contact.email.trim() || !personal.contact.phoneNumber.trim() || !phoneValid || !personal.contact.location.trim() || !resume.professionalSummary.trim();
+  const hasPersonalErrors = !personal.firstName.trim() || !personal.lastName.trim() || !personal.contact.email.trim() || !personal.contact.phoneNumber.trim() || !phoneValid || !personal.contact.location.trim();
   const hasExperienceErrors = resume.experiences.some((item) => !item.employer.trim() || !item.role.trim() || !item.location.trim() || !item.startDate || (!item.current && !item.endDate) || !item.highlights.some((line) => line.trim()));
   const hasEducationErrors = resume.education.length === 0 || resume.education.some((item) => !item.institution.trim() || !item.degree.trim() || (item.educationType === "college" && !item.fieldOfStudy.trim()) || !item.startDate || (!item.current && !item.endDate));
   const hasSkillsErrors = primarySkills.length === 0;
-  const hasResearchErrors = resume.researchExperiences.some((item) => !item.role.trim() || !item.organization.trim() || !item.project.trim() || !item.date);
-  const hasPublicationErrors = resume.publications.some((item) => !item.title.trim() || !item.authors.trim() || !item.publisher.trim() || !item.date);
+
   
   const invalidStep = () => {
     switch (stepId) {
@@ -62,8 +61,6 @@ export function ResumeFormContainer() {
       case "experience": return hasExperienceErrors;
       case "education": return hasEducationErrors;
       case "skills": return hasSkillsErrors;
-      case "research": return hasResearchErrors;
-      case "publications": return hasPublicationErrors;
       default: return false;
     }
   };
@@ -79,7 +76,9 @@ export function ResumeFormContainer() {
       <div className="flex flex-col gap-3 border-b border-slate-200/60 pb-5 dark:border-slate-700/60 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="eyebrow">Resume content</p>
-          <h1 id="form-title" className="mt-2 text-2xl font-bold tracking-tight text-slate-950 dark:text-slate-50">Build your resume</h1>
+          <h1 id="form-title" className="mt-2 text-2xl font-bold tracking-tight text-slate-950 dark:text-slate-50">
+            {state.documentType === "cv" ? "Build your Curriculum Vitae" : "Build your resume"}
+          </h1>
         </div>
         <p className="text-sm font-medium tabular-nums text-slate-400 dark:text-slate-500">Step {currentStep + 1} of {steps.length}</p>
       </div>
@@ -139,13 +138,6 @@ export function ResumeFormContainer() {
               <Field label="Location" required value={personal.contact.location} onChange={(event) => updatePersonal({ contact: { location: event.target.value } })} error={showErrors && !personal.contact.location.trim() ? "Location is required." : undefined} placeholder="Cebu, Philippines" suggestionKey="personal.location" />
             </div>
             <div className="mt-6"><LinkListInput values={personal.links} onChange={(links) => updatePersonal({ links })} makeId={makeId} /></div>
-            <div className="mt-8 border-t border-slate-200/60 pt-7 dark:border-slate-700/60">
-              <EditableTitle as="h2" className={SECTION_HEADING_CLASS} title={titleFor("summary")} onSave={renameTitle("summary")} />
-              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Aim for two to four concise sentences.</p>
-              <div className="mt-4">
-                <Textarea label="Summary" value={resume.professionalSummary} onChange={(event) => dispatch({ type: "SET_PROFESSIONAL_SUMMARY", payload: event.target.value })} error={showErrors && !resume.professionalSummary.trim() ? "Summary is required." : undefined} maxLength={600} hint={`${resume.professionalSummary.length}/600 characters`} placeholder="Summarize your expertise, strengths, and the value you bring." />
-              </div>
-            </div>
           </Section>
         )}
 
@@ -181,27 +173,7 @@ export function ResumeFormContainer() {
           </Section>
         )}
 
-        {stepId === "research" && (
-          <Section title={<EditableTitle as="h2" className={SECTION_HEADING_CLASS} title={titleFor("researchExperiences")} onSave={renameTitle("researchExperiences")} />} description="Add your research experience and relevant projects.">
-            <div className="space-y-3">
-              {resume.researchExperiences.map((item, index) => (
-                <ResearchEditor key={item.id} item={item} index={index} showErrors={showErrors} onChange={(nextItem) => dispatch({ type: "SET_RESEARCH_EXPERIENCES", payload: resume.researchExperiences.map((entry) => entry.id === nextItem.id ? nextItem : entry) })} onRemove={() => dispatch({ type: "SET_RESEARCH_EXPERIENCES", payload: resume.researchExperiences.filter((entry) => entry.id !== item.id) })} />
-              ))}
-            </div>
-            <AddButton onClick={() => dispatch({ type: "SET_RESEARCH_EXPERIENCES", payload: [...resume.researchExperiences, { id: makeId(), role: "", organization: "", project: "", date: "", highlights: [] }] })}>+ Add</AddButton>
-          </Section>
-        )}
 
-        {stepId === "publications" && (
-          <Section title={<EditableTitle as="h2" className={SECTION_HEADING_CLASS} title={titleFor("publications")} onSave={renameTitle("publications")} />} description="Add your published papers and articles.">
-            <div className="space-y-3">
-              {resume.publications.map((item, index) => (
-                <PublicationEditor key={item.id} item={item} index={index} showErrors={showErrors} onChange={(nextItem) => dispatch({ type: "SET_PUBLICATIONS", payload: resume.publications.map((entry) => entry.id === nextItem.id ? nextItem : entry) })} onRemove={() => dispatch({ type: "SET_PUBLICATIONS", payload: resume.publications.filter((entry) => entry.id !== item.id) })} />
-              ))}
-            </div>
-            <AddButton onClick={() => dispatch({ type: "SET_PUBLICATIONS", payload: [...resume.publications, { id: makeId(), title: "", authors: "", publisher: "", date: "", url: "", highlights: [] }] })}>+ Add</AddButton>
-          </Section>
-        )}
 
         {stepId === "additional" && (
           <Section title="Additional Sections" description="Choose sections that strengthen your resume. These are optional, so add only what is relevant to you.">
@@ -330,41 +302,6 @@ function EducationEditor({ item, index, showErrors, onChange, onRemove }: { item
         <div className="mt-3 grid gap-4 sm:grid-cols-2">
           <Field label="Grade label" value={item.gradeLabel ?? ""} onChange={(event) => update("gradeLabel", event.target.value)} placeholder="GPA" />
           <Field label="Grade value" value={item.gradeValue ?? ""} onChange={(event) => update("gradeValue", event.target.value)} placeholder="e.g. 1.50" />
-        </div>
-      </div>
-    </EntryCard>
-  );
-}
-
-function ResearchEditor({ item, index, showErrors, onChange, onRemove }: { item: ResearchExperience; index: number; showErrors: boolean; onChange: (item: ResearchExperience) => void; onRemove: () => void }) {
-  const update = <K extends keyof ResearchExperience>(key: K, value: ResearchExperience[K]) => onChange({ ...item, [key]: value });
-  return (
-    <EntryCard title={item.role || item.organization || `Research ${index + 1}`} onRemove={onRemove}>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Role" required value={item.role} onChange={(event) => update("role", event.target.value)} error={showErrors && !item.role.trim() ? "Role is required." : undefined} placeholder="Research Assistant" />
-        <Field label="Organization" required value={item.organization} onChange={(event) => update("organization", event.target.value)} error={showErrors && !item.organization.trim() ? "Organization is required." : undefined} placeholder="University Name" />
-        <Field label="Project" required value={item.project} onChange={(event) => update("project", event.target.value)} error={showErrors && !item.project.trim() ? "Project is required." : undefined} placeholder="AI Research Lab" />
-        <PartialDateField label="Date" required value={item.date} onChange={(value) => update("date", value)} error={showErrors && !item.date ? "Date is required." : undefined} />
-        <div className="sm:col-span-2">
-          <BulletListInput label="Description" values={item.highlights} onChange={(value) => update("highlights", value)} placeholder="Describe your research contributions" addLabel="+ Add" />
-        </div>
-      </div>
-    </EntryCard>
-  );
-}
-
-function PublicationEditor({ item, index, showErrors, onChange, onRemove }: { item: Publication; index: number; showErrors: boolean; onChange: (item: Publication) => void; onRemove: () => void }) {
-  const update = <K extends keyof Publication>(key: K, value: Publication[K]) => onChange({ ...item, [key]: value });
-  return (
-    <EntryCard title={item.title || `Publication ${index + 1}`} onRemove={onRemove}>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Title" required value={item.title} onChange={(event) => update("title", event.target.value)} error={showErrors && !item.title.trim() ? "Title is required." : undefined} placeholder="Paper Title" />
-        <Field label="Authors" required value={item.authors} onChange={(event) => update("authors", event.target.value)} error={showErrors && !item.authors.trim() ? "Authors is required." : undefined} placeholder="Doe J., Smith A." />
-        <Field label="Publisher / Journal" required value={item.publisher} onChange={(event) => update("publisher", event.target.value)} error={showErrors && !item.publisher.trim() ? "Publisher is required." : undefined} placeholder="IEEE" />
-        <PartialDateField label="Date" required value={item.date} onChange={(value) => update("date", value)} error={showErrors && !item.date ? "Date is required." : undefined} />
-        <Field label="URL" value={item.url} onChange={(event) => update("url", event.target.value)} placeholder="https://doi.org/..." className="sm:col-span-2" />
-        <div className="sm:col-span-2">
-          <BulletListInput label="Description" values={item.highlights} onChange={(value) => update("highlights", value)} placeholder="Brief description or key findings" addLabel="+ Add" />
         </div>
       </div>
     </EntryCard>

@@ -1,4 +1,4 @@
-import type { Award, Certification, Education, Experience, Language, OptionalSectionKey, OtherEntry, PersonalDetails, Project, Publication, Presentation, ResearchExperience, ResumeData, ResumeState, SectionId, VolunteerExperience } from "@/types/resume";
+import type { Award, Certification, Education, Experience, Language, OptionalSectionKey, OtherEntry, PersonalDetails, Project, Publication, Presentation, ResearchExperience, TeachingExperience, Grant, Membership, OrganizationRole, LeadershipExperience, Reference, ResumeData, ResumeState, SectionId, VolunteerExperience } from "@/types/resume";
 import { DEFAULT_TEMPLATE_ID } from "@/lib/templates";
 import { DEFAULT_FONT_ID } from "@/lib/fonts";
 
@@ -16,6 +16,12 @@ export const DEFAULT_SECTION_TITLES: Record<SectionId, string> = {
   publications: "Publications",
   presentations: "Presentations",
   researchExperiences: "Research Experience",
+  teachingExperiences: "Teaching Experience",
+  grants: "Grants & Fellowships",
+  memberships: "Professional Memberships",
+  organizations: "Organizations",
+  leadership: "Leadership",
+  references: "References",
   other: "Other",
 };
 
@@ -37,6 +43,12 @@ export const initialResumeData: ResumeData = {
   publications: [],
   presentations: [],
   researchExperiences: [],
+  teachingExperiences: [],
+  grants: [],
+  memberships: [],
+  organizations: [],
+  leadership: [],
+  references: [],
   otherEntries: [],
   optionalSections: [],
   sectionTitles: { ...DEFAULT_SECTION_TITLES },
@@ -69,6 +81,12 @@ export type ResumeAction =
   | { type: "SET_PUBLICATIONS"; payload: Publication[] }
   | { type: "SET_PRESENTATIONS"; payload: Presentation[] }
   | { type: "SET_RESEARCH_EXPERIENCES"; payload: ResearchExperience[] }
+  | { type: "SET_TEACHING_EXPERIENCES"; payload: any[] } // Type any to avoid importing all if not strictly typed in action union yet, wait I will import them.
+  | { type: "SET_GRANTS"; payload: any[] }
+  | { type: "SET_MEMBERSHIPS"; payload: any[] }
+  | { type: "SET_ORGANIZATIONS"; payload: any[] }
+  | { type: "SET_LEADERSHIP"; payload: any[] }
+  | { type: "SET_REFERENCES"; payload: any[] }
   | { type: "SET_OTHER_ENTRIES"; payload: OtherEntry[] }
   | { type: "SET_OPTIONAL_SECTIONS"; payload: OptionalSectionKey[] }
   | { type: "SET_SECTION_TITLE"; payload: { id: SectionId; title: string } }
@@ -95,6 +113,12 @@ export function resumeReducer(state: ResumeState, action: ResumeAction): ResumeS
     case "SET_PUBLICATIONS": return { ...state, resume: { ...state.resume, publications: action.payload } };
     case "SET_PRESENTATIONS": return { ...state, resume: { ...state.resume, presentations: action.payload } };
     case "SET_RESEARCH_EXPERIENCES": return { ...state, resume: { ...state.resume, researchExperiences: action.payload } };
+    case "SET_TEACHING_EXPERIENCES": return { ...state, resume: { ...state.resume, teachingExperiences: action.payload } };
+    case "SET_GRANTS": return { ...state, resume: { ...state.resume, grants: action.payload } };
+    case "SET_MEMBERSHIPS": return { ...state, resume: { ...state.resume, memberships: action.payload } };
+    case "SET_ORGANIZATIONS": return { ...state, resume: { ...state.resume, organizations: action.payload } };
+    case "SET_LEADERSHIP": return { ...state, resume: { ...state.resume, leadership: action.payload } };
+    case "SET_REFERENCES": return { ...state, resume: { ...state.resume, references: action.payload } };
     case "SET_OTHER_ENTRIES": return { ...state, resume: { ...state.resume, otherEntries: action.payload } };
     case "SET_OPTIONAL_SECTIONS": return { ...state, resume: { ...state.resume, optionalSections: action.payload } };
     case "SET_SECTION_TITLE": return { ...state, resume: { ...state.resume, sectionTitles: { ...state.resume.sectionTitles, [action.payload.id]: action.payload.title } } };

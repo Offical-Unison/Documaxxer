@@ -19,16 +19,16 @@ export function HowItWorks() {
             How It Works
           </p>
           <h2 id="how-it-works-title" className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl dark:text-slate-50 max-w-sm">
-            A simpler way to build your resume.
+            A simpler way to build your documents.
           </h2>
           <p className="mt-6 text-base leading-relaxed text-slate-500 dark:text-slate-400 max-w-md">
-            A focused workspace for building a clear, professional resume.
+            Create a professional resume or comprehensive curriculum vitae in one focused workspace.
           </p>
           
           <div className="mt-12 hidden lg:block">
             <Button asChild className="group">
-              <Link href="/builder">
-                Start Building <span className="ml-2 inline-block transition-transform group-hover:translate-x-1" aria-hidden="true">→</span>
+              <Link href="/create">
+                Create a Document <span className="ml-2 inline-block transition-transform group-hover:translate-x-1" aria-hidden="true">→</span>
               </Link>
             </Button>
           </div>
@@ -58,8 +58,8 @@ export function HowItWorks() {
       
       <div className="mt-12 lg:hidden">
         <Button asChild className="group w-full sm:w-auto">
-          <Link href="/builder">
-            Start Building <span className="ml-2 inline-block transition-transform group-hover:translate-x-1" aria-hidden="true">→</span>
+          <Link href="/create">
+            Create a Document <span className="ml-2 inline-block transition-transform group-hover:translate-x-1" aria-hidden="true">→</span>
           </Link>
         </Button>
       </div>

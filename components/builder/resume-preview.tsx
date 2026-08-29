@@ -10,7 +10,7 @@ import { countResumeWords } from "@/lib/statistics";
 import {
   CONTENT_HEIGHT_MM, CONTENT_WIDTH_MM, MARGIN_MM, PAGE_HEIGHT_MM, PAGE_WIDTH_MM,
   SIDEBAR_GAP_MM, SIDEBAR_MAIN_WIDTH_RATIO, SIDEBAR_RAIL_WIDTH_RATIO, TEMPLATE_THEMES,
-  buildBlocks, hasEducationContent, hasExperienceContent, normalizeUrl, paginateBlocks, splitForSidebar,
+  buildTemplateBlocks, hasEducationContent, hasExperienceContent, normalizeUrl, paginateBlocks,
   type PreviewBlock,
 } from "@/lib/resume-blocks";
 import {
@@ -45,7 +45,6 @@ function useResumePages(): UseResumePagesResult {
   const { resume, selectedTemplateId, selectedFontId } = state;
   const templateId = getTemplate(selectedTemplateId).id;
   const theme = TEMPLATE_THEMES[templateId];
-  const isSidebar = templateId === "sidebar";
   const fontStack = getFont(selectedFontId).stack;
 
   const { personalDetails: personal, professionalSummary } = resume;
@@ -60,6 +59,13 @@ function useResumePages(): UseResumePagesResult {
   const educationPresent = resume.education.some(hasEducationContent);
   const skillsPresent = resume.skills.length > 0;
   const isEmpty = !fullName && !personal.headline.trim() && !contactLine && links.length === 0 && !professionalSummary.trim() && !experiencesPresent && !educationPresent && !skillsPresent;
+
+  const { main: mainBlocks, rail: railBlocks } = useMemo(
+    () => buildTemplateBlocks(resume, templateId),
+    [resume, templateId]
+  );
+  const isSidebar = railBlocks.length > 0;
+  const wordCount = useMemo(() => countResumeWords(resume), [resume]);
 
   const headerNode = fullName || personal.headline.trim() || contactLine || links.length > 0
     ? (
@@ -80,13 +86,6 @@ function useResumePages(): UseResumePagesResult {
       </header>
     )
     : null;
-
-  const blocks = useMemo(() => buildBlocks(resume, state.documentType), [resume, state.documentType]);
-  const { rail: railBlocks, main: mainBlocks } = useMemo(
-    () => (isSidebar ? splitForSidebar(blocks) : { rail: [] as PreviewBlock[], main: blocks }),
-    [blocks, isSidebar]
-  );
-  const wordCount = useMemo(() => countResumeWords(resume), [resume]);
 
   const headerMeasureRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);

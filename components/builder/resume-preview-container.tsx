@@ -31,9 +31,9 @@ export function ResumePreviewContainer() {
   };
 
   return (
-    <div aria-labelledby="preview-title" className="flex flex-col pb-12">
+    <div aria-labelledby="preview-title" className="flex h-full flex-col">
       {/* Floating Toolbar */}
-      <div className="sticky top-6 z-10 mx-auto mb-8 flex w-full max-w-2xl flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white/80 p-3 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-[#121824]/80 sm:flex-row sm:items-center sm:justify-between">
+      <div className="sticky top-0 z-10 mx-auto mb-6 flex w-full flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white/80 p-3 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-[#121824]/80 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-1 min-w-0 items-center gap-3">
           <div className="flex-1 min-w-0">
             <TemplatePicker variant="compact" selectedId={state.selectedTemplateId} onSelect={changeTemplate} />
@@ -58,8 +58,8 @@ export function ResumePreviewContainer() {
       </div>
 
       {/* Document Area */}
-      <div className="relative mx-auto w-full max-w-[850px]">
-        <ResumePreview pageIndex={pageIndex} onPageIndexChange={setPageIndex} maxHeight="none" />
+      <div className="flex-1 flex flex-col items-center justify-start min-h-0 w-full px-2">
+        <ResumePreview pageIndex={pageIndex} onPageIndexChange={setPageIndex} maxHeight="calc(100vh - 220px)" className="w-full" />
       </div>
 
       {expanded && <ExpandedPreviewModal pageIndex={pageIndex} onPageIndexChange={setPageIndex} onClose={() => setExpanded(false)} />}

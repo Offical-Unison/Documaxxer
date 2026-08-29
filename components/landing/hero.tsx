@@ -103,8 +103,8 @@ export function Hero() {
           <div className="sm:col-span-2">
             <DocumentTypeCard
               title="Resume"
-              description="A concise, targeted document focusing on specific skills and experiences relevant to a particular job application."
-              href="/builder"
+              description="A focused document for job applications. Highlights relevant experience and skills."
+              href="/templates?type=resume"
               delay="100ms"
               badge="Most Popular"
               icon={
@@ -122,8 +122,8 @@ export function Hero() {
           <div className="h-full">
             <DocumentTypeCard
               title="Curriculum Vitae"
-              description="A comprehensive overview of your academic and professional history."
-              href="/builder"
+              description="A comprehensive document for academic and research opportunities. Details academic history, publications, and research."
+              href="/templates?type=cv"
               delay="200ms"
               icon={
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">

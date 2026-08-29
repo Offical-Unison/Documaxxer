@@ -104,7 +104,56 @@ export interface ResearchExperience {
   highlights: string[];
 }
 
-export type OptionalSectionKey = "projects" | "certifications" | "awards" | "volunteerExperiences" | "languages" | "publications" | "presentations" | "researchExperiences" | "other";
+export interface TeachingExperience {
+  id: string;
+  role: string;
+  institution: string;
+  location: string;
+  date: string;
+  highlights: string[];
+}
+
+export interface Grant {
+  id: string;
+  name: string;
+  issuer: string;
+  date: string;
+  highlights: string[];
+}
+
+export interface Membership {
+  id: string;
+  organization: string;
+  role: string;
+  date: string;
+  highlights: string[];
+}
+
+export interface OrganizationRole {
+  id: string;
+  organization: string;
+  role: string;
+  date: string;
+  highlights: string[];
+}
+
+export interface LeadershipExperience {
+  id: string;
+  role: string;
+  organization: string;
+  date: string;
+  highlights: string[];
+}
+
+export interface Reference {
+  id: string;
+  name: string;
+  title: string;
+  company: string;
+  contactInfo: string;
+}
+
+export type OptionalSectionKey = "summary" | "projects" | "certifications" | "awards" | "volunteerExperiences" | "languages" | "publications" | "presentations" | "researchExperiences" | "teachingExperiences" | "grants" | "memberships" | "organizations" | "leadership" | "references" | "other";
 export type SectionId = "personal" | "summary" | "experience" | "education" | "skills" | OptionalSectionKey;
 
 export interface ResumeData {
@@ -121,6 +170,12 @@ export interface ResumeData {
   publications: Publication[];
   presentations: Presentation[];
   researchExperiences: ResearchExperience[];
+  teachingExperiences: TeachingExperience[];
+  grants: Grant[];
+  memberships: Membership[];
+  organizations: OrganizationRole[];
+  leadership: LeadershipExperience[];
+  references: Reference[];
   otherEntries: OtherEntry[];
   optionalSections: OptionalSectionKey[];
   sectionTitles: Record<SectionId, string>;

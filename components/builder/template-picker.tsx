@@ -14,38 +14,9 @@ export function TemplatePicker({ selectedId, onSelect, variant = "grid" }: Templ
   const { state, dispatch } = useResumeContext();
   const filteredTemplates = RESUME_TEMPLATES.filter(t => t.type === state.documentType);
 
-  const documentTypeToggle = (
-    <div className="mb-4 flex w-full max-w-xs overflow-hidden rounded-lg border border-slate-200/80 bg-slate-100/50 p-1 dark:border-slate-700/80 dark:bg-slate-800/50">
-      <button
-        type="button"
-        onClick={() => dispatch({ type: "SET_DOCUMENT_TYPE", payload: "resume" })}
-        className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
-          state.documentType === "resume"
-            ? "bg-white text-blue-600 shadow-sm dark:bg-[#1A2234] dark:text-blue-400"
-            : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-        }`}
-      >
-        Resume
-      </button>
-      <button
-        type="button"
-        onClick={() => dispatch({ type: "SET_DOCUMENT_TYPE", payload: "cv" })}
-        className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
-          state.documentType === "cv"
-            ? "bg-white text-blue-600 shadow-sm dark:bg-[#1A2234] dark:text-blue-400"
-            : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-        }`}
-      >
-        Curriculum Vitae
-      </button>
-    </div>
-  );
-
   if (variant === "compact") {
     return (
       <div className="w-full">
-        <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">Document Type</p>
-        {documentTypeToggle}
         <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">Template</p>
         <select
           value={selectedId ?? ""}
@@ -70,7 +41,6 @@ export function TemplatePicker({ selectedId, onSelect, variant = "grid" }: Templ
 
   return (
     <div>
-      {documentTypeToggle}
       <div className="grid gap-4 sm:grid-cols-3">
         {filteredTemplates.map((template) => {
           const active = selectedId === template.id;
@@ -108,35 +78,87 @@ export function TemplatePicker({ selectedId, onSelect, variant = "grid" }: Templ
 function TemplateThumbnail({ id }: { id: TemplateId }) {
   return (
     <div className="h-24 w-full rounded-lg border border-slate-200/90 bg-slate-50/80 p-2 shadow-inner dark:border-slate-700/80 dark:bg-[#1A2234]">
-      {id === "classic" && (
+      {id === "ats-classic" && (
         <div className="flex h-full flex-col items-center gap-1">
           <div className="h-1.5 w-12 rounded-full bg-slate-800 dark:bg-slate-200" />
-          <div className="h-1 w-16 rounded-full bg-slate-300 dark:bg-slate-600" />
-          <div className="mt-2 h-1 w-full rounded-full bg-slate-200 dark:bg-slate-700" />
+          <div className="h-1 w-16 rounded-full bg-slate-400" />
+          <div className="mt-1 h-0.5 w-full bg-slate-300 dark:bg-slate-600" />
+          <div className="mt-1 h-1 w-full rounded-full bg-slate-300 dark:bg-slate-600" />
           <div className="h-1 w-full rounded-full bg-slate-200 dark:bg-slate-700" />
           <div className="h-1 w-3/4 rounded-full bg-slate-200 dark:bg-slate-700" />
         </div>
       )}
-      {id === "modern" && (
+      {id === "modern-tech" && (
         <div className="flex h-full flex-col gap-1">
           <div className="h-1.5 w-14 rounded-full bg-slate-800 dark:bg-slate-200" />
           <div className="h-1 w-10 rounded-full bg-blue-400" />
-          <div className="mt-2 h-1 w-full rounded-full bg-slate-200 dark:bg-slate-700" />
-          <div className="h-1 w-full rounded-full bg-slate-200 dark:bg-slate-700" />
-          <div className="h-1 w-2/3 rounded-full bg-slate-200 dark:bg-slate-700" />
+          <div className="mt-1 flex gap-1">
+            <div className="h-1 w-4 rounded-full bg-slate-300" />
+            <div className="h-1 w-6 rounded-full bg-slate-300" />
+            <div className="h-1 w-5 rounded-full bg-slate-300" />
+          </div>
+          <div className="mt-1 h-1 w-full rounded-full bg-slate-200 dark:bg-slate-700" />
+          <div className="h-1 w-5/6 rounded-full bg-slate-200 dark:bg-slate-700" />
         </div>
       )}
-      {id === "sidebar" && (
+      {id === "executive" && (
         <div className="flex h-full gap-1.5">
-          <div className="w-1/3 space-y-1 rounded bg-blue-50 p-1 dark:bg-blue-500/20">
-            <div className="h-1 w-full rounded-full bg-blue-300 dark:bg-blue-400" />
-            <div className="h-1 w-full rounded-full bg-blue-200 dark:bg-blue-500/50" />
-            <div className="h-1 w-2/3 rounded-full bg-blue-200 dark:bg-blue-500/50" />
-          </div>
           <div className="flex-1 space-y-1">
-            <div className="h-1.5 w-10 rounded-full bg-slate-800 dark:bg-slate-200" />
+            <div className="h-1.5 w-12 rounded-full bg-slate-800 dark:bg-slate-200" />
+            <div className="h-1 w-full rounded-full bg-slate-300 dark:bg-slate-600" />
+            <div className="mt-2 h-1 w-full rounded-full bg-slate-200 dark:bg-slate-700" />
             <div className="h-1 w-full rounded-full bg-slate-200 dark:bg-slate-700" />
-            <div className="h-1 w-full rounded-full bg-slate-200 dark:bg-slate-700" />
+          </div>
+          <div className="w-1/3 space-y-1 rounded bg-slate-100 p-1 dark:bg-slate-800">
+            <div className="h-1 w-full rounded-full bg-slate-300 dark:bg-slate-500" />
+            <div className="h-1 w-2/3 rounded-full bg-slate-200 dark:bg-slate-600" />
+          </div>
+        </div>
+      )}
+      {id === "academic" && (
+        <div className="flex h-full flex-col items-center gap-1">
+          <div className="h-1.5 w-14 rounded-full bg-slate-800 dark:bg-slate-200" />
+          <div className="mt-1 h-0.5 w-10 bg-slate-400" />
+          <div className="mt-1 w-full space-y-0.5">
+            <div className="h-0.5 w-full bg-slate-200 dark:bg-slate-700" />
+            <div className="h-0.5 w-full bg-slate-200 dark:bg-slate-700" />
+            <div className="h-0.5 w-5/6 bg-slate-200 dark:bg-slate-700" />
+          </div>
+          <div className="mt-0.5 w-full space-y-0.5">
+            <div className="h-0.5 w-full bg-slate-200 dark:bg-slate-700" />
+            <div className="h-0.5 w-4/5 bg-slate-200 dark:bg-slate-700" />
+          </div>
+        </div>
+      )}
+      {id === "research" && (
+        <div className="flex h-full flex-col gap-1">
+          <div className="h-1.5 w-16 rounded-full bg-slate-800 dark:bg-slate-200" />
+          <div className="mt-1 h-1 w-1/4 rounded-full bg-blue-500" />
+          <div className="ml-2 mt-1 space-y-0.5 border-l border-slate-300 pl-1 dark:border-slate-600">
+            <div className="h-0.5 w-full bg-slate-300 dark:bg-slate-600" />
+            <div className="h-0.5 w-11/12 bg-slate-200 dark:bg-slate-700" />
+          </div>
+          <div className="ml-2 space-y-0.5 border-l border-slate-300 pl-1 dark:border-slate-600">
+            <div className="h-0.5 w-full bg-slate-300 dark:bg-slate-600" />
+            <div className="h-0.5 w-5/6 bg-slate-200 dark:bg-slate-700" />
+          </div>
+        </div>
+      )}
+      {id === "professional" && (
+        <div className="flex h-full flex-col gap-1.5">
+          <div className="flex items-end justify-between border-b border-slate-300 pb-1 dark:border-slate-600">
+            <div className="h-1.5 w-12 rounded-full bg-slate-800 dark:bg-slate-200" />
+            <div className="h-1 w-16 rounded-full bg-slate-400" />
+          </div>
+          <div className="flex gap-1.5">
+            <div className="w-1/4 space-y-1">
+              <div className="h-1 w-full rounded-full bg-blue-400" />
+              <div className="h-1 w-2/3 rounded-full bg-slate-300" />
+            </div>
+            <div className="flex-1 space-y-1">
+              <div className="h-1 w-full rounded-full bg-slate-300 dark:bg-slate-600" />
+              <div className="h-1 w-5/6 rounded-full bg-slate-200 dark:bg-slate-700" />
+            </div>
           </div>
         </div>
       )}
