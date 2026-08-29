@@ -1,10 +1,10 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useReducer, useRef, type Dispatch, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useReducer, useRef, useState, type Dispatch, type ReactNode } from "react";
 import { initialResumeState, resumeReducer, type ResumeAction } from "@/context/resume-reducer";
 import type { ResumeState } from "@/types/resume";
 
-interface ResumeContextValue { state: ResumeState; dispatch: Dispatch<ResumeAction>; }
+interface ResumeContextValue { state: ResumeState; dispatch: Dispatch<ResumeAction>; isHydrated: boolean; }
 const ResumeContext = createContext<ResumeContextValue | undefined>(undefined);
 
 const STORAGE_KEY = "documaxxer:document-state:v1";
@@ -12,7 +12,7 @@ const SAVE_DEBOUNCE_MS = 500;
 
 export function ResumeProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(resumeReducer, initialResumeState);
-  const hydrated = useRef(false);
+  const [isHydrated, setIsHydrated] = useState(false);
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
@@ -30,12 +30,12 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
     } catch {
       // corrupted/unavailable storage — start fresh
     } finally {
-      hydrated.current = true;
+      setIsHydrated(true);
     }
   }, []);
 
   useEffect(() => {
-    if (!hydrated.current) return;
+    if (!isHydrated) return;
     if (saveTimeout.current) clearTimeout(saveTimeout.current);
     saveTimeout.current = setTimeout(() => {
       try {
@@ -47,7 +47,7 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
     return () => { if (saveTimeout.current) clearTimeout(saveTimeout.current); };
   }, [state]);
 
-  const value = useMemo(() => ({ state, dispatch }), [state]);
+  const value = useMemo(() => ({ state, dispatch, isHydrated }), [state, isHydrated]);
   return <ResumeContext.Provider value={value}>{children}</ResumeContext.Provider>;
 }
 

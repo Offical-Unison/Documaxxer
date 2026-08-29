@@ -11,11 +11,12 @@ import Link from "next/link";
 
 function TemplateSelectionContent() {
   const searchParams = useSearchParams();
-  const { state, dispatch } = useResumeContext();
+  const { state, dispatch, isHydrated } = useResumeContext();
 
   const typeParam = searchParams.get("type");
   
   useEffect(() => {
+    if (!isHydrated) return;
     if (typeParam === "resume" || typeParam === "cv") {
       dispatch({ type: "SET_DOCUMENT_TYPE", payload: typeParam });
       // If the current template doesn't match the new type, reset to the first one of that type
@@ -27,7 +28,7 @@ function TemplateSelectionContent() {
         }
       }
     }
-  }, [typeParam, dispatch, state.selectedTemplateId]);
+  }, [typeParam, dispatch, state.selectedTemplateId, isHydrated]);
 
   const handleTemplateSelect = (id: TemplateId) => {
     dispatch({ type: "SET_TEMPLATE", payload: id });

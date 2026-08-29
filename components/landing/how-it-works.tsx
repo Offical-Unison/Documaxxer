@@ -10,10 +10,10 @@ const TUTORIAL_STEPS = [
 
 export function HowItWorks() {
   return (
-    <section id="how-it-works" className="mx-auto w-full max-w-7xl px-5 sm:px-8 scroll-reveal pt-16 pb-24 sm:pt-24 sm:pb-32" aria-labelledby="how-it-works-title">
-      <hr className="mb-12 border-blue-100 sm:mb-20 dark:border-blue-950/40" />
+    <section id="how-it-works" className="mx-auto w-full max-w-7xl px-5 sm:px-8 scroll-reveal pt-12 pb-16 sm:pt-20 sm:pb-24" aria-labelledby="how-it-works-title">
+      <hr className="mb-10 border-blue-100 sm:mb-16 dark:border-blue-950/40" />
       
-      <div className="grid gap-12 lg:grid-cols-[1fr_2fr] lg:gap-8">
+      <div className="grid gap-10 lg:grid-cols-[1fr_2fr] lg:gap-8">
         <div>
           <p className="mb-4 text-[10px] uppercase tracking-[0.2em] font-medium text-blue-500 dark:text-blue-400">
             How It Works
@@ -21,11 +21,11 @@ export function HowItWorks() {
           <h2 id="how-it-works-title" className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl dark:text-slate-50 max-w-sm">
             A simpler way to build your documents.
           </h2>
-          <p className="mt-6 text-base leading-relaxed text-slate-500 dark:text-slate-400 max-w-md">
+          <p className="mt-5 text-base leading-relaxed text-slate-500 dark:text-slate-400 max-w-md">
             Create a professional resume or comprehensive curriculum vitae in one focused workspace.
           </p>
           
-          <div className="mt-12 hidden lg:block">
+          <div className="mt-10 hidden lg:block">
             <Button asChild className="group">
               <Link href="/create">
                 Create a Document <span className="ml-2 inline-block transition-transform group-hover:translate-x-1" aria-hidden="true">→</span>

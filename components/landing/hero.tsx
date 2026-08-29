@@ -68,12 +68,12 @@ export function Hero() {
   return (
     <section
       id="hero"
-      className="mx-auto w-full max-w-7xl px-5 sm:px-8 pt-20 pb-16 md:pt-32 md:pb-24"
+      className="mx-auto w-full max-w-7xl px-5 sm:px-8 pt-16 pb-12 md:pt-24 md:pb-16"
     >
-      <div className="grid gap-16 xl:grid-cols-[1fr_1.1fr] xl:items-center xl:gap-12">
+      <div className="grid gap-12 xl:grid-cols-[1fr_1.1fr] xl:items-center xl:gap-10">
         {/* Left - copy */}
         <div className="animate-fade-in-up max-w-xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50/50 px-3 py-1 mb-8 dark:border-blue-900/30 dark:bg-blue-900/10">
+          <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50/50 px-3 py-1 mb-6 dark:border-blue-900/30 dark:bg-blue-900/10">
             <span className="flex h-1.5 w-1.5 rounded-full bg-blue-600 dark:bg-blue-400" />
             <span className="text-[10px] font-semibold tracking-[0.2em] text-blue-700 dark:text-blue-300 uppercase">
               Free forever
@@ -84,11 +84,11 @@ export function Hero() {
             Craft your next professional document.
           </h1>
           
-          <p className="mt-6 text-lg leading-relaxed text-slate-500 dark:text-slate-400 max-w-lg">
+          <p className="mt-5 text-lg leading-relaxed text-slate-500 dark:text-slate-400 max-w-lg">
             Build a resume, CV, or cover letter that perfectly represents your experience. Pick a document type to start building immediately—no sign up required.
           </p>
 
-          <div className="mt-12 flex items-center gap-6 text-slate-400 dark:text-slate-500">
+          <div className="mt-10 flex items-center gap-6 text-slate-400 dark:text-slate-500">
             <p className="text-sm font-medium">Export to:</p>
             <div className="h-4 w-px bg-slate-200 dark:bg-slate-800" />
             <span className="text-sm font-medium">PDF format</span>

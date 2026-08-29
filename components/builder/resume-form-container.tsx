@@ -75,7 +75,7 @@ export function ResumeFormContainer() {
     <div aria-labelledby="form-title" className="min-w-0 pb-12">
       <div className="flex flex-col gap-3 border-b border-slate-200/60 pb-5 dark:border-slate-700/60 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="eyebrow">Resume content</p>
+          <p className="eyebrow">{state.documentType === "cv" ? "CV Content" : "Resume Content"}</p>
           <h1 id="form-title" className="mt-2 text-2xl font-bold tracking-tight text-slate-950 dark:text-slate-50">
             {state.documentType === "cv" ? "Build your Curriculum Vitae" : "Build your resume"}
           </h1>
