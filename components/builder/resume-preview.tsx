@@ -25,7 +25,7 @@ import type { ReactNode } from "react";
  * and returns everything both ResumePreview and ResumeAllPages need.
  * ════════════════════════════════════════════════════════════════ */
 
-interface UseResumePagesResult {
+export interface UseResumePagesResult {
   isEmpty: boolean;
   headerNode: ReactNode;
   pages: PreviewBlock[][];
@@ -40,7 +40,7 @@ interface UseResumePagesResult {
   measuringContainer: ReactNode;
 }
 
-function useResumePages(): UseResumePagesResult {
+export function useResumePages(): UseResumePagesResult {
   const { state } = useResumeContext();
   const { resume, selectedTemplateId, selectedFontId } = state;
   const templateId = getTemplate(selectedTemplateId).id;
@@ -221,11 +221,11 @@ function A4Page({ children, fontStack }: { children: ReactNode; fontStack: strin
 
   return (
     <div ref={boxRef} className="flex h-full w-full items-center justify-center overflow-hidden">
-      <div ref={sizerRef} aria-hidden="true" style={{ position: "fixed", top: 0, left: "-9999px", width: "210mm", height: 0, overflow: "hidden" }} />
+      <div ref={sizerRef} aria-hidden="true" style={{ position: "fixed", top: 0, left: "-9999px", width: `${PAGE_WIDTH_MM}mm`, height: 0, overflow: "hidden" }} />
       <div style={{ width: scaledWidthPx || undefined, height: scaledHeightPx || undefined, position: "relative", flexShrink: 0 }}>
         <div
           className="bg-white shadow-md ring-1 ring-slate-200"
-          style={{ width: "210mm", height: "297mm", transform: `scale(${scale})`, transformOrigin: "top left", position: "absolute", top: 0, left: 0 }}
+          style={{ width: `${PAGE_WIDTH_MM}mm`, height: `${PAGE_HEIGHT_MM}mm`, transform: `scale(${scale})`, transformOrigin: "top left", position: "absolute", top: 0, left: 0 }}
         >
           <div style={{ height: "100%", width: "100%", overflow: "hidden", padding: `${MARGIN_MM}mm`, fontFamily: fontStack, color: TEXT_COLOR }}>
             {children}
@@ -267,6 +267,7 @@ function PageNavButton({ direction, onClick, disabled }: { direction: "prev" | "
  * ════════════════════════════════════════════════════════════════ */
 
 export interface ResumePreviewProps {
+  resumePages: UseResumePagesResult;
   pageIndex: number;
   onPageIndexChange: (index: number) => void;
   maxHeight?: string;
@@ -277,9 +278,8 @@ export interface ResumePreviewProps {
   className?: string;
 }
 
-export function ResumePreview({ pageIndex, onPageIndexChange, maxHeight = "70vh", hideFooter, footerOnly, className }: ResumePreviewProps) {
-  const resume = useResumePages();
-  const { isEmpty, headerNode, pages, railBlocks, isSidebar, fontStack, contactLine, links, measureWidthMM, wordCount, measuringContainer } = resume;
+export function ResumePreview({ resumePages, pageIndex, onPageIndexChange, maxHeight = "70vh", hideFooter, footerOnly, className }: ResumePreviewProps) {
+  const { isEmpty, headerNode, pages, railBlocks, isSidebar, fontStack, contactLine, links, measureWidthMM, wordCount, measuringContainer } = resumePages;
 
   useEffect(() => {
     if (pageIndex > pages.length - 1) onPageIndexChange(Math.max(0, pages.length - 1));
@@ -370,7 +370,7 @@ export function ResumeAllPages() {
   if (isEmpty) return null;
 
   return (
-    <div className="print-only" style={{ fontFamily: fontStack }}>
+    <div className="print-only hidden print:block" style={{ fontFamily: fontStack }}>
       {/* Measuring container for this instance of the hook */}
       {measuringContainer}
 
@@ -378,13 +378,15 @@ export function ResumeAllPages() {
         <div
           key={pageIndex}
           style={{
-            width: `${PAGE_WIDTH_MM}mm`,
             height: `${PAGE_HEIGHT_MM}mm`,
+            width: `${PAGE_WIDTH_MM}mm`,
             padding: `${MARGIN_MM}mm`,
             boxSizing: "border-box",
+            overflow: "hidden",
             color: TEXT_COLOR,
             fontFamily: fontStack,
             breakAfter: pageIndex < pages.length - 1 ? "page" : "auto",
+            pageBreakAfter: pageIndex < pages.length - 1 ? "always" : "auto",
           }}
         >
           <ResumePageContent

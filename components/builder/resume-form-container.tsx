@@ -50,8 +50,8 @@ export function ResumeFormContainer() {
 
   const phoneValid = isValidPhoneNumber(personal.contact.phoneCountry, personal.contact.phoneNumber);
   const hasPersonalErrors = !personal.firstName.trim() || !personal.lastName.trim() || !personal.contact.email.trim() || !personal.contact.phoneNumber.trim() || !phoneValid || !personal.contact.location.trim();
-  const hasExperienceErrors = resume.experiences.some((item) => !item.employer.trim() || !item.role.trim() || !item.location.trim() || !item.startDate || (!item.current && !item.endDate) || !item.highlights.some((line) => line.trim()));
-  const hasEducationErrors = resume.education.length === 0 || resume.education.some((item) => !item.institution.trim() || !item.degree.trim() || (item.educationType === "college" && !item.fieldOfStudy.trim()) || !item.startDate || (!item.current && !item.endDate));
+  const hasExperienceErrors = resume.experiences.some((item) => !item.employer.trim() || !item.role.trim() || !item.location.trim() || !item.startDate || (!item.current && !item.endDate) || (!item.current && item.startDate && item.endDate && item.startDate > item.endDate) || !item.highlights.some((line) => line.trim()));
+  const hasEducationErrors = resume.education.length === 0 || resume.education.some((item) => !item.institution.trim() || !item.degree.trim() || (item.educationType === "college" && !item.fieldOfStudy.trim()) || !item.startDate || (!item.current && !item.endDate) || (!item.current && item.startDate && item.endDate && item.startDate > item.endDate));
   const hasSkillsErrors = primarySkills.length === 0;
 
   
@@ -235,7 +235,7 @@ function ExperienceEditor({ item, index, showErrors, onChange, onRemove }: { ite
           </label>
         </div>
         <PartialDateField label="Start date" required value={item.startDate} onChange={(value) => update("startDate", value)} error={showErrors && !item.startDate ? "Start date is required." : undefined} />
-        <PartialDateField label="End date" required={!item.current} disabled={item.current} value={item.endDate} onChange={(value) => update("endDate", value)} error={showErrors && !item.current && !item.endDate ? "End date is required." : undefined} />
+        <PartialDateField label="End date" required={!item.current} disabled={item.current} value={item.endDate} onChange={(value) => update("endDate", value)} error={showErrors && !item.current && !item.endDate ? "End date is required." : showErrors && !item.current && item.startDate && item.endDate && item.startDate > item.endDate ? "End date must be after start date." : undefined} />
         <div className="sm:col-span-2">
           <BulletListInput label="Description" values={item.highlights} onChange={(value) => update("highlights", value)} placeholder="Describe an achievement or responsibility" addLabel="+ Add" />
           {showErrors && !hasHighlight && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">Add at least one description.</p>}
@@ -281,13 +281,13 @@ function EducationEditor({ item, index, showErrors, onChange, onRemove }: { item
                 Currently studying
               </label>
             </div>
-            <PartialDateField label="End date" required={!item.current} disabled={item.current} value={item.endDate} onChange={(value) => update("endDate", value)} error={showErrors && !item.current && !item.endDate ? "End date is required." : undefined} />
+            <PartialDateField label="End date" required={!item.current} disabled={item.current} value={item.endDate} onChange={(value) => update("endDate", value)} error={showErrors && !item.current && !item.endDate ? "End date is required." : showErrors && !item.current && item.startDate && item.endDate && item.startDate > item.endDate ? "End date must be after start date." : undefined} />
           </>
         ) : (
           <>
             <PartialDateField label="Start date" required value={item.startDate} onChange={(value) => update("startDate", value)} error={showErrors && !item.startDate ? "Start date is required." : undefined} />
             <Field label="Strand / Program" required value={item.degree} onChange={(event) => update("degree", event.target.value)} error={showErrors && !item.degree.trim() ? "Strand / Program is required." : undefined} placeholder="STEM" suggestionKey="education.degree" />
-            <PartialDateField label="End date" required={!item.current} disabled={item.current} value={item.endDate} onChange={(value) => update("endDate", value)} error={showErrors && !item.current && !item.endDate ? "End date is required." : undefined} />
+            <PartialDateField label="End date" required={!item.current} disabled={item.current} value={item.endDate} onChange={(value) => update("endDate", value)} error={showErrors && !item.current && !item.endDate ? "End date is required." : showErrors && !item.current && item.startDate && item.endDate && item.startDate > item.endDate ? "End date must be after start date." : undefined} />
             <div className="flex items-end">
               <label className="flex min-h-11 items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
                 <input type="checkbox" checked={item.current} onChange={(event) => onChange({ ...item, current: event.target.checked, endDate: event.target.checked ? "" : item.endDate })} className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800" />

@@ -88,17 +88,16 @@ body {
   }
 }
 
-.print-only { display: none; }
 
 @media print {
-  @page { size: A4; margin: 0; }
-  html, body { background: #ffffff !important; }
-  body * { visibility: hidden; }
-
+  @page { size: letter; margin: 0; }
+  html, body {
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
   .print-only, .print-only * {
-    visibility: visible !important;
-    color: #000000 !important;
-    background: transparent !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -117,16 +116,5 @@ body {
   }
   .print-only header {
     border-color: #000000 !important;
-  }
-  .print-only {
-    display: block;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 210mm;
-  }
-  /* Each page div inside print-only should not clip content */
-  .print-only > div[style*="width"] {
-    break-inside: avoid;
   }
 }

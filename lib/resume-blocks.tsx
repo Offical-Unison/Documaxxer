@@ -7,9 +7,9 @@ import {
   bodyStyle, dateStyle,
 } from "@/lib/resume-typography";
 
-export const PAGE_WIDTH_MM = 210;
-export const PAGE_HEIGHT_MM = 297;
-export const MARGIN_MM = 20;
+export const PAGE_WIDTH_MM = 215.9; // 8.5 inches
+export const PAGE_HEIGHT_MM = 279.4; // 11 inches
+export const MARGIN_MM = 25.4; // 1 inch
 export const CONTENT_WIDTH_MM = PAGE_WIDTH_MM - MARGIN_MM * 2;
 export const CONTENT_HEIGHT_MM = PAGE_HEIGHT_MM - MARGIN_MM * 2;
 
@@ -81,26 +81,26 @@ export function EntryHeading({ primary, secondary, dateRange, subItems, customPr
 export function buildTemplateBlocks(resume: ResumeData, templateId: TemplateId): { main: PreviewBlock[]; rail: PreviewBlock[] } {
   const { professionalSummary, sectionTitles } = resume;
 
-  const experiences = sortEntriesByRecency(resume.experiences.filter(hasExperienceContent));
-  const education = sortEntriesByRecency(resume.education.filter(hasEducationContent));
+  const experiences = sortEntriesByRecency((resume.experiences || []).filter(hasExperienceContent));
+  const education = sortEntriesByRecency((resume.education || []).filter(hasEducationContent));
   
   const hasProjectContent = (item: Project) => item.name.trim();
-  const projects = sortByDateDesc(resume.projects.filter(hasProjectContent));
-  const certifications = sortByDateDesc(resume.certifications.filter((item) => item.name.trim()));
-  const awards = sortByDateDesc(resume.awards.filter((item) => item.title.trim()));
+  const projects = sortByDateDesc((resume.projects || []).filter(hasProjectContent));
+  const certifications = sortByDateDesc((resume.certifications || []).filter((item) => item.name.trim()));
+  const awards = sortByDateDesc((resume.awards || []).filter((item) => item.title.trim()));
   const hasVolunteerContent = (item: VolunteerExperience) => item.organization.trim() || item.role.trim();
-  const volunteering = sortByDateDesc(resume.volunteerExperiences.filter(hasVolunteerContent));
-  const organizations = sortByDateDesc(resume.organizations.filter((item) => item.organization.trim() || item.role.trim()));
-  const leadership = sortByDateDesc(resume.leadership.filter((item) => item.organization.trim() || item.role.trim()));
-  const teaching = sortByDateDesc(resume.teachingExperiences.filter((item) => item.role.trim() || item.institution.trim()));
-  const grants = sortByDateDesc(resume.grants.filter((item) => item.name.trim() || item.issuer.trim()));
-  const memberships = sortByDateDesc(resume.memberships.filter((item) => item.organization.trim() || item.role.trim()));
-  const references = resume.references.filter((item) => item.name.trim());
-  const languages = resume.languages.filter((item) => item.name.trim());
-  const publications = sortByDateDesc(resume.publications.filter((item) => item.title.trim()));
-  const presentations = sortByDateDesc(resume.presentations.filter((item) => item.title.trim()));
-  const research = sortByDateDesc(resume.researchExperiences.filter((item) => item.role.trim() || item.project.trim()));
-  const otherEntries = sortByDateDesc(resume.otherEntries.filter((entry) => entry.name.trim()));
+  const volunteering = sortByDateDesc((resume.volunteerExperiences || []).filter(hasVolunteerContent));
+  const organizations = sortByDateDesc((resume.organizations || []).filter((item) => item.organization.trim() || item.role.trim()));
+  const leadership = sortByDateDesc((resume.leadership || []).filter((item) => item.organization.trim() || item.role.trim()));
+  const teaching = sortByDateDesc((resume.teachingExperiences || []).filter((item) => item.role.trim() || item.institution.trim()));
+  const grants = sortByDateDesc((resume.grants || []).filter((item) => item.name.trim() || item.issuer.trim()));
+  const memberships = sortByDateDesc((resume.memberships || []).filter((item) => item.organization.trim() || item.role.trim()));
+  const references = (resume.references || []).filter((item) => item.name.trim());
+  const languages = (resume.languages || []).filter((item) => item.name.trim());
+  const publications = sortByDateDesc((resume.publications || []).filter((item) => item.title.trim()));
+  const presentations = sortByDateDesc((resume.presentations || []).filter((item) => item.title.trim()));
+  const research = sortByDateDesc((resume.researchExperiences || []).filter((item) => item.role.trim() || item.project.trim()));
+  const otherEntries = sortByDateDesc((resume.otherEntries || []).filter((entry) => entry.name.trim()));
 
   const main: PreviewBlock[] = [];
   const rail: PreviewBlock[] = [];
@@ -397,8 +397,8 @@ export function buildTemplateBlocks(resume: ResumeData, templateId: TemplateId):
     addSummary(main);
     addExperiences(main);
     addEducation(main);
-    addProjects(main);
     addSkills(main);
+    addProjects(main);
     addCertifications(main);
     addAwards(main);
     addLeadership(main);
@@ -416,10 +416,10 @@ export function buildTemplateBlocks(resume: ResumeData, templateId: TemplateId):
   } 
   else if (templateId === "modern-tech") {
     addSummary(main);
-    addSkills(main, true); // tech style
     addProjects(main);
     addExperiences(main);
     addEducation(main);
+    addSkills(main, true); // tech style
     addCertifications(main);
     addAwards(main);
     addLeadership(main);
@@ -441,8 +441,8 @@ export function buildTemplateBlocks(resume: ResumeData, templateId: TemplateId):
     addExperiences(main);
     addProjects(main);
     
-    addSkills(rail);
     addEducation(rail);
+    addSkills(rail);
     addCertifications(rail);
     addLanguages(rail);
     addAwards(rail);
@@ -461,6 +461,7 @@ export function buildTemplateBlocks(resume: ResumeData, templateId: TemplateId):
   else if (templateId === "academic") {
     addSummary(main);
     addEducation(main);
+    addSkills(main);
     addExperiences(main);
     addResearch(main);
     addTeaching(main);
@@ -470,7 +471,6 @@ export function buildTemplateBlocks(resume: ResumeData, templateId: TemplateId):
     addGrants(main);
     addMemberships(main);
     addCertifications(main);
-    addSkills(main);
     addLanguages(main);
     addProjects(main);
     addLeadership(main);
@@ -507,8 +507,8 @@ export function buildTemplateBlocks(resume: ResumeData, templateId: TemplateId):
     addExperiences(main);
     addProjects(main);
     
-    addSkills(rail);
     addEducation(rail);
+    addSkills(rail);
     addCertifications(rail);
     addLanguages(rail);
     addAwards(rail);

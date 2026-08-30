@@ -1,6 +1,6 @@
 "use client";
 
-import { AlignmentType, BorderStyle, convertMillimetersToTwip, Document, Packer, Paragraph, TabStopPosition, TabStopType, TextRun } from "docx";
+import { AlignmentType, BorderStyle, convertMillimetersToTwip, Document, LineRuleType, Packer, Paragraph, TabStopPosition, TabStopType, TextRun } from "docx";
 import { COUNTRIES } from "@/lib/countries";
 import { formatDateRange, formatPartialDate, sortByDateDesc, sortEntriesByRecency } from "@/lib/format";
 import { getFont } from "@/lib/fonts";
@@ -68,14 +68,14 @@ function entryHeading(primary: string, secondary: string, dateRange: string, fon
 function bulletLine(text: string, fontName: string): Paragraph {
   return new Paragraph({
     bullet: { level: 0 },
-    spacing: { after: BULLET_AFTER, line: BODY_LINE_SPACING },
+    spacing: { after: BULLET_AFTER, line: BODY_LINE_SPACING, lineRule: LineRuleType.AT_LEAST },
     children: [new TextRun({ text, size: BODY_HP, color: BLACK, font: fontName })],
   });
 }
 
 function plainLine(text: string, fontName: string): Paragraph {
   return new Paragraph({
-    spacing: { after: BULLET_AFTER, line: BODY_LINE_SPACING },
+    spacing: { after: BULLET_AFTER, line: BODY_LINE_SPACING, lineRule: LineRuleType.AT_LEAST },
     children: [new TextRun({ text, size: BODY_HP, color: BLACK, font: fontName })],
   });
 }
@@ -136,11 +136,11 @@ export async function exportResumeToDocx(resume: ResumeData, selectedFontId?: st
     children.push(sectionHeading(resume.sectionTitles.summary, fontName));
     children.push(new Paragraph({
       children: [new TextRun({ text: resume.professionalSummary, color: BLACK, size: BODY_HP, font: fontName })],
-      spacing: { after: BULLET_AFTER, line: BODY_LINE_SPACING },
+      spacing: { after: BULLET_AFTER, line: BODY_LINE_SPACING, lineRule: LineRuleType.AT_LEAST },
     }));
   }
 
-  const experiences = sortEntriesByRecency(resume.experiences.filter(hasExperienceContent));
+  const experiences = sortEntriesByRecency((resume.experiences || []).filter(hasExperienceContent));
   if (experiences.length > 0) {
     children.push(sectionHeading(resume.sectionTitles.experience, fontName));
     experiences.forEach((item) => {
@@ -149,7 +149,7 @@ export async function exportResumeToDocx(resume: ResumeData, selectedFontId?: st
     });
   }
 
-  const education = sortEntriesByRecency(resume.education.filter(hasEducationContent));
+  const education = sortEntriesByRecency((resume.education || []).filter(hasEducationContent));
   if (education.length > 0) {
     children.push(sectionHeading(resume.sectionTitles.education, fontName));
     education.forEach((item) => {
@@ -164,20 +164,20 @@ export async function exportResumeToDocx(resume: ResumeData, selectedFontId?: st
     });
   }
 
-  if (resume.skills.length > 0) {
+  if ((resume.skills || []).length > 0) {
     children.push(sectionHeading(resume.sectionTitles.skills, fontName));
-    resume.skills.forEach((skill) => children.push(bulletLine(skill, fontName)));
+    (resume.skills || []).forEach((skill) => children.push(bulletLine(skill, fontName)));
   }
 
-  resume.optionalSections.forEach((key) => {
+  (resume.optionalSections || []).forEach((key) => {
     if (key === "projects") {
-      const projects = sortByDateDesc(resume.projects.filter((item) => item.name.trim()));
+      const projects = sortByDateDesc((resume.projects || []).filter((item) => item.name.trim()));
       if (projects.length === 0) return;
       children.push(sectionHeading(resume.sectionTitles.projects, fontName));
       projects.forEach((item) => {
         const techLine = item.technologies.filter(Boolean).join(", ");
         const primaryText = item.name;
-        
+
         const runsPrimary: TextRun[] = [new TextRun({ text: primaryText, bold: true, size: ENTRY_TITLE_HP, color: BLACK, font: fontName })];
         if (techLine) runsPrimary.push(new TextRun({ text: ` | ${techLine}`, size: ENTRY_TITLE_HP, color: BLACK, font: fontName }));
         if (item.date) runsPrimary.push(new TextRun({ text: `\t${formatPartialDate(item.date)}`, size: DATE_HP, color: BLACK, font: fontName }));
@@ -189,7 +189,7 @@ export async function exportResumeToDocx(resume: ResumeData, selectedFontId?: st
       });
     }
     if (key === "certifications") {
-      const items = sortByDateDesc(resume.certifications.filter((item) => item.name.trim()));
+      const items = sortByDateDesc((resume.certifications || []).filter((item) => item.name.trim()));
       if (items.length === 0) return;
       children.push(sectionHeading(resume.sectionTitles.certifications, fontName));
       items.forEach((item) => {
@@ -199,7 +199,7 @@ export async function exportResumeToDocx(resume: ResumeData, selectedFontId?: st
       });
     }
     if (key === "awards") {
-      const items = sortByDateDesc(resume.awards.filter((item) => item.title.trim()));
+      const items = sortByDateDesc((resume.awards || []).filter((item) => item.title.trim()));
       if (items.length === 0) return;
       children.push(sectionHeading(resume.sectionTitles.awards, fontName));
       items.forEach((item) => {
@@ -208,7 +208,7 @@ export async function exportResumeToDocx(resume: ResumeData, selectedFontId?: st
       });
     }
     if (key === "volunteerExperiences") {
-      const items = sortByDateDesc(resume.volunteerExperiences.filter((item) => item.organization.trim() || item.role.trim()));
+      const items = sortByDateDesc((resume.volunteerExperiences || []).filter((item) => item.organization.trim() || item.role.trim()));
       if (items.length === 0) return;
       children.push(sectionHeading(resume.sectionTitles.volunteerExperiences, fontName));
       items.forEach((item) => {
@@ -217,16 +217,16 @@ export async function exportResumeToDocx(resume: ResumeData, selectedFontId?: st
       });
     }
     if (key === "languages") {
-      const items = resume.languages.filter((item) => item.name.trim());
+      const items = (resume.languages || []).filter((item) => item.name.trim());
       if (items.length === 0) return;
       children.push(sectionHeading(resume.sectionTitles.languages, fontName));
       children.push(new Paragraph({
-        spacing: { line: BODY_LINE_SPACING },
+        spacing: { line: BODY_LINE_SPACING, lineRule: LineRuleType.AT_LEAST },
         children: [new TextRun({ text: items.map((item) => (item.proficiency ? `${item.name} (${item.proficiency})` : item.name)).join(" • "), color: BLACK, size: BODY_HP, font: fontName })],
       }));
     }
     if (key === "other") {
-      const items = sortByDateDesc(resume.otherEntries.filter((entry) => entry.name.trim()));
+      const items = sortByDateDesc((resume.otherEntries || []).filter((entry) => entry.name.trim()));
       if (items.length === 0) return;
       children.push(sectionHeading(resume.sectionTitles.other, fontName));
       items.forEach((item) => {
@@ -236,7 +236,7 @@ export async function exportResumeToDocx(resume: ResumeData, selectedFontId?: st
       });
     }
     if (key === "publications") {
-      const items = sortByDateDesc(resume.publications.filter((entry) => entry.title.trim()));
+      const items = sortByDateDesc((resume.publications || []).filter((entry) => entry.title.trim()));
       if (items.length === 0) return;
       children.push(sectionHeading(resume.sectionTitles.publications, fontName));
       items.forEach((item) => {
@@ -247,7 +247,7 @@ export async function exportResumeToDocx(resume: ResumeData, selectedFontId?: st
       });
     }
     if (key === "presentations") {
-      const items = sortByDateDesc(resume.presentations.filter((entry) => entry.title.trim()));
+      const items = sortByDateDesc((resume.presentations || []).filter((entry) => entry.title.trim()));
       if (items.length === 0) return;
       children.push(sectionHeading(resume.sectionTitles.presentations, fontName));
       items.forEach((item) => {
@@ -257,7 +257,7 @@ export async function exportResumeToDocx(resume: ResumeData, selectedFontId?: st
       });
     }
     if (key === "researchExperiences") {
-      const items = sortByDateDesc(resume.researchExperiences.filter((entry) => entry.role.trim() || entry.project.trim()));
+      const items = sortByDateDesc((resume.researchExperiences || []).filter((entry) => entry.role.trim() || entry.project.trim()));
       if (items.length === 0) return;
       children.push(sectionHeading(resume.sectionTitles.researchExperiences, fontName));
       items.forEach((item) => {

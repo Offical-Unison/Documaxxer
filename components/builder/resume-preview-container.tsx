@@ -8,6 +8,7 @@ import { TemplatePicker } from "@/components/builder/template-picker";
 import { FontPicker } from "@/components/builder/font-picker";
 import { useResumeContext } from "@/context/resume-context";
 import type { TemplateId } from "@/lib/templates";
+import { useResumePages, type UseResumePagesResult } from "@/components/builder/resume-preview";
 
 function ExpandIcon() {
   return (
@@ -22,6 +23,7 @@ function ExpandIcon() {
 
 export function ResumePreviewContainer() {
   const { state, dispatch } = useResumeContext();
+  const resumePages = useResumePages();
   const [pageIndex, setPageIndex] = useState(0);
   const [expanded, setExpanded] = useState(false);
 
@@ -32,7 +34,6 @@ export function ResumePreviewContainer() {
 
   return (
     <div aria-labelledby="preview-title" className="flex h-full flex-col">
-      {/* Floating Toolbar */}
       <div className="sticky top-0 z-10 mx-auto mb-6 flex w-full flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white/80 p-3 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-[#121824]/80 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-1 min-w-0 items-center gap-3">
           <div className="flex-1 min-w-0">
@@ -51,23 +52,33 @@ export function ResumePreviewContainer() {
           >
             <ExpandIcon />
           </button>
-          {state.generateUnlocked && (
-            <GenerateButton />
-          )}
         </div>
       </div>
 
-      {/* Document Area */}
       <div className="flex-1 flex flex-col items-center justify-start min-h-0 w-full px-2">
-        <ResumePreview pageIndex={pageIndex} onPageIndexChange={setPageIndex} maxHeight="calc(100vh - 220px)" className="w-full" />
+        <ResumePreview resumePages={resumePages} pageIndex={pageIndex} onPageIndexChange={setPageIndex} maxHeight="calc(100vh - 220px)" className="w-full" />
+        {state.generateUnlocked && (
+          <div className="mt-8 mb-8 flex justify-center w-full">
+            <GenerateButton />
+          </div>
+        )}
       </div>
 
-      {expanded && <ExpandedPreviewModal pageIndex={pageIndex} onPageIndexChange={setPageIndex} onClose={() => setExpanded(false)} />}
+      {expanded && (
+        <ExpandedPreviewModal resumePages={resumePages} pageIndex={pageIndex} onPageIndexChange={setPageIndex} onClose={() => setExpanded(false)} />
+      )}
     </div>
   );
 }
 
-function ExpandedPreviewModal({ pageIndex, onPageIndexChange, onClose }: { pageIndex: number; onPageIndexChange: (index: number) => void; onClose: () => void }) {
+function ExpandedPreviewModal({
+  resumePages, pageIndex, onPageIndexChange, onClose,
+}: {
+  resumePages: UseResumePagesResult;
+  pageIndex: number;
+  onPageIndexChange: (index: number) => void;
+  onClose: () => void;
+}) {
   const stableOnClose = useCallback(() => onClose(), [onClose]);
 
   useEffect(() => {
@@ -85,12 +96,9 @@ function ExpandedPreviewModal({ pageIndex, onPageIndexChange, onClose }: { pageI
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center" role="dialog" aria-modal="true" aria-label="Expanded resume preview">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity" onClick={stableOnClose} />
 
-      {/* Modal container — flex-col with close button at top and page nav pinned at bottom */}
       <div className="relative z-10 flex w-full max-w-4xl flex-col items-center gap-3 px-4 py-6 sm:px-8 sm:py-8 animate-fade-in-scale" style={{ maxHeight: "100vh" }}>
-        {/* Top bar: close button only */}
         <div className="flex w-full items-center justify-end">
           <button
             type="button"
@@ -102,13 +110,11 @@ function ExpandedPreviewModal({ pageIndex, onPageIndexChange, onClose }: { pageI
           </button>
         </div>
 
-        {/* Resume area — automatically scales to fit available space */}
         <div className="flex-1 min-h-0 w-full flex items-center justify-center">
-          <ResumePreview pageIndex={pageIndex} onPageIndexChange={onPageIndexChange} maxHeight="100%" hideFooter className="h-full w-full" />
+          <ResumePreview resumePages={resumePages} pageIndex={pageIndex} onPageIndexChange={onPageIndexChange} maxHeight="100%" hideFooter className="h-full w-full" />
         </div>
 
-        {/* Page nav + word count pinned below scroll area */}
-        <ResumePreview pageIndex={pageIndex} onPageIndexChange={onPageIndexChange} footerOnly />
+        <ResumePreview resumePages={resumePages} pageIndex={pageIndex} onPageIndexChange={onPageIndexChange} footerOnly />
       </div>
     </div>,
     document.body

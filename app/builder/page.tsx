@@ -6,7 +6,7 @@ import { ResumeAllPages } from "@/components/builder/resume-preview";
 export default function BuilderPage() {
   return (
     <>
-    <main className="flex h-[100dvh] flex-col overflow-hidden bg-slate-50 dark:bg-[#0B0F19]">
+    <main className="flex h-[100dvh] flex-col overflow-hidden bg-slate-50 dark:bg-[#0B0F19] print:hidden">
       <BuilderHeader />
       <div className="flex flex-1 justify-center overflow-hidden">
         <div className="flex w-full max-w-[1400px] flex-1 overflow-hidden xl:border-x xl:border-slate-200 xl:bg-white xl:dark:border-slate-800 xl:dark:bg-[#0B0F19]">

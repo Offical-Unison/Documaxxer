@@ -31,6 +31,8 @@ export const nameStyle: React.CSSProperties = {
   color: TEXT_COLOR,
   letterSpacing: "-0.02em",
   lineHeight: 1.2,
+  whiteSpace: "pre-wrap",
+  wordBreak: "break-word",
 };
 
 export const sectionHeadingStyle: React.CSSProperties = {
@@ -42,18 +44,24 @@ export const sectionHeadingStyle: React.CSSProperties = {
   borderBottom: "1px solid #000",
   paddingBottom: "4px",
   marginTop: "14px",
+  whiteSpace: "pre-wrap",
+  wordBreak: "break-word",
 };
 
 export const entryTitleStyle: React.CSSProperties = {
   fontSize: `${ENTRY_TITLE_PT}pt`,
   fontWeight: 700,
   color: TEXT_COLOR,
+  whiteSpace: "pre-wrap",
+  wordBreak: "break-word",
 };
 
 export const entrySubtitleStyle: React.CSSProperties = {
   fontSize: `${BODY_PT}pt`,
   fontWeight: 700,
   color: TEXT_COLOR,
+  whiteSpace: "pre-wrap",
+  wordBreak: "break-word",
 };
 
 export const bodyStyle: React.CSSProperties = {
@@ -61,6 +69,8 @@ export const bodyStyle: React.CSSProperties = {
   fontWeight: 400,
   color: TEXT_COLOR,
   lineHeight: 1.5,
+  whiteSpace: "pre-wrap",
+  wordBreak: "break-word",
 };
 
 export const dateStyle: React.CSSProperties = {
@@ -68,22 +78,30 @@ export const dateStyle: React.CSSProperties = {
   fontWeight: 400,
   color: TEXT_COLOR,
   flexShrink: 0,
+  whiteSpace: "pre-wrap",
+  wordBreak: "break-word",
 };
 
 export const contactStyle: React.CSSProperties = {
   fontSize: `${CONTACT_PT}pt`,
   fontWeight: 400,
   color: TEXT_COLOR,
+  whiteSpace: "pre-wrap",
+  wordBreak: "break-word",
 };
 
 export const headlineStyle: React.CSSProperties = {
   fontSize: `${BODY_PT}pt`,
   fontWeight: 500,
   color: TEXT_COLOR,
+  whiteSpace: "pre-wrap",
+  wordBreak: "break-word",
 };
 
 export const linkStyle: React.CSSProperties = {
   fontSize: `${CONTACT_PT}pt`,
   color: TEXT_COLOR,
   textDecoration: "underline",
+  whiteSpace: "pre-wrap",
+  wordBreak: "break-word",
 };
