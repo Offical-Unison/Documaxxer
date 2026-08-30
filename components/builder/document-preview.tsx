@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
-import { useResumeContext } from "@/context/resume-context";
+import { useDocumentContext } from "@/context/document-context";
 import { COUNTRIES } from "@/lib/countries";
 import { getTemplate } from "@/lib/templates";
 import { getFont } from "@/lib/fonts";
@@ -12,17 +12,17 @@ import {
   SIDEBAR_GAP_MM, SIDEBAR_MAIN_WIDTH_RATIO, SIDEBAR_RAIL_WIDTH_RATIO, TEMPLATE_THEMES,
   buildTemplateBlocks, hasEducationContent, hasExperienceContent, normalizeUrl, paginateBlocks,
   type PreviewBlock,
-} from "@/lib/resume-blocks";
+} from "@/lib/document-blocks";
 import {
   nameStyle, headlineStyle, contactStyle, linkStyle, TEXT_COLOR,
-} from "@/lib/resume-typography";
+} from "@/lib/document-typography";
 import type { ReactNode } from "react";
 
 /* ════════════════════════════════════════════════════════════════
- * useResumePages — single source of truth for resume layout
+ * useDocumentPages — single source of truth for document layout
  *
  * Builds blocks, measures them in a hidden container, paginates,
- * and returns everything both ResumePreview and ResumeAllPages need.
+ * and returns everything both DocumentPreview and DocumentAllPages need.
  * ════════════════════════════════════════════════════════════════ */
 
 export interface UseResumePagesResult {
@@ -40,14 +40,14 @@ export interface UseResumePagesResult {
   measuringContainer: ReactNode;
 }
 
-export function useResumePages(): UseResumePagesResult {
-  const { state } = useResumeContext();
-  const { resume, selectedTemplateId, selectedFontId } = state;
+export function useDocumentPages(): UseResumePagesResult {
+  const { state } = useDocumentContext();
+  const { document, selectedTemplateId, selectedFontId } = state;
   const templateId = getTemplate(selectedTemplateId).id;
   const theme = TEMPLATE_THEMES[templateId];
   const fontStack = getFont(selectedFontId).stack;
 
-  const { personalDetails: personal, professionalSummary } = resume;
+  const { personalDetails: personal, professionalSummary } = document;
 
   const fullName = `${personal.firstName} ${personal.lastName}`.trim();
   const dial = COUNTRIES.find((country) => country.code === personal.contact.phoneCountry)?.dial ?? "+63";
@@ -55,17 +55,17 @@ export function useResumePages(): UseResumePagesResult {
   const contactLine = [personal.contact.location, personal.contact.email, phoneLine].filter(Boolean).join("  •  ");
   const links = personal.links.filter((link) => link.name.trim() && link.url.trim());
 
-  const experiencesPresent = resume.experiences.some(hasExperienceContent);
-  const educationPresent = resume.education.some(hasEducationContent);
-  const skillsPresent = resume.skills.length > 0;
+  const experiencesPresent = document.experiences.some(hasExperienceContent);
+  const educationPresent = document.education.some(hasEducationContent);
+  const skillsPresent = document.skills.length > 0;
   const isEmpty = !fullName && !personal.headline.trim() && !contactLine && links.length === 0 && !professionalSummary.trim() && !experiencesPresent && !educationPresent && !skillsPresent;
 
   const { main: mainBlocks, rail: railBlocks } = useMemo(
-    () => buildTemplateBlocks(resume, templateId),
-    [resume, templateId]
+    () => buildTemplateBlocks(document, templateId),
+    [document, templateId]
   );
   const isSidebar = railBlocks.length > 0;
-  const wordCount = useMemo(() => countResumeWords(resume), [resume]);
+  const wordCount = useMemo(() => countResumeWords(document), [document]);
 
   const headerNode = fullName || personal.headline.trim() || contactLine || links.length > 0
     ? (
@@ -112,7 +112,7 @@ export function useResumePages(): UseResumePagesResult {
   }, [mainBlocks, isEmpty]);
 
   /* Off-screen measuring container — rendered once in the component that
-     first mounts (ResumePreview). Both preview and print use the SAME
+     first mounts (DocumentPreview). Both preview and print use the SAME
      pagination result from this hook instance. */
   const measuringContainer = (
     <div aria-hidden="true" style={{ position: "fixed", top: 0, left: "-9999px", width: `${measureWidthMM}mm`, fontFamily: fontStack }}>
@@ -263,22 +263,22 @@ function PageNavButton({ direction, onClick, disabled }: { direction: "prev" | "
 }
 
 /* ════════════════════════════════════════════════════════════════
- * ResumePreview — interactive, scaled, single-page preview
+ * DocumentPreview — interactive, scaled, single-page preview
  * ════════════════════════════════════════════════════════════════ */
 
-export interface ResumePreviewProps {
+export interface DocumentPreviewProps {
   resumePages: UseResumePagesResult;
   pageIndex: number;
   onPageIndexChange: (index: number) => void;
   maxHeight?: string;
   /** When true, page navigation and word count are not rendered. */
   hideFooter?: boolean;
-  /** When true, only the page navigation and word count are rendered (no resume paper). */
+  /** When true, only the page navigation and word count are rendered (no document paper). */
   footerOnly?: boolean;
   className?: string;
 }
 
-export function ResumePreview({ resumePages, pageIndex, onPageIndexChange, maxHeight = "70vh", hideFooter, footerOnly, className }: ResumePreviewProps) {
+export function DocumentPreview({ resumePages, pageIndex, onPageIndexChange, maxHeight = "70vh", hideFooter, footerOnly, className }: DocumentPreviewProps) {
   const { isEmpty, headerNode, pages, railBlocks, isSidebar, fontStack, contactLine, links, measureWidthMM, wordCount, measuringContainer } = resumePages;
 
   useEffect(() => {
@@ -306,7 +306,7 @@ export function ResumePreview({ resumePages, pageIndex, onPageIndexChange, maxHe
   if (isEmpty) {
     return (
       <div className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
-        <p className="text-sm font-medium text-slate-600">Your resume preview will appear here</p>
+        <p className="text-sm font-medium text-slate-600">Your document preview will appear here</p>
         <p className="mt-1 text-xs text-slate-400">Start filling out the form to see it come together.</p>
       </div>
     );
@@ -356,16 +356,16 @@ export function ResumePreview({ resumePages, pageIndex, onPageIndexChange, maxHe
 }
 
 /* ════════════════════════════════════════════════════════════════
- * ResumeAllPages — print-only, full-fidelity, all pages at true
- * A4 size. Uses the SAME useResumePages() hook so pagination is
+ * DocumentAllPages — print-only, full-fidelity, all pages at true
+ * A4 size. Uses the SAME useDocumentPages() hook so pagination is
  * identical to the interactive preview.
  *
  * Replaces the old ResumePrintView that had its own independent
  * block building + measurement + pagination.
  * ════════════════════════════════════════════════════════════════ */
 
-export function ResumeAllPages() {
-  const { isEmpty, headerNode, pages, railBlocks, isSidebar, fontStack, contactLine, links, measureWidthMM, measuringContainer } = useResumePages();
+export function DocumentAllPages() {
+  const { isEmpty, headerNode, pages, railBlocks, isSidebar, fontStack, contactLine, links, measureWidthMM, measuringContainer } = useDocumentPages();
 
   if (isEmpty) return null;
 

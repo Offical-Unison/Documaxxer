@@ -3,7 +3,7 @@
 import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { TemplatePicker } from "@/components/builder/template-picker";
-import { useResumeContext } from "@/context/resume-context";
+import { useDocumentContext } from "@/context/document-context";
 import { BuilderHeader } from "@/components/builder/builder-header";
 import { getTemplate, RESUME_TEMPLATES, type TemplateId } from "@/lib/templates";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import Link from "next/link";
 
 function TemplateSelectionContent() {
   const searchParams = useSearchParams();
-  const { state, dispatch, isHydrated } = useResumeContext();
+  const { state, dispatch, isHydrated } = useDocumentContext();
 
   const typeParam = searchParams.get("type");
   

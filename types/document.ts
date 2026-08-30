@@ -156,7 +156,7 @@ export interface Reference {
 export type OptionalSectionKey = "projects" | "certifications" | "awards" | "volunteerExperiences" | "languages" | "publications" | "presentations" | "researchExperiences" | "teachingExperiences" | "grants" | "memberships" | "organizations" | "leadership" | "references" | "other";
 export type SectionId = "personal" | "summary" | "experience" | "education" | "skills" | OptionalSectionKey;
 
-export interface ResumeData {
+export interface DocumentData {
   personalDetails: PersonalDetails;
   professionalSummary: string;
   experiences: Experience[];
@@ -181,9 +181,9 @@ export interface ResumeData {
   sectionTitles: Record<SectionId, string>;
 }
 
-export interface ResumeState {
+export interface DocumentState {
   documentType: "resume" | "cv";
-  resume: ResumeData;
+  document: DocumentData;
   activeSection: string | null;
   selectedTemplateId: string | null;
   selectedFontId: string | null;

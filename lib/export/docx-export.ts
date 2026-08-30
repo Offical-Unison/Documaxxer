@@ -4,11 +4,11 @@ import { AlignmentType, BorderStyle, convertMillimetersToTwip, Document, LineRul
 import { COUNTRIES } from "@/lib/countries";
 import { formatDateRange, formatPartialDate, sortByDateDesc, sortEntriesByRecency } from "@/lib/format";
 import { getFont } from "@/lib/fonts";
-import type { Education, Experience, ResumeData } from "@/types/resume";
+import type { Education, Experience, DocumentData } from "@/types/document";
 import {
   NAME_HP, SECTION_HEADING_HP, ENTRY_TITLE_HP, BODY_HP, CONTACT_HP, DATE_HP, BODY_PT
-} from "@/lib/resume-typography";
-import { MARGIN_MM } from "@/lib/resume-blocks";
+} from "@/lib/document-typography";
+import { MARGIN_MM } from "@/lib/document-blocks";
 
 const hasExperienceContent = (item: Experience) => item.employer.trim() || item.role.trim();
 const hasEducationContent = (item: Education) => item.institution.trim();
@@ -83,8 +83,8 @@ function plainLine(text: string, fontName: string): Paragraph {
 
 
 /** Builds a genuinely editable .docx (real OOXML paragraphs/runs, no image or PDF conversion) and triggers a browser download. */
-export async function exportResumeToDocx(resume: ResumeData, selectedFontId?: string, documentType: "resume" | "cv" = "resume"): Promise<void> {
-  const personal = resume.personalDetails;
+export async function exportDocumentToDocx(document: DocumentData, selectedFontId?: string, documentType: "resume" | "cv" = "resume"): Promise<void> {
+  const personal = document.personalDetails;
   const fullName = `${personal.firstName} ${personal.lastName}`.trim() || (documentType === "cv" ? "CV" : "Resume");
   const dial = COUNTRIES.find((country) => country.code === personal.contact.phoneCountry)?.dial ?? "+63";
   const phoneLine = personal.contact.phoneNumber ? `${dial} ${personal.contact.phoneNumber}` : "";
@@ -132,26 +132,26 @@ export async function exportResumeToDocx(resume: ResumeData, selectedFontId?: st
     children: [new TextRun({ text: "", size: 2 })],
   }));
 
-  if (resume.professionalSummary.trim()) {
-    children.push(sectionHeading(resume.sectionTitles.summary, fontName));
+  if (document.professionalSummary.trim()) {
+    children.push(sectionHeading(document.sectionTitles.summary, fontName));
     children.push(new Paragraph({
-      children: [new TextRun({ text: resume.professionalSummary, color: BLACK, size: BODY_HP, font: fontName })],
+      children: [new TextRun({ text: document.professionalSummary, color: BLACK, size: BODY_HP, font: fontName })],
       spacing: { after: BULLET_AFTER, line: BODY_LINE_SPACING, lineRule: LineRuleType.AT_LEAST },
     }));
   }
 
-  const experiences = sortEntriesByRecency((resume.experiences || []).filter(hasExperienceContent));
+  const experiences = sortEntriesByRecency((document.experiences || []).filter(hasExperienceContent));
   if (experiences.length > 0) {
-    children.push(sectionHeading(resume.sectionTitles.experience, fontName));
+    children.push(sectionHeading(document.sectionTitles.experience, fontName));
     experiences.forEach((item) => {
       children.push(...entryHeading(item.role || "—", [item.employer, item.location].filter(Boolean).join(", "), formatDateRange(item.startDate, item.endDate, item.current), fontName));
       item.highlights.filter((line) => line.trim()).forEach((line) => children.push(bulletLine(line, fontName)));
     });
   }
 
-  const education = sortEntriesByRecency((resume.education || []).filter(hasEducationContent));
+  const education = sortEntriesByRecency((document.education || []).filter(hasEducationContent));
   if (education.length > 0) {
-    children.push(sectionHeading(resume.sectionTitles.education, fontName));
+    children.push(sectionHeading(document.sectionTitles.education, fontName));
     education.forEach((item) => {
       const gradeLabel = item.gradeLabel?.trim();
       const gradeValue = item.gradeValue?.trim();
@@ -164,16 +164,16 @@ export async function exportResumeToDocx(resume: ResumeData, selectedFontId?: st
     });
   }
 
-  if ((resume.skills || []).length > 0) {
-    children.push(sectionHeading(resume.sectionTitles.skills, fontName));
-    (resume.skills || []).forEach((skill) => children.push(bulletLine(skill, fontName)));
+  if ((document.skills || []).length > 0) {
+    children.push(sectionHeading(document.sectionTitles.skills, fontName));
+    (document.skills || []).forEach((skill) => children.push(bulletLine(skill, fontName)));
   }
 
-  (resume.optionalSections || []).forEach((key) => {
+  (document.optionalSections || []).forEach((key) => {
     if (key === "projects") {
-      const projects = sortByDateDesc((resume.projects || []).filter((item) => item.name.trim()));
+      const projects = sortByDateDesc((document.projects || []).filter((item) => item.name.trim()));
       if (projects.length === 0) return;
-      children.push(sectionHeading(resume.sectionTitles.projects, fontName));
+      children.push(sectionHeading(document.sectionTitles.projects, fontName));
       projects.forEach((item) => {
         const techLine = item.technologies.filter(Boolean).join(", ");
         const primaryText = item.name;
@@ -189,9 +189,9 @@ export async function exportResumeToDocx(resume: ResumeData, selectedFontId?: st
       });
     }
     if (key === "certifications") {
-      const items = sortByDateDesc((resume.certifications || []).filter((item) => item.name.trim()));
+      const items = sortByDateDesc((document.certifications || []).filter((item) => item.name.trim()));
       if (items.length === 0) return;
-      children.push(sectionHeading(resume.sectionTitles.certifications, fontName));
+      children.push(sectionHeading(document.sectionTitles.certifications, fontName));
       items.forEach((item) => {
         children.push(...entryHeading(item.name, "", formatPartialDate(item.date), fontName));
         const org = item.issuingOrganization?.trim();
@@ -199,36 +199,36 @@ export async function exportResumeToDocx(resume: ResumeData, selectedFontId?: st
       });
     }
     if (key === "awards") {
-      const items = sortByDateDesc((resume.awards || []).filter((item) => item.title.trim()));
+      const items = sortByDateDesc((document.awards || []).filter((item) => item.title.trim()));
       if (items.length === 0) return;
-      children.push(sectionHeading(resume.sectionTitles.awards, fontName));
+      children.push(sectionHeading(document.sectionTitles.awards, fontName));
       items.forEach((item) => {
         children.push(...entryHeading(item.title, "", formatPartialDate(item.date), fontName));
         item.highlights.filter((line) => line.trim()).forEach((line) => children.push(plainLine(line, fontName)));
       });
     }
     if (key === "volunteerExperiences") {
-      const items = sortByDateDesc((resume.volunteerExperiences || []).filter((item) => item.organization.trim() || item.role.trim()));
+      const items = sortByDateDesc((document.volunteerExperiences || []).filter((item) => item.organization.trim() || item.role.trim()));
       if (items.length === 0) return;
-      children.push(sectionHeading(resume.sectionTitles.volunteerExperiences, fontName));
+      children.push(sectionHeading(document.sectionTitles.volunteerExperiences, fontName));
       items.forEach((item) => {
         children.push(...entryHeading([item.role, item.organization].filter(Boolean).join(" | "), "", formatPartialDate(item.date), fontName));
         item.highlights.filter((line) => line.trim()).forEach((line) => children.push(plainLine(line, fontName)));
       });
     }
     if (key === "languages") {
-      const items = (resume.languages || []).filter((item) => item.name.trim());
+      const items = (document.languages || []).filter((item) => item.name.trim());
       if (items.length === 0) return;
-      children.push(sectionHeading(resume.sectionTitles.languages, fontName));
+      children.push(sectionHeading(document.sectionTitles.languages, fontName));
       children.push(new Paragraph({
         spacing: { line: BODY_LINE_SPACING, lineRule: LineRuleType.AT_LEAST },
         children: [new TextRun({ text: items.map((item) => (item.proficiency ? `${item.name} (${item.proficiency})` : item.name)).join(" • "), color: BLACK, size: BODY_HP, font: fontName })],
       }));
     }
     if (key === "other") {
-      const items = sortByDateDesc((resume.otherEntries || []).filter((entry) => entry.name.trim()));
+      const items = sortByDateDesc((document.otherEntries || []).filter((entry) => entry.name.trim()));
       if (items.length === 0) return;
-      children.push(sectionHeading(resume.sectionTitles.other, fontName));
+      children.push(sectionHeading(document.sectionTitles.other, fontName));
       items.forEach((item) => {
         children.push(...entryHeading(item.name, "", formatPartialDate(item.date), fontName));
         // No bullets for other/custom section descriptions — plain paragraphs
@@ -236,9 +236,9 @@ export async function exportResumeToDocx(resume: ResumeData, selectedFontId?: st
       });
     }
     if (key === "publications") {
-      const items = sortByDateDesc((resume.publications || []).filter((entry) => entry.title.trim()));
+      const items = sortByDateDesc((document.publications || []).filter((entry) => entry.title.trim()));
       if (items.length === 0) return;
-      children.push(sectionHeading(resume.sectionTitles.publications, fontName));
+      children.push(sectionHeading(document.sectionTitles.publications, fontName));
       items.forEach((item) => {
         children.push(...entryHeading(item.title, item.publisher, formatPartialDate(item.date), fontName));
         if (item.authors.trim()) children.push(plainLine(`Authors: ${item.authors}`, fontName));
@@ -247,9 +247,9 @@ export async function exportResumeToDocx(resume: ResumeData, selectedFontId?: st
       });
     }
     if (key === "presentations") {
-      const items = sortByDateDesc((resume.presentations || []).filter((entry) => entry.title.trim()));
+      const items = sortByDateDesc((document.presentations || []).filter((entry) => entry.title.trim()));
       if (items.length === 0) return;
-      children.push(sectionHeading(resume.sectionTitles.presentations, fontName));
+      children.push(sectionHeading(document.sectionTitles.presentations, fontName));
       items.forEach((item) => {
         children.push(...entryHeading(item.title, item.event, formatPartialDate(item.date), fontName));
         if (item.location.trim()) children.push(plainLine(`Location: ${item.location}`, fontName));
@@ -257,9 +257,9 @@ export async function exportResumeToDocx(resume: ResumeData, selectedFontId?: st
       });
     }
     if (key === "researchExperiences") {
-      const items = sortByDateDesc((resume.researchExperiences || []).filter((entry) => entry.role.trim() || entry.project.trim()));
+      const items = sortByDateDesc((document.researchExperiences || []).filter((entry) => entry.role.trim() || entry.project.trim()));
       if (items.length === 0) return;
-      children.push(sectionHeading(resume.sectionTitles.researchExperiences, fontName));
+      children.push(sectionHeading(document.sectionTitles.researchExperiences, fontName));
       items.forEach((item) => {
         const secondary = [item.organization, item.project].filter(Boolean).join(" | ");
         children.push(...entryHeading(item.role, secondary, formatPartialDate(item.date), fontName));

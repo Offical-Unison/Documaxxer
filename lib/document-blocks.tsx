@@ -1,14 +1,14 @@
 import type { ReactNode } from "react";
 import { formatDateRange, formatPartialDate, sortByDateDesc, sortEntriesByRecency } from "@/lib/format";
 import type { TemplateId } from "@/lib/templates";
-import type { Education, Experience, Project, ResumeData, VolunteerExperience } from "@/types/resume";
+import type { Education, Experience, Project, DocumentData, VolunteerExperience } from "@/types/document";
 import {
   sectionHeadingStyle, entryTitleStyle, entrySubtitleStyle,
   bodyStyle, dateStyle,
-} from "@/lib/resume-typography";
+} from "@/lib/document-typography";
 
-export const PAGE_WIDTH_MM = 215.9; // 8.5 inches
-export const PAGE_HEIGHT_MM = 279.4; // 11 inches
+export const PAGE_WIDTH_MM = 210; // A4 width in mm
+export const PAGE_HEIGHT_MM = 297; // A4 height in mm
 export const MARGIN_MM = 25.4; // 1 inch
 export const CONTENT_WIDTH_MM = PAGE_WIDTH_MM - MARGIN_MM * 2;
 export const CONTENT_HEIGHT_MM = PAGE_HEIGHT_MM - MARGIN_MM * 2;
@@ -78,29 +78,29 @@ export function EntryHeading({ primary, secondary, dateRange, subItems, customPr
  * Central builder for all templates.
  * Returns the main blocks, and optionally rail blocks if it's a two-column template.
  */
-export function buildTemplateBlocks(resume: ResumeData, templateId: TemplateId): { main: PreviewBlock[]; rail: PreviewBlock[] } {
-  const { professionalSummary, sectionTitles } = resume;
+export function buildTemplateBlocks(document: DocumentData, templateId: TemplateId): { main: PreviewBlock[]; rail: PreviewBlock[] } {
+  const { professionalSummary, sectionTitles } = document;
 
-  const experiences = sortEntriesByRecency((resume.experiences || []).filter(hasExperienceContent));
-  const education = sortEntriesByRecency((resume.education || []).filter(hasEducationContent));
+  const experiences = sortEntriesByRecency((document.experiences || []).filter(hasExperienceContent));
+  const education = sortEntriesByRecency((document.education || []).filter(hasEducationContent));
   
   const hasProjectContent = (item: Project) => item.name.trim();
-  const projects = sortByDateDesc((resume.projects || []).filter(hasProjectContent));
-  const certifications = sortByDateDesc((resume.certifications || []).filter((item) => item.name.trim()));
-  const awards = sortByDateDesc((resume.awards || []).filter((item) => item.title.trim()));
+  const projects = sortByDateDesc((document.projects || []).filter(hasProjectContent));
+  const certifications = sortByDateDesc((document.certifications || []).filter((item) => item.name.trim()));
+  const awards = sortByDateDesc((document.awards || []).filter((item) => item.title.trim()));
   const hasVolunteerContent = (item: VolunteerExperience) => item.organization.trim() || item.role.trim();
-  const volunteering = sortByDateDesc((resume.volunteerExperiences || []).filter(hasVolunteerContent));
-  const organizations = sortByDateDesc((resume.organizations || []).filter((item) => item.organization.trim() || item.role.trim()));
-  const leadership = sortByDateDesc((resume.leadership || []).filter((item) => item.organization.trim() || item.role.trim()));
-  const teaching = sortByDateDesc((resume.teachingExperiences || []).filter((item) => item.role.trim() || item.institution.trim()));
-  const grants = sortByDateDesc((resume.grants || []).filter((item) => item.name.trim() || item.issuer.trim()));
-  const memberships = sortByDateDesc((resume.memberships || []).filter((item) => item.organization.trim() || item.role.trim()));
-  const references = (resume.references || []).filter((item) => item.name.trim());
-  const languages = (resume.languages || []).filter((item) => item.name.trim());
-  const publications = sortByDateDesc((resume.publications || []).filter((item) => item.title.trim()));
-  const presentations = sortByDateDesc((resume.presentations || []).filter((item) => item.title.trim()));
-  const research = sortByDateDesc((resume.researchExperiences || []).filter((item) => item.role.trim() || item.project.trim()));
-  const otherEntries = sortByDateDesc((resume.otherEntries || []).filter((entry) => entry.name.trim()));
+  const volunteering = sortByDateDesc((document.volunteerExperiences || []).filter(hasVolunteerContent));
+  const organizations = sortByDateDesc((document.organizations || []).filter((item) => item.organization.trim() || item.role.trim()));
+  const leadership = sortByDateDesc((document.leadership || []).filter((item) => item.organization.trim() || item.role.trim()));
+  const teaching = sortByDateDesc((document.teachingExperiences || []).filter((item) => item.role.trim() || item.institution.trim()));
+  const grants = sortByDateDesc((document.grants || []).filter((item) => item.name.trim() || item.issuer.trim()));
+  const memberships = sortByDateDesc((document.memberships || []).filter((item) => item.organization.trim() || item.role.trim()));
+  const references = (document.references || []).filter((item) => item.name.trim());
+  const languages = (document.languages || []).filter((item) => item.name.trim());
+  const publications = sortByDateDesc((document.publications || []).filter((item) => item.title.trim()));
+  const presentations = sortByDateDesc((document.presentations || []).filter((item) => item.title.trim()));
+  const research = sortByDateDesc((document.researchExperiences || []).filter((item) => item.role.trim() || item.project.trim()));
+  const otherEntries = sortByDateDesc((document.otherEntries || []).filter((entry) => entry.name.trim()));
 
   const main: PreviewBlock[] = [];
   const rail: PreviewBlock[] = [];
@@ -151,26 +151,26 @@ export function buildTemplateBlocks(resume: ResumeData, templateId: TemplateId):
   };
 
   const addSkills = (target: PreviewBlock[], techStyle: boolean = false) => {
-    if (resume.skills.length === 0) return;
+    if (document.skills.length === 0) return;
     target.push(sectionHeader("skills", sectionTitles.skills));
     
     if (techStyle) {
       target.push(sectionContent("skills-content", (
         <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-          {resume.skills.map((skill) => (
+          {document.skills.map((skill) => (
             <span key={skill} style={{ ...bodyStyle, fontWeight: 500, padding: "2px 8px", backgroundColor: "#f1f5f9", borderRadius: "4px", border: "1px solid #e2e8f0" }}>{skill}</span>
           ))}
         </div>
       )));
     } else {
       target.push(sectionContent("skills-content", (
-        <p style={bodyStyle}>{resume.skills.join(" • ")}</p>
+        <p style={bodyStyle}>{document.skills.join(" • ")}</p>
       )));
     }
   };
 
   const addProjects = (target: PreviewBlock[]) => {
-    if (projects.length === 0 || !resume.optionalSections.includes("projects")) return;
+    if (projects.length === 0 || !document.optionalSections.includes("projects")) return;
     target.push(sectionHeader("projects", sectionTitles.projects));
     projects.forEach((item) => {
       const highlights = item.highlights.filter((line) => line.trim());
@@ -190,7 +190,7 @@ export function buildTemplateBlocks(resume: ResumeData, templateId: TemplateId):
   };
 
   const addResearch = (target: PreviewBlock[]) => {
-    if (research.length === 0 || !resume.optionalSections.includes("researchExperiences")) return;
+    if (research.length === 0 || !document.optionalSections.includes("researchExperiences")) return;
     target.push(sectionHeader("researchExperiences", sectionTitles.researchExperiences));
     research.forEach((item) => {
       const highlights = item.highlights.filter((line) => line.trim());
@@ -208,7 +208,7 @@ export function buildTemplateBlocks(resume: ResumeData, templateId: TemplateId):
   };
 
   const addPublications = (target: PreviewBlock[]) => {
-    if (publications.length === 0 || !resume.optionalSections.includes("publications")) return;
+    if (publications.length === 0 || !document.optionalSections.includes("publications")) return;
     target.push(sectionHeader("publications", sectionTitles.publications));
     publications.forEach((item) => {
       const highlights = item.highlights.filter((line) => line.trim());
@@ -228,7 +228,7 @@ export function buildTemplateBlocks(resume: ResumeData, templateId: TemplateId):
   };
   
   const addCertifications = (target: PreviewBlock[]) => {
-    if (certifications.length === 0 || !resume.optionalSections.includes("certifications")) return;
+    if (certifications.length === 0 || !document.optionalSections.includes("certifications")) return;
     target.push(sectionHeader("certifications", sectionTitles.certifications));
     certifications.forEach((item) => {
       const org = item.issuingOrganization?.trim();
@@ -242,13 +242,13 @@ export function buildTemplateBlocks(resume: ResumeData, templateId: TemplateId):
   };
 
   const addLanguages = (target: PreviewBlock[]) => {
-    if (languages.length === 0 || !resume.optionalSections.includes("languages")) return;
+    if (languages.length === 0 || !document.optionalSections.includes("languages")) return;
     target.push(sectionHeader("languages", sectionTitles.languages));
     target.push(sectionContent("languages-content", <p style={bodyStyle}>{languages.map((item) => (item.proficiency ? `${item.name} (${item.proficiency})` : item.name)).join(" • ")}</p>));
   };
   
   const addAwards = (target: PreviewBlock[]) => {
-    if (awards.length === 0 || !resume.optionalSections.includes("awards")) return;
+    if (awards.length === 0 || !document.optionalSections.includes("awards")) return;
     target.push(sectionHeader("awards", sectionTitles.awards));
     awards.forEach((item) => {
       const highlights = item.highlights.filter((line) => line.trim());
@@ -262,7 +262,7 @@ export function buildTemplateBlocks(resume: ResumeData, templateId: TemplateId):
   };
   
   const addVolunteering = (target: PreviewBlock[]) => {
-    if (volunteering.length === 0 || !resume.optionalSections.includes("volunteerExperiences")) return;
+    if (volunteering.length === 0 || !document.optionalSections.includes("volunteerExperiences")) return;
     target.push(sectionHeader("volunteering", sectionTitles.volunteerExperiences));
     volunteering.forEach((item) => {
       const highlights = item.highlights.filter((line) => line.trim());
@@ -276,7 +276,7 @@ export function buildTemplateBlocks(resume: ResumeData, templateId: TemplateId):
   };
 
   const addPresentations = (target: PreviewBlock[]) => {
-    if (presentations.length === 0 || !resume.optionalSections.includes("presentations")) return;
+    if (presentations.length === 0 || !document.optionalSections.includes("presentations")) return;
     target.push(sectionHeader("presentations", sectionTitles.presentations));
     presentations.forEach((item) => {
       const highlights = item.highlights.filter((line) => line.trim());
@@ -291,7 +291,7 @@ export function buildTemplateBlocks(resume: ResumeData, templateId: TemplateId):
   };
   
   const addTeaching = (target: PreviewBlock[]) => {
-    if (teaching.length === 0 || !resume.optionalSections.includes("teachingExperiences")) return;
+    if (teaching.length === 0 || !document.optionalSections.includes("teachingExperiences")) return;
     target.push(sectionHeader("teachingExperiences", sectionTitles.teachingExperiences));
     teaching.forEach((item) => {
       const highlights = item.highlights.filter((line) => line.trim());
@@ -306,7 +306,7 @@ export function buildTemplateBlocks(resume: ResumeData, templateId: TemplateId):
   };
 
   const addGrants = (target: PreviewBlock[]) => {
-    if (grants.length === 0 || !resume.optionalSections.includes("grants")) return;
+    if (grants.length === 0 || !document.optionalSections.includes("grants")) return;
     target.push(sectionHeader("grants", sectionTitles.grants));
     grants.forEach((item) => {
       const highlights = item.highlights.filter((line) => line.trim());
@@ -320,7 +320,7 @@ export function buildTemplateBlocks(resume: ResumeData, templateId: TemplateId):
   };
 
   const addMemberships = (target: PreviewBlock[]) => {
-    if (memberships.length === 0 || !resume.optionalSections.includes("memberships")) return;
+    if (memberships.length === 0 || !document.optionalSections.includes("memberships")) return;
     target.push(sectionHeader("memberships", sectionTitles.memberships));
     memberships.forEach((item) => {
       const highlights = item.highlights.filter((line) => line.trim());
@@ -334,7 +334,7 @@ export function buildTemplateBlocks(resume: ResumeData, templateId: TemplateId):
   };
 
   const addOrganizations = (target: PreviewBlock[]) => {
-    if (organizations.length === 0 || !resume.optionalSections.includes("organizations")) return;
+    if (organizations.length === 0 || !document.optionalSections.includes("organizations")) return;
     target.push(sectionHeader("organizations", sectionTitles.organizations));
     organizations.forEach((item) => {
       const highlights = item.highlights.filter((line) => line.trim());
@@ -348,7 +348,7 @@ export function buildTemplateBlocks(resume: ResumeData, templateId: TemplateId):
   };
 
   const addLeadership = (target: PreviewBlock[]) => {
-    if (leadership.length === 0 || !resume.optionalSections.includes("leadership")) return;
+    if (leadership.length === 0 || !document.optionalSections.includes("leadership")) return;
     target.push(sectionHeader("leadership", sectionTitles.leadership));
     leadership.forEach((item) => {
       const highlights = item.highlights.filter((line) => line.trim());
@@ -362,7 +362,7 @@ export function buildTemplateBlocks(resume: ResumeData, templateId: TemplateId):
   };
 
   const addReferences = (target: PreviewBlock[]) => {
-    if (references.length === 0 || !resume.optionalSections.includes("references")) return;
+    if (references.length === 0 || !document.optionalSections.includes("references")) return;
     target.push(sectionHeader("references", sectionTitles.references));
     target.push(sectionContent("references-content", (
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
@@ -379,7 +379,7 @@ export function buildTemplateBlocks(resume: ResumeData, templateId: TemplateId):
   };
   
   const addOther = (target: PreviewBlock[]) => {
-    if (otherEntries.length === 0 || !resume.optionalSections.includes("other")) return;
+    if (otherEntries.length === 0 || !document.optionalSections.includes("other")) return;
     target.push(sectionHeader("other", sectionTitles.other));
     otherEntries.forEach((entry) => {
       const highlights = entry.highlights.filter((line) => line.trim());

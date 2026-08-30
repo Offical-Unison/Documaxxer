@@ -1,6 +1,6 @@
 "use client";
 
-import type { ResumeLink } from "@/types/resume";
+import type { ResumeLink } from "@/types/document";
 
 interface LinkListInputProps {
   values: ResumeLink[];

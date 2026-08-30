@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useResumeContext } from "@/context/resume-context";
-import { exportResumeToDocx } from "@/lib/export/docx-export";
+import { useDocumentContext } from "@/context/document-context";
+import { exportDocumentToDocx } from "@/lib/export/docx-export";
 
 export function GenerateButton() {
-  const { state } = useResumeContext();
+  const { state } = useDocumentContext();
   const [isExportingDocx, setIsExportingDocx] = useState(false);
   const [docxError, setDocxError] = useState<string | null>(null);
 
@@ -15,7 +15,7 @@ export function GenerateButton() {
     setDocxError(null);
     setIsExportingDocx(true);
     try {
-      await exportResumeToDocx(state.resume, state.selectedFontId ?? undefined, state.documentType);
+      await exportDocumentToDocx(state.document, state.selectedFontId ?? undefined, state.documentType);
     } catch {
       setDocxError(`Couldn't generate the Word document. Please try again.`);
     } finally {

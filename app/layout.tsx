@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "@/styles/globals.css";
-import { ResumeProvider } from "@/context/resume-context";
+import { DocumentProvider } from "@/context/document-context";
 import { ThemeProvider } from "@/context/theme-context";
 
 const geist = Geist({
@@ -11,7 +11,7 @@ const geist = Geist({
 
 export const metadata: Metadata = {
   title: "Documaxxer | Modern Resume & CV Builder",
-  description: "Build a polished resume or CV with confidence.",
+  description: "Build a polished document or CV with confidence.",
   icons: {
     icon: "/icon.svg",
   },
@@ -38,7 +38,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       </head>
       <body className={`${geist.variable} font-sans antialiased`}>
         <ThemeProvider>
-          <ResumeProvider>{children}</ResumeProvider>
+          <DocumentProvider>{children}</DocumentProvider>
         </ThemeProvider>
       </body>
     </html>

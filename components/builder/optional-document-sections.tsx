@@ -5,8 +5,8 @@ import { AddButton, EntryCard, Field, TagInput } from "@/components/builder/form
 import { BulletListInput } from "@/components/builder/bullet-list";
 import { PartialDateField } from "@/components/builder/date-input";
 import { EditableTitle } from "@/components/builder/editable-title";
-import { useResumeContext } from "@/context/resume-context";
-import type { Award, Certification, Language, OptionalSectionKey, OtherEntry, Project, Publication, Presentation, ResearchExperience, VolunteerExperience, TeachingExperience, Grant, Membership, OrganizationRole, LeadershipExperience, Reference } from "@/types/resume";
+import { useDocumentContext } from "@/context/document-context";
+import type { Award, Certification, Language, OptionalSectionKey, OtherEntry, Project, Publication, Presentation, ResearchExperience, VolunteerExperience, TeachingExperience, Grant, Membership, OrganizationRole, LeadershipExperience, Reference } from "@/types/document";
 
 const makeId = () => crypto.randomUUID();
 
@@ -35,16 +35,16 @@ const CV_SECTION_OPTIONS: { key: OptionalSectionKey; label: string; description:
   { key: "other", label: "Custom Section", description: "Add any other custom section." },
 ];
 
-export function OptionalResumeSections() {
-  const { state, dispatch } = useResumeContext();
-  const { resume } = state;
+export function OptionalDocumentSections() {
+  const { state, dispatch } = useDocumentContext();
+  const { document } = state;
   const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const addSection = (key: OptionalSectionKey) => dispatch({ type: "SET_OPTIONAL_SECTIONS", payload: [...resume.optionalSections, key] });
-  const removeSection = (key: OptionalSectionKey) => dispatch({ type: "SET_OPTIONAL_SECTIONS", payload: resume.optionalSections.filter((section) => section !== key) });
+  const addSection = (key: OptionalSectionKey) => dispatch({ type: "SET_OPTIONAL_SECTIONS", payload: [...document.optionalSections, key] });
+  const removeSection = (key: OptionalSectionKey) => dispatch({ type: "SET_OPTIONAL_SECTIONS", payload: document.optionalSections.filter((section) => section !== key) });
 
   const reorder = (fromIndex: number, toIndex: number) => {
     if (fromIndex === toIndex) return;
-    const next = [...resume.optionalSections];
+    const next = [...document.optionalSections];
     const [moved] = next.splice(fromIndex, 1);
     next.splice(toIndex, 0, moved);
     dispatch({ type: "SET_OPTIONAL_SECTIONS", payload: next });
@@ -54,7 +54,7 @@ export function OptionalResumeSections() {
     <section>
       <div className="grid gap-4 sm:grid-cols-2">
         {(state.documentType === "cv" ? CV_SECTION_OPTIONS : RESUME_SECTION_OPTIONS).map((section) => {
-          const added = resume.optionalSections.includes(section.key);
+          const added = document.optionalSections.includes(section.key);
           return (
             <article
               key={section.key}
@@ -96,12 +96,12 @@ export function OptionalResumeSections() {
         })}
       </div>
 
-      {resume.optionalSections.length > 0 && (
+      {document.optionalSections.length > 0 && (
         <div className="mt-8 border-t border-slate-200/80 pt-7 dark:border-slate-700/80">
           <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Added sections</h3>
-          <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">Drag a section to reorder how it appears on your resume.</p>
+          <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">Drag a section to reorder how it appears on your document.</p>
           <div className="mt-4 space-y-5">
-            {resume.optionalSections.map((section, index) => (
+            {document.optionalSections.map((section, index) => (
               <div
                 key={section}
                 draggable
@@ -122,8 +122,8 @@ export function OptionalResumeSections() {
 }
 
 function OptionalSection({ section, onRemove }: { section: OptionalSectionKey; onRemove: () => void }) {
-  const { state, dispatch } = useResumeContext();
-  const resume = state.resume;
+  const { state, dispatch } = useDocumentContext();
+  const document = state.document;
   return (
     <section className="rounded-2xl border border-slate-200/80 bg-white/70 p-4 shadow-sm dark:border-slate-700/80 dark:bg-slate-800/70 sm:p-5">
       <div className="flex items-center justify-between gap-3">
@@ -132,7 +132,7 @@ function OptionalSection({ section, onRemove }: { section: OptionalSectionKey; o
           <EditableTitle
             as="h4"
             className="font-semibold text-slate-900 dark:text-slate-100"
-            title={resume.sectionTitles[section]}
+            title={document.sectionTitles[section]}
             onSave={(title) => dispatch({ type: "SET_SECTION_TITLE", payload: { id: section, title } })}
           />
         </div>
@@ -145,21 +145,21 @@ function OptionalSection({ section, onRemove }: { section: OptionalSectionKey; o
         </button>
       </div>
       <div className="mt-4">
-        {section === "projects" && <Projects items={resume.projects} onChange={(payload) => dispatch({ type: "SET_PROJECTS", payload })} />}
-        {section === "certifications" && <Certifications items={resume.certifications} onChange={(payload) => dispatch({ type: "SET_CERTIFICATIONS", payload })} />}
-        {section === "awards" && <Awards items={resume.awards} onChange={(payload) => dispatch({ type: "SET_AWARDS", payload })} />}
-        {section === "volunteerExperiences" && <Volunteering items={resume.volunteerExperiences} onChange={(payload) => dispatch({ type: "SET_VOLUNTEER_EXPERIENCES", payload })} />}
-        {section === "organizations" && <Organizations items={resume.organizations} onChange={(payload) => dispatch({ type: "SET_ORGANIZATIONS", payload })} />}
-        {section === "leadership" && <Leadership items={resume.leadership} onChange={(payload) => dispatch({ type: "SET_LEADERSHIP", payload })} />}
-        {section === "languages" && <Languages items={resume.languages} onChange={(payload) => dispatch({ type: "SET_LANGUAGES", payload })} />}
-        {section === "publications" && <Publications items={resume.publications} onChange={(payload) => dispatch({ type: "SET_PUBLICATIONS", payload })} />}
-        {section === "presentations" && <Presentations items={resume.presentations} onChange={(payload) => dispatch({ type: "SET_PRESENTATIONS", payload })} />}
-        {section === "researchExperiences" && <ResearchExperiences items={resume.researchExperiences} onChange={(payload) => dispatch({ type: "SET_RESEARCH_EXPERIENCES", payload })} />}
-        {section === "teachingExperiences" && <TeachingExperiences items={resume.teachingExperiences} onChange={(payload) => dispatch({ type: "SET_TEACHING_EXPERIENCES", payload })} />}
-        {section === "grants" && <Grants items={resume.grants} onChange={(payload) => dispatch({ type: "SET_GRANTS", payload })} />}
-        {section === "memberships" && <Memberships items={resume.memberships} onChange={(payload) => dispatch({ type: "SET_MEMBERSHIPS", payload })} />}
-        {section === "references" && <References items={resume.references} onChange={(payload) => dispatch({ type: "SET_REFERENCES", payload })} />}
-        {section === "other" && <Other entries={resume.otherEntries} onChange={(entries) => dispatch({ type: "SET_OTHER_ENTRIES", payload: entries })} />}
+        {section === "projects" && <Projects items={document.projects} onChange={(payload) => dispatch({ type: "SET_PROJECTS", payload })} />}
+        {section === "certifications" && <Certifications items={document.certifications} onChange={(payload) => dispatch({ type: "SET_CERTIFICATIONS", payload })} />}
+        {section === "awards" && <Awards items={document.awards} onChange={(payload) => dispatch({ type: "SET_AWARDS", payload })} />}
+        {section === "volunteerExperiences" && <Volunteering items={document.volunteerExperiences} onChange={(payload) => dispatch({ type: "SET_VOLUNTEER_EXPERIENCES", payload })} />}
+        {section === "organizations" && <Organizations items={document.organizations} onChange={(payload) => dispatch({ type: "SET_ORGANIZATIONS", payload })} />}
+        {section === "leadership" && <Leadership items={document.leadership} onChange={(payload) => dispatch({ type: "SET_LEADERSHIP", payload })} />}
+        {section === "languages" && <Languages items={document.languages} onChange={(payload) => dispatch({ type: "SET_LANGUAGES", payload })} />}
+        {section === "publications" && <Publications items={document.publications} onChange={(payload) => dispatch({ type: "SET_PUBLICATIONS", payload })} />}
+        {section === "presentations" && <Presentations items={document.presentations} onChange={(payload) => dispatch({ type: "SET_PRESENTATIONS", payload })} />}
+        {section === "researchExperiences" && <ResearchExperiences items={document.researchExperiences} onChange={(payload) => dispatch({ type: "SET_RESEARCH_EXPERIENCES", payload })} />}
+        {section === "teachingExperiences" && <TeachingExperiences items={document.teachingExperiences} onChange={(payload) => dispatch({ type: "SET_TEACHING_EXPERIENCES", payload })} />}
+        {section === "grants" && <Grants items={document.grants} onChange={(payload) => dispatch({ type: "SET_GRANTS", payload })} />}
+        {section === "memberships" && <Memberships items={document.memberships} onChange={(payload) => dispatch({ type: "SET_MEMBERSHIPS", payload })} />}
+        {section === "references" && <References items={document.references} onChange={(payload) => dispatch({ type: "SET_REFERENCES", payload })} />}
+        {section === "other" && <Other entries={document.otherEntries} onChange={(entries) => dispatch({ type: "SET_OTHER_ENTRIES", payload: entries })} />}
       </div>
     </section>
   );

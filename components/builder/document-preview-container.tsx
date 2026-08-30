@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { ResumePreview } from "@/components/builder/resume-preview";
+import { DocumentPreview } from "@/components/builder/document-preview";
 import { GenerateButton } from "@/components/builder/generate-button";
 import { TemplatePicker } from "@/components/builder/template-picker";
 import { FontPicker } from "@/components/builder/font-picker";
-import { useResumeContext } from "@/context/resume-context";
+import { useDocumentContext } from "@/context/document-context";
 import type { TemplateId } from "@/lib/templates";
-import { useResumePages, type UseResumePagesResult } from "@/components/builder/resume-preview";
+import { useDocumentPages, type UseResumePagesResult } from "@/components/builder/document-preview";
 
 function ExpandIcon() {
   return (
@@ -21,9 +21,9 @@ function ExpandIcon() {
   );
 }
 
-export function ResumePreviewContainer() {
-  const { state, dispatch } = useResumeContext();
-  const resumePages = useResumePages();
+export function DocumentPreviewContainer() {
+  const { state, dispatch } = useDocumentContext();
+  const resumePages = useDocumentPages();
   const [pageIndex, setPageIndex] = useState(0);
   const [expanded, setExpanded] = useState(false);
 
@@ -56,7 +56,7 @@ export function ResumePreviewContainer() {
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-start min-h-0 w-full px-2">
-        <ResumePreview resumePages={resumePages} pageIndex={pageIndex} onPageIndexChange={setPageIndex} maxHeight="calc(100vh - 220px)" className="w-full" />
+        <DocumentPreview resumePages={resumePages} pageIndex={pageIndex} onPageIndexChange={setPageIndex} maxHeight="calc(100vh - 220px)" className="w-full" />
         {state.generateUnlocked && (
           <div className="mt-8 mb-8 flex justify-center w-full">
             <GenerateButton />
@@ -95,7 +95,7 @@ function ExpandedPreviewModal({
   if (typeof document === "undefined") return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center" role="dialog" aria-modal="true" aria-label="Expanded resume preview">
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center" role="dialog" aria-modal="true" aria-label="Expanded document preview">
       <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity" onClick={stableOnClose} />
 
       <div className="relative z-10 flex w-full max-w-4xl flex-col items-center gap-3 px-4 py-6 sm:px-8 sm:py-8 animate-fade-in-scale" style={{ maxHeight: "100vh" }}>
@@ -111,10 +111,10 @@ function ExpandedPreviewModal({
         </div>
 
         <div className="flex-1 min-h-0 w-full flex items-center justify-center">
-          <ResumePreview resumePages={resumePages} pageIndex={pageIndex} onPageIndexChange={onPageIndexChange} maxHeight="100%" hideFooter className="h-full w-full" />
+          <DocumentPreview resumePages={resumePages} pageIndex={pageIndex} onPageIndexChange={onPageIndexChange} maxHeight="100%" hideFooter className="h-full w-full" />
         </div>
 
-        <ResumePreview resumePages={resumePages} pageIndex={pageIndex} onPageIndexChange={onPageIndexChange} footerOnly />
+        <DocumentPreview resumePages={resumePages} pageIndex={pageIndex} onPageIndexChange={onPageIndexChange} footerOnly />
       </div>
     </div>,
     document.body

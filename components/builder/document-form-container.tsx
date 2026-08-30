@@ -7,11 +7,11 @@ import { PartialDateField } from "@/components/builder/date-input";
 import { LinkListInput } from "@/components/builder/link-list";
 import { PhoneField } from "@/components/builder/phone-input";
 import { EditableTitle } from "@/components/builder/editable-title";
-import { OptionalResumeSections } from "@/components/builder/optional-resume-sections";
-import { useResumeContext } from "@/context/resume-context";
+import { OptionalDocumentSections } from "@/components/builder/optional-document-sections";
+import { useDocumentContext } from "@/context/document-context";
 import { isValidPhoneNumber } from "@/lib/phone";
 import { getDocumentSteps } from "@/lib/document-config";
-import type { Education, Experience, PersonalDetails } from "@/types/resume";
+import type { Education, Experience, PersonalDetails } from "@/types/document";
 
 const makeId = () => crypto.randomUUID();
 
@@ -27,9 +27,9 @@ function Section({ title, description, children }: { title: React.ReactNode; des
   );
 }
 
-export function ResumeFormContainer() {
-  const { state, dispatch } = useResumeContext();
-  const { resume } = state;
+export function DocumentFormContainer() {
+  const { state, dispatch } = useDocumentContext();
+  const { document } = state;
   const steps = getDocumentSteps(state.documentType);
   const LAST_STEP = steps.length - 1;
   const savedStep = Number(state.activeSection);
@@ -37,10 +37,10 @@ export function ResumeFormContainer() {
   const currentStepConfig = steps[currentStep] || steps[0];
   const stepId = currentStepConfig.id;
   const [showErrors, setShowErrors] = useState(false);
-  const personal = resume.personalDetails;
-  const primarySkills = resume.skills;
-  const titleFor = (id: keyof typeof resume.sectionTitles) => resume.sectionTitles[id];
-  const renameTitle = (id: keyof typeof resume.sectionTitles) => (title: string) => dispatch({ type: "SET_SECTION_TITLE", payload: { id, title } });
+  const personal = document.personalDetails;
+  const primarySkills = document.skills;
+  const titleFor = (id: keyof typeof document.sectionTitles) => document.sectionTitles[id];
+  const renameTitle = (id: keyof typeof document.sectionTitles) => (title: string) => dispatch({ type: "SET_SECTION_TITLE", payload: { id, title } });
 
   const updatePersonal = (update: Omit<Partial<PersonalDetails>, "contact"> & { contact?: Partial<PersonalDetails["contact"]> }) => {
     dispatch({ type: "UPDATE_PERSONAL_DETAILS", payload: { ...personal, ...update, contact: { ...personal.contact, ...update.contact } } });
@@ -50,8 +50,8 @@ export function ResumeFormContainer() {
 
   const phoneValid = isValidPhoneNumber(personal.contact.phoneCountry, personal.contact.phoneNumber);
   const hasPersonalErrors = !personal.firstName.trim() || !personal.lastName.trim() || !personal.contact.email.trim() || !personal.contact.phoneNumber.trim() || !phoneValid || !personal.contact.location.trim();
-  const hasExperienceErrors = resume.experiences.some((item) => !item.employer.trim() || !item.role.trim() || !item.location.trim() || !item.startDate || (!item.current && !item.endDate) || (!item.current && item.startDate && item.endDate && item.startDate > item.endDate) || !item.highlights.some((line) => line.trim()));
-  const hasEducationErrors = resume.education.length === 0 || resume.education.some((item) => !item.institution.trim() || !item.degree.trim() || (item.educationType === "college" && !item.fieldOfStudy.trim()) || !item.startDate || (!item.current && !item.endDate) || (!item.current && item.startDate && item.endDate && item.startDate > item.endDate));
+  const hasExperienceErrors = document.experiences.some((item) => !item.employer.trim() || !item.role.trim() || !item.location.trim() || !item.startDate || (!item.current && !item.endDate) || (!item.current && item.startDate && item.endDate && item.startDate > item.endDate) || !item.highlights.some((line) => line.trim()));
+  const hasEducationErrors = document.education.length === 0 || document.education.some((item) => !item.institution.trim() || !item.degree.trim() || (item.educationType === "college" && !item.fieldOfStudy.trim()) || !item.startDate || (!item.current && !item.endDate) || (!item.current && item.startDate && item.endDate && item.startDate > item.endDate));
   const hasSkillsErrors = primarySkills.length === 0;
 
   
@@ -145,12 +145,12 @@ export function ResumeFormContainer() {
               <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">Briefly describe your professional background, strengths, and career focus.</p>
               <textarea
                 className="min-h-28 w-full rounded-xl border border-slate-200/90 bg-white/90 px-3.5 py-2.5 text-sm text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.04)] placeholder:text-slate-400 transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 focus:bg-white focus:outline-none dark:border-slate-700/80 dark:bg-[#1A2234]/90 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-500/20"
-                value={resume.professionalSummary}
+                value={document.professionalSummary}
                 onChange={(event) => dispatch({ type: "SET_PROFESSIONAL_SUMMARY", payload: event.target.value })}
                 maxLength={600}
                 placeholder="Summarize your expertise, strengths, and the value you bring."
               />
-              <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">{resume.professionalSummary.length}/600 characters</p>
+              <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">{document.professionalSummary.length}/600 characters</p>
             </div>
           </Section>
         )}
@@ -158,24 +158,24 @@ export function ResumeFormContainer() {
         {stepId === "experience" && (
           <Section title={<EditableTitle as="h2" className={SECTION_HEADING_CLASS} title={titleFor("experience")} onSave={renameTitle("experience")} />} description="This section is optional. Add roles that best demonstrate your impact.">
             <div className="space-y-3">
-              {resume.experiences.map((item, index) => (
-                <ExperienceEditor key={item.id} item={item} index={index} showErrors={showErrors} onChange={(nextItem) => setExperience(resume.experiences.map((entry) => entry.id === nextItem.id ? nextItem : entry))} onRemove={() => setExperience(resume.experiences.filter((entry) => entry.id !== item.id))} />
+              {document.experiences.map((item, index) => (
+                <ExperienceEditor key={item.id} item={item} index={index} showErrors={showErrors} onChange={(nextItem) => setExperience(document.experiences.map((entry) => entry.id === nextItem.id ? nextItem : entry))} onRemove={() => setExperience(document.experiences.filter((entry) => entry.id !== item.id))} />
               ))}
             </div>
-            <AddButton onClick={() => setExperience([...resume.experiences, { id: makeId(), employer: "", role: "", location: "", startDate: "", endDate: "", current: false, highlights: [] }])}>+ Add</AddButton>
+            <AddButton onClick={() => setExperience([...document.experiences, { id: makeId(), employer: "", role: "", location: "", startDate: "", endDate: "", current: false, highlights: [] }])}>+ Add</AddButton>
           </Section>
         )}
 
         {stepId === "education" && (
           <Section title={<EditableTitle as="h2" className={SECTION_HEADING_CLASS} title={titleFor("education")} onSave={renameTitle("education")} />} description="Add at least one college, university, or high school entry.">
             <div className="space-y-3">
-              {resume.education.map((item, index) => (
-                <EducationEditor key={item.id} item={item} index={index} showErrors={showErrors} onChange={(nextItem) => setEducation(resume.education.map((entry) => entry.id === nextItem.id ? nextItem : entry))} onRemove={() => setEducation(resume.education.filter((entry) => entry.id !== item.id))} />
+              {document.education.map((item, index) => (
+                <EducationEditor key={item.id} item={item} index={index} showErrors={showErrors} onChange={(nextItem) => setEducation(document.education.map((entry) => entry.id === nextItem.id ? nextItem : entry))} onRemove={() => setEducation(document.education.filter((entry) => entry.id !== item.id))} />
               ))}
             </div>
-            {showErrors && resume.education.length === 0 && <p className="mt-3 text-sm text-red-600 dark:text-red-400">Add at least one education entry to continue.</p>}
+            {showErrors && document.education.length === 0 && <p className="mt-3 text-sm text-red-600 dark:text-red-400">Add at least one education entry to continue.</p>}
             <div className="mt-4">
-              <AddButton onClick={() => setEducation([...resume.education, blankEducation("college")])}>+ Add</AddButton>
+              <AddButton onClick={() => setEducation([...document.education, blankEducation("college")])}>+ Add</AddButton>
             </div>
           </Section>
         )}
@@ -190,8 +190,8 @@ export function ResumeFormContainer() {
 
 
         {stepId === "additional" && (
-          <Section title="Additional Sections" description="Choose sections that strengthen your resume. These are optional, so add only what is relevant to you.">
-            <OptionalResumeSections />
+          <Section title="Additional Sections" description="Choose sections that strengthen your document. These are optional, so add only what is relevant to you.">
+            <OptionalDocumentSections />
           </Section>
         )}
 

@@ -1,17 +1,17 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useReducer, useRef, useState, type Dispatch, type ReactNode } from "react";
-import { initialResumeState, resumeReducer, type ResumeAction } from "@/context/resume-reducer";
-import type { ResumeState } from "@/types/resume";
+import { initialDocumentState, documentReducer, type DocumentAction } from "@/context/document-reducer";
+import type { DocumentState } from "@/types/document";
 
-interface ResumeContextValue { state: ResumeState; dispatch: Dispatch<ResumeAction>; isHydrated: boolean; }
-const ResumeContext = createContext<ResumeContextValue | undefined>(undefined);
+interface DocumentContextValue { state: DocumentState; dispatch: Dispatch<DocumentAction>; isHydrated: boolean; }
+const DocumentContext = createContext<DocumentContextValue | undefined>(undefined);
 
 const STORAGE_KEY = "documaxxer:document-state:v1";
 const SAVE_DEBOUNCE_MS = 500;
 
-export function ResumeProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(resumeReducer, initialResumeState);
+export function DocumentProvider({ children }: { children: ReactNode }) {
+  const [state, dispatch] = useReducer(documentReducer, initialDocumentState);
   const [isHydrated, setIsHydrated] = useState(false);
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -19,8 +19,10 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        const saved = JSON.parse(raw) as ResumeState;
-        dispatch({ type: "SET_RESUME", payload: saved.resume });
+        const saved = JSON.parse(raw) as any;
+        if (saved.document || saved.resume) {
+          dispatch({ type: "SET_DOCUMENT", payload: saved.document || saved.resume });
+        }
         dispatch({ type: "SET_TEMPLATE", payload: saved.selectedTemplateId });
         dispatch({ type: "SET_FONT", payload: saved.selectedFontId });
         dispatch({ type: "SET_ACTIVE_SECTION", payload: saved.activeSection });
@@ -48,11 +50,11 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
   }, [state]);
 
   const value = useMemo(() => ({ state, dispatch, isHydrated }), [state, isHydrated]);
-  return <ResumeContext.Provider value={value}>{children}</ResumeContext.Provider>;
+  return <DocumentContext.Provider value={value}>{children}</DocumentContext.Provider>;
 }
 
-export function useResumeContext() {
-  const context = useContext(ResumeContext);
-  if (!context) throw new Error("useResumeContext must be used within a ResumeProvider.");
+export function useDocumentContext() {
+  const context = useContext(DocumentContext);
+  if (!context) throw new Error("useDocumentContext must be used within a DocumentProvider.");
   return context;
 }

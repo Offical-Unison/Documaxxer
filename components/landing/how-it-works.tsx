@@ -5,7 +5,7 @@ const TUTORIAL_STEPS = [
   { step: "01", title: "Select Template", description: "Choose a structural foundation. Switch instantly at any time without losing data." },
   { step: "02", title: "Input Content", description: "Navigate through guided sections - experience, education, and credentials - with focused precision." },
   { step: "03", title: "Live Preview", description: "Observe real-time document rendering as you construct your profile." },
-  { step: "04", title: "Finalize & Export", description: "Generate your finished resume as a PDF or editable Word document, ready to share." },
+  { step: "04", title: "Finalize & Export", description: "Generate your finished document as a PDF or editable Word document, ready to share." },
 ];
 
 export function HowItWorks() {
@@ -22,7 +22,7 @@ export function HowItWorks() {
             A simpler way to build your documents.
           </h2>
           <p className="mt-5 text-base leading-relaxed text-slate-500 dark:text-slate-400 max-w-md">
-            Create a professional resume or comprehensive curriculum vitae in one focused workspace.
+            Create a professional document or comprehensive curriculum vitae in one focused workspace.
           </p>
           
           <div className="mt-10 hidden lg:block">

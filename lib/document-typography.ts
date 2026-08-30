@@ -1,5 +1,5 @@
 /**
- * Single source of truth for resume typography.
+ * Single source of truth for document typography.
  * Used by preview (inline styles), print view, and DOCX export.
  *
  * All sizes are in typographic points (pt).

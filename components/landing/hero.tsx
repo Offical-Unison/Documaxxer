@@ -85,7 +85,7 @@ export function Hero() {
           </h1>
           
           <p className="mt-5 text-lg leading-relaxed text-slate-500 dark:text-slate-400 max-w-lg">
-            Build a resume, CV, or cover letter that perfectly represents your experience. Pick a document type to start building immediately—no sign up required.
+            Build a document, CV, or cover letter that perfectly represents your experience. Pick a document type to start building immediately—no sign up required.
           </p>
 
           <div className="mt-10 flex items-center gap-6 text-slate-400 dark:text-slate-500">

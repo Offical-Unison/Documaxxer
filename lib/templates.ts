@@ -9,9 +9,9 @@ export interface ResumeTemplate {
 
 export const RESUME_TEMPLATES: ResumeTemplate[] = [
   // Resume Templates
-  { id: "ats-classic", name: "ATS Classic", description: "A traditional, highly readable, ATS-friendly resume.", type: "resume" },
-  { id: "modern-tech", name: "Modern Tech", description: "Modern resume suited for Information Technology and software.", type: "resume" },
-  { id: "executive", name: "Executive", description: "Polished two-column resume for experienced professionals.", type: "resume" },
+  { id: "ats-classic", name: "ATS Classic", description: "A traditional, highly readable, ATS-friendly document.", type: "resume" },
+  { id: "modern-tech", name: "Modern Tech", description: "Modern document suited for Information Technology and software.", type: "resume" },
+  { id: "executive", name: "Executive", description: "Polished two-column document for experienced professionals.", type: "resume" },
   // CV Templates
   { id: "academic", name: "Academic", description: "Traditional academic document for university and faculty applications.", type: "cv" },
   { id: "research", name: "Research", description: "Research-focused document for scientists and technical professionals.", type: "cv" },

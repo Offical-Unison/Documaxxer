@@ -1,7 +1,7 @@
 import { BuilderHeader } from "@/components/builder/builder-header";
-import { ResumeFormContainer } from "@/components/builder/resume-form-container";
-import { ResumePreviewContainer } from "@/components/builder/resume-preview-container";
-import { ResumeAllPages } from "@/components/builder/resume-preview";
+import { DocumentFormContainer } from "@/components/builder/document-form-container";
+import { DocumentPreviewContainer } from "@/components/builder/document-preview-container";
+import { DocumentAllPages } from "@/components/builder/document-preview";
 
 export default function BuilderPage() {
   return (
@@ -14,7 +14,7 @@ export default function BuilderPage() {
             <div className="flex-1 overflow-y-auto px-5 py-7 sm:px-8 sm:py-10">
               <div className="mx-auto w-full max-w-3xl">
                 <div>
-                  <ResumeFormContainer />
+                  <DocumentFormContainer />
                 </div>
               </div>
             </div>
@@ -22,12 +22,12 @@ export default function BuilderPage() {
 
           {/* Right Preview Pane */}
           <div className="hidden w-[450px] shrink-0 overflow-y-auto border-l border-slate-200 bg-slate-50/50 px-6 py-6 dark:border-slate-800 dark:bg-[#070A10]/50 xl:block 2xl:w-[500px]">
-            <ResumePreviewContainer />
+            <DocumentPreviewContainer />
           </div>
         </div>
       </div>
     </main>
-    <ResumeAllPages />
+    <DocumentAllPages />
     </>
   );
 }

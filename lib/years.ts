@@ -1,4 +1,4 @@
-/** Reasonable year range for resume date pickers, newest first. Centralized so every date field stays in sync. */
+/** Reasonable year range for document date pickers, newest first. Centralized so every date field stays in sync. */
 export function getYearOptions(): number[] {
   const currentYear = new Date().getFullYear();
   const years: number[] = [];

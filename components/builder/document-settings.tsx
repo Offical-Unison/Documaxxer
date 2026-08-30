@@ -1,11 +1,11 @@
 "use client";
 
-import { useResumeContext } from "@/context/resume-context";
+import { useDocumentContext } from "@/context/document-context";
 import { TemplatePicker } from "@/components/builder/template-picker";
 import { FontPicker } from "@/components/builder/font-picker";
 
 export function DocumentSettings() {
-  const { state, dispatch } = useResumeContext();
+  const { state, dispatch } = useDocumentContext();
 
   return (
     <section className="mb-8 rounded-2xl border border-slate-200/80 bg-white/80 p-5 shadow-[0_4px_20px_rgba(15,23,42,0.03)] backdrop-blur-xl dark:border-slate-800/80 dark:bg-[#121824]/80">

@@ -2,7 +2,7 @@
 
 import { RESUME_TEMPLATES, type TemplateId } from "@/lib/templates";
 
-import { useResumeContext } from "@/context/resume-context";
+import { useDocumentContext } from "@/context/document-context";
 
 interface TemplatePickerProps {
   selectedId: string | null;
@@ -11,7 +11,7 @@ interface TemplatePickerProps {
 }
 
 export function TemplatePicker({ selectedId, onSelect, variant = "grid" }: TemplatePickerProps) {
-  const { state } = useResumeContext();
+  const { state } = useDocumentContext();
   const filteredTemplates = RESUME_TEMPLATES.filter(t => t.type === state.documentType);
 
   if (variant === "compact") {
