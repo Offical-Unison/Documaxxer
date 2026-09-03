@@ -54,7 +54,7 @@ export function DocumentFormContainer() {
   const hasEducationErrors = document.education.length === 0 || document.education.some((item) => !item.institution.trim() || !item.degree.trim() || (item.educationType === "college" && !item.fieldOfStudy.trim()) || !item.startDate || (!item.current && !item.endDate) || (!item.current && item.startDate && item.endDate && item.startDate > item.endDate));
   const hasSkillsErrors = primarySkills.length === 0;
 
-  
+
   const invalidStep = () => {
     switch (stepId) {
       case "personal": return hasPersonalErrors;
@@ -95,13 +95,12 @@ export function DocumentFormContainer() {
                   onClick={() => number < currentStep && goTo(number)}
                   disabled={number > currentStep}
                   aria-current={isCurrent ? "step" : undefined}
-                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition sm:px-3.5 sm:py-2 ${
-                    isCurrent
+                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition sm:px-3.5 sm:py-2 ${isCurrent
                       ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
                       : isCompleted
                         ? "bg-transparent text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
                         : "bg-transparent text-slate-400 dark:text-slate-600"
-                  }`}
+                    }`}
                 >
                   {isCompleted ? (
                     <span className="text-[10px]">✓</span>

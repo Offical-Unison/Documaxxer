@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { DocumentPreview } from "@/components/builder/document-preview";
+import { DocumentAllPages, DocumentPreview } from "@/components/builder/document-preview";
 import { GenerateButton } from "@/components/builder/generate-button";
 import { TemplatePicker } from "@/components/builder/template-picker";
 import { FontPicker } from "@/components/builder/font-picker";
@@ -34,6 +34,7 @@ export function DocumentPreviewContainer() {
 
   return (
     <div aria-labelledby="preview-title" className="flex h-full flex-col">
+      <DocumentPrintPortal resumePages={resumePages} />
       <div className="sticky top-0 z-10 mx-auto mb-6 flex w-full flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white/80 p-3 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-[#121824]/80 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-1 min-w-0 items-center gap-3">
           <div className="flex-1 min-w-0">
@@ -69,6 +70,16 @@ export function DocumentPreviewContainer() {
       )}
     </div>
   );
+}
+
+function DocumentPrintPortal({ resumePages }: { resumePages: UseResumePagesResult }) {
+  const [printRoot, setPrintRoot] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    setPrintRoot(document.body);
+  }, []);
+
+  return printRoot ? createPortal(<DocumentAllPages resumePages={resumePages} />, printRoot) : null;
 }
 
 function ExpandedPreviewModal({

@@ -28,8 +28,7 @@ import type { ReactNode } from "react";
 export interface UseResumePagesResult {
   isEmpty: boolean;
   headerNode: ReactNode;
-  pages: PreviewBlock[][];
-  railBlocks: PreviewBlock[];
+  pages: DocumentPage[];
   isSidebar: boolean;
   fontStack: string;
   contactLine: string;
@@ -38,6 +37,26 @@ export interface UseResumePagesResult {
   wordCount: number;
   /** Render this off-screen measuring container exactly once in the DOM. */
   measuringContainer: ReactNode;
+}
+
+export interface DocumentPage {
+  main: PreviewBlock[];
+  rail: PreviewBlock[];
+}
+
+const COLUMN_TOP_GAP_PX = 12; // Tailwind's mt-3, shared by the preview and print page body.
+
+function measureBlocks(container: HTMLDivElement | null, blocks: PreviewBlock[]): Record<string, number> {
+  const heights: Record<string, number> = {};
+  if (!container) return heights;
+
+  const children = Array.from(container.children) as HTMLElement[];
+  children.forEach((child, index) => {
+    const nextTop = index < children.length - 1 ? children[index + 1].offsetTop : container.scrollHeight;
+    const block = blocks[index];
+    if (block) heights[block.id] = nextTop - child.offsetTop;
+  });
+  return heights;
 }
 
 export function useDocumentPages(): UseResumePagesResult {
@@ -53,7 +72,10 @@ export function useDocumentPages(): UseResumePagesResult {
   const dial = COUNTRIES.find((country) => country.code === personal.contact.phoneCountry)?.dial ?? "+63";
   const phoneLine = personal.contact.phoneNumber ? `${dial} ${personal.contact.phoneNumber}` : "";
   const contactLine = [personal.contact.location, personal.contact.email, phoneLine].filter(Boolean).join("  •  ");
-  const links = personal.links.filter((link) => link.name.trim() && link.url.trim());
+  const links = useMemo(
+    () => personal.links.filter((link) => link.name.trim() && link.url.trim()),
+    [personal.links]
+  );
 
   const experiencesPresent = document.experiences.some(hasExperienceContent);
   const educationPresent = document.education.some(hasEducationContent);
@@ -88,28 +110,29 @@ export function useDocumentPages(): UseResumePagesResult {
     : null;
 
   const headerMeasureRef = useRef<HTMLDivElement>(null);
-  const measureRef = useRef<HTMLDivElement>(null);
+  const mainMeasureRef = useRef<HTMLDivElement>(null);
+  const railMeasureRef = useRef<HTMLDivElement>(null);
+  const railIntroMeasureRef = useRef<HTMLDivElement>(null);
   const contentAreaRef = useRef<HTMLDivElement>(null);
-  const [pages, setPages] = useState<PreviewBlock[][]>([[]]);
+  const [pages, setPages] = useState<DocumentPage[]>([{ main: [], rail: [] }]);
 
   const measureWidthMM = isSidebar ? CONTENT_WIDTH_MM * SIDEBAR_MAIN_WIDTH_RATIO - SIDEBAR_GAP_MM / 2 : CONTENT_WIDTH_MM;
+  const railWidthMM = CONTENT_WIDTH_MM * SIDEBAR_RAIL_WIDTH_RATIO - SIDEBAR_GAP_MM / 2;
 
   useIsomorphicLayoutEffect(() => {
     if (isEmpty) return;
-    const heights: Record<string, number> = {};
-    const container = measureRef.current;
-    if (container) {
-      const children = Array.from(container.children) as HTMLElement[];
-      children.forEach((child, index) => {
-        const nextTop = index < children.length - 1 ? children[index + 1].offsetTop : container.scrollHeight;
-        const block = mainBlocks[index];
-        if (block) heights[block.id] = nextTop - child.offsetTop;
-      });
-    }
+    const mainHeights = measureBlocks(mainMeasureRef.current, mainBlocks);
+    const railHeights = measureBlocks(railMeasureRef.current, railBlocks);
     const headerHeight = headerMeasureRef.current?.offsetHeight ?? 0;
+    const railIntroHeight = railIntroMeasureRef.current?.offsetHeight ?? 0;
     const contentHeight = contentAreaRef.current?.offsetHeight ?? 1;
-    setPages(paginateBlocks(mainBlocks, heights, headerHeight, contentHeight));
-  }, [mainBlocks, isEmpty]);
+    const mainPages = paginateBlocks(mainBlocks, mainHeights, headerHeight + (isSidebar ? COLUMN_TOP_GAP_PX : 0), contentHeight, isSidebar ? COLUMN_TOP_GAP_PX : 0);
+    const railPages = isSidebar
+      ? paginateBlocks(railBlocks, railHeights, headerHeight + COLUMN_TOP_GAP_PX + railIntroHeight + 24, contentHeight, COLUMN_TOP_GAP_PX + 24)
+      : [[]];
+    const pageCount = Math.max(mainPages.length, railPages.length);
+    setPages(Array.from({ length: pageCount }, (_, index) => ({ main: mainPages[index] ?? [], rail: railPages[index] ?? [] })));
+  }, [mainBlocks, railBlocks, isEmpty, isSidebar, contactLine, links]);
 
   /* Off-screen measuring container — rendered once in the component that
      first mounts (DocumentPreview). Both preview and print use the SAME
@@ -117,16 +140,35 @@ export function useDocumentPages(): UseResumePagesResult {
   const measuringContainer = (
     <div aria-hidden="true" style={{ position: "fixed", top: 0, left: "-9999px", width: `${measureWidthMM}mm`, fontFamily: fontStack }}>
       <div ref={headerMeasureRef} style={{ overflow: "hidden" }}>{headerNode}</div>
-      <div ref={measureRef} style={{ overflow: "hidden" }}>
+      <div ref={mainMeasureRef} style={{ overflow: "hidden" }}>
         {mainBlocks.map((block) => (
-          <div key={block.id}>{block.node}</div>
+          <div key={block.id} style={{ display: "flow-root" }}>{block.node}</div>
         ))}
       </div>
+      {isSidebar && (
+        <aside style={{ width: `${railWidthMM}mm`, boxSizing: "border-box", padding: "12px" }}>
+          <div ref={railIntroMeasureRef}>
+            {contactLine && <p style={{ ...contactStyle, lineHeight: "1.6" }}>{contactLine}</p>}
+            {links.length > 0 && (
+              <div style={{ marginTop: "4px" }}>
+                {links.map((link) => (
+                  <a key={link.id} href={normalizeUrl(link.url)} target="_blank" rel="noreferrer" style={{ ...linkStyle, display: "block", lineHeight: "1.6" }}>{link.name}</a>
+                ))}
+              </div>
+            )}
+          </div>
+          <div ref={railMeasureRef}>
+            {railBlocks.map((block) => (
+              <div key={block.id} className="mt-3 first:mt-0" style={{ display: "flow-root" }}>{block.node}</div>
+            ))}
+          </div>
+        </aside>
+      )}
       <div ref={contentAreaRef} style={{ height: `${CONTENT_HEIGHT_MM}mm` }} />
     </div>
   );
 
-  return { isEmpty, headerNode, pages, railBlocks, isSidebar, fontStack, contactLine, links, measureWidthMM, wordCount, measuringContainer };
+  return { isEmpty, headerNode, pages, isSidebar, fontStack, contactLine, links, measureWidthMM, wordCount, measuringContainer };
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -136,24 +178,25 @@ export function useDocumentPages(): UseResumePagesResult {
  * ════════════════════════════════════════════════════════════════ */
 
 function ResumePageContent({
-  pageIndex, pageBlocks, headerNode, isSidebar, contactLine, links, railBlocks, measureWidthMM,
+  pageIndex, page, headerNode, isSidebar, contactLine, links, measureWidthMM,
 }: {
   pageIndex: number;
-  pageBlocks: PreviewBlock[];
+  page: DocumentPage;
   headerNode: ReactNode;
   isSidebar: boolean;
   contactLine: string;
   links: { id: string; name: string; url: string }[];
-  railBlocks: PreviewBlock[];
   measureWidthMM: number;
 }) {
+  const showRail = isSidebar && (pageIndex === 0 ? Boolean(contactLine || links.length || page.rail.length) : page.rail.length > 0);
+
   return (
     <>
       {pageIndex === 0 && headerNode}
       {isSidebar ? (
         <div className="mt-3 flex" style={{ gap: `${SIDEBAR_GAP_MM}mm` }}>
-          {pageIndex === 0 && (
-            <aside style={{ width: `${CONTENT_WIDTH_MM * SIDEBAR_RAIL_WIDTH_RATIO}mm` }} className="shrink-0 rounded-lg bg-blue-50/60 p-3">
+          {showRail && (
+            <aside style={{ width: `${CONTENT_WIDTH_MM * SIDEBAR_RAIL_WIDTH_RATIO - SIDEBAR_GAP_MM / 2}mm`, boxSizing: "border-box" }} className="shrink-0 rounded-lg bg-blue-50/60 p-3">
               {contactLine && <p style={{ ...contactStyle, lineHeight: "1.6" }}>{contactLine}</p>}
               {links.length > 0 && (
                 <div style={{ marginTop: "4px" }}>
@@ -162,22 +205,22 @@ function ResumePageContent({
                   ))}
                 </div>
               )}
-              {railBlocks.map((block) => (
-                <div key={block.id} className="mt-3 first:mt-0">{block.node}</div>
+              {page.rail.map((block) => (
+                <div key={block.id} className="mt-3 first:mt-0" style={{ display: "flow-root" }}>{block.node}</div>
               ))}
             </aside>
           )}
           <div style={{ width: `${measureWidthMM}mm` }} className="min-w-0">
-            {pageBlocks.map((block, index) => (
-              <div key={block.id} style={pageIndex > 0 && index === 0 ? { marginTop: 0 } : undefined}>
+            {page.main.map((block) => (
+              <div key={block.id} style={{ display: "flow-root" }}>
                 {block.node}
               </div>
             ))}
           </div>
         </div>
       ) : (
-        pageBlocks.map((block, index) => (
-          <div key={block.id} style={pageIndex > 0 && index === 0 ? { marginTop: 0 } : undefined}>
+        page.main.map((block) => (
+          <div key={block.id} style={{ display: "flow-root" }}>
             {block.node}
           </div>
         ))
@@ -279,7 +322,7 @@ export interface DocumentPreviewProps {
 }
 
 export function DocumentPreview({ resumePages, pageIndex, onPageIndexChange, maxHeight = "70vh", hideFooter, footerOnly, className }: DocumentPreviewProps) {
-  const { isEmpty, headerNode, pages, railBlocks, isSidebar, fontStack, contactLine, links, measureWidthMM, wordCount, measuringContainer } = resumePages;
+  const { isEmpty, headerNode, pages, isSidebar, fontStack, contactLine, links, measureWidthMM, wordCount, measuringContainer } = resumePages;
 
   useEffect(() => {
     if (pageIndex > pages.length - 1) onPageIndexChange(Math.max(0, pages.length - 1));
@@ -312,7 +355,7 @@ export function DocumentPreview({ resumePages, pageIndex, onPageIndexChange, max
     );
   }
 
-  const currentBlocks = pages[safeIndex] ?? [];
+  const currentPage = pages[safeIndex] ?? { main: [], rail: [] };
 
   return (
     <div className={className ? `${className} flex flex-col` : "flex flex-col"}>
@@ -329,12 +372,11 @@ export function DocumentPreview({ resumePages, pageIndex, onPageIndexChange, max
           <A4Page fontStack={fontStack}>
             <ResumePageContent
               pageIndex={safeIndex}
-              pageBlocks={currentBlocks}
+              page={currentPage}
               headerNode={headerNode}
               isSidebar={isSidebar}
               contactLine={contactLine}
               links={links}
-              railBlocks={railBlocks}
               measureWidthMM={measureWidthMM}
             />
           </A4Page>
@@ -364,17 +406,14 @@ export function DocumentPreview({ resumePages, pageIndex, onPageIndexChange, max
  * block building + measurement + pagination.
  * ════════════════════════════════════════════════════════════════ */
 
-export function DocumentAllPages() {
-  const { isEmpty, headerNode, pages, railBlocks, isSidebar, fontStack, contactLine, links, measureWidthMM, measuringContainer } = useDocumentPages();
+export function DocumentAllPages({ resumePages }: { resumePages: UseResumePagesResult }) {
+  const { isEmpty, headerNode, pages, isSidebar, fontStack, contactLine, links, measureWidthMM } = resumePages;
 
   if (isEmpty) return null;
 
   return (
     <div className="print-only hidden print:block" style={{ fontFamily: fontStack }}>
-      {/* Measuring container for this instance of the hook */}
-      {measuringContainer}
-
-      {pages.map((pageBlocks, pageIndex) => (
+      {pages.map((page, pageIndex) => (
         <div
           key={pageIndex}
           style={{
@@ -382,7 +421,6 @@ export function DocumentAllPages() {
             width: `${PAGE_WIDTH_MM}mm`,
             padding: `${MARGIN_MM}mm`,
             boxSizing: "border-box",
-            overflow: "hidden",
             color: TEXT_COLOR,
             fontFamily: fontStack,
             breakAfter: pageIndex < pages.length - 1 ? "page" : "auto",
@@ -391,12 +429,11 @@ export function DocumentAllPages() {
         >
           <ResumePageContent
             pageIndex={pageIndex}
-            pageBlocks={pageBlocks}
+            page={page}
             headerNode={headerNode}
             isSidebar={isSidebar}
             contactLine={contactLine}
             links={links}
-            railBlocks={railBlocks}
             measureWidthMM={measureWidthMM}
           />
         </div>

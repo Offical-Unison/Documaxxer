@@ -10,7 +10,7 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Documaxxer | Modern Resume & CV Builder",
+  title: "Documaxxer | Professional Document Builder",
   description: "Build a polished document or CV with confidence.",
   icons: {
     icon: "/icon.svg",

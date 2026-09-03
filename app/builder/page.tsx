@@ -1,7 +1,6 @@
 import { BuilderHeader } from "@/components/builder/builder-header";
 import { DocumentFormContainer } from "@/components/builder/document-form-container";
 import { DocumentPreviewContainer } from "@/components/builder/document-preview-container";
-import { DocumentAllPages } from "@/components/builder/document-preview";
 
 export default function BuilderPage() {
   return (
@@ -27,7 +26,6 @@ export default function BuilderPage() {
         </div>
       </div>
     </main>
-    <DocumentAllPages />
     </>
   );
 }

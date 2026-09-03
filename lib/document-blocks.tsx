@@ -532,30 +532,83 @@ export function buildTemplateBlocks(document: DocumentData, templateId: Template
  * Greedily fills pages up to the measured content-area height. Blocks are
  * atomic (never split). A trailing section header left alone at the bottom
  * of a page is pushed onto the next page so it isn't orphaned from its content.
+ *
+ * A small safety margin (PAGINATION_SAFETY_PX) is subtracted from the
+ * available content height to account for subpixel rounding drift between
+ * the off-screen measuring container and the actual print render.
  */
-export function paginateBlocks(blocks: PreviewBlock[], heights: Record<string, number>, headerHeight: number, contentHeight: number): PreviewBlock[][] {
+const PAGINATION_SAFETY_PX = 3;
+
+export function paginateBlocks(
+  blocks: PreviewBlock[],
+  heights: Record<string, number>,
+  firstPageReservedHeight: number,
+  contentHeight: number,
+  pageReservedHeight = 0,
+): PreviewBlock[][] {
   if (blocks.length === 0) return [[]];
+  const safeHeight = contentHeight - PAGINATION_SAFETY_PX;
   const pages: PreviewBlock[][] = [[]];
-  let used = headerHeight;
+  let used = firstPageReservedHeight;
   let pageIndex = 0;
 
   blocks.forEach((block) => {
     const h = heights[block.id] ?? 0;
-    if (pages[pageIndex].length > 0 && used + h > contentHeight) {
+    if (pages[pageIndex].length > 0 && used + h > safeHeight) {
       pageIndex += 1;
       pages[pageIndex] = [];
-      used = 0;
+      used = pageReservedHeight;
     }
     pages[pageIndex].push(block);
     used += h;
   });
 
-  for (let i = 0; i < pages.length - 1; i += 1) {
-    const page = pages[i];
-    const last = page[page.length - 1];
-    if (last?.type === "header") {
-      page.pop();
-      pages[i + 1].unshift(last);
+  // Orphan-header fix: push trailing headers to the next page.
+  // Re-validate cascading overflow: if the next page now exceeds the safe
+  // height, push its last block(s) onto yet another page until stable.
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (let i = 0; i < pages.length - 1; i += 1) {
+      const page = pages[i];
+      const last = page[page.length - 1];
+      if (last?.type === "header") {
+        page.pop();
+        pages[i + 1].unshift(last);
+        changed = true;
+      }
+    }
+    // Check last page — if it ends with an orphan header and there's no next page, create one.
+    const lastPage = pages[pages.length - 1];
+    if (lastPage.length > 1 && lastPage[lastPage.length - 1]?.type === "header") {
+      const orphan = lastPage.pop()!;
+      pages.push([orphan]);
+      changed = true;
+    }
+
+    // Re-validate page heights after header moves — if any page overflows,
+    // push its trailing blocks to the next page.
+    for (let i = 0; i < pages.length; i += 1) {
+      const reserved = i === 0 ? firstPageReservedHeight : pageReservedHeight;
+      let pageUsed = reserved;
+      let overflowStart = -1;
+      for (let j = 0; j < pages[i].length; j += 1) {
+        const h = heights[pages[i][j].id] ?? 0;
+        if (pages[i].length > 1 && j > 0 && pageUsed + h > safeHeight) {
+          overflowStart = j;
+          break;
+        }
+        pageUsed += h;
+      }
+      if (overflowStart > 0) {
+        const overflow = pages[i].splice(overflowStart);
+        if (i + 1 < pages.length) {
+          pages[i + 1].unshift(...overflow);
+        } else {
+          pages.push(overflow);
+        }
+        changed = true;
+      }
     }
   }
 
