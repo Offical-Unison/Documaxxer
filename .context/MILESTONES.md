@@ -9,10 +9,10 @@ This document is the authoritative progress tracker for the Documaxxer project. 
 | Milestone | Title | Status | Completion | Dependencies |
 | :--- | :--- | :--- | :--- | :--- |
 | **M0** | Project Audit & Current-Milestone Detection | **COMPLETE** | 100% | None |
-| **M1** | Project Structure Cleanup | **IN PROGRESS** | 85% | M0 |
+| **M1** | Project Structure Cleanup | **COMPLETE** | 100% | M0 |
 | **M2** | Formalize the Document Engine & Data Model | **COMPLETE** | 100% | M1 |
-| **M3** | User Authentication | **NOT STARTED** | 0% | M2 |
-| **M4** | Database & Persistence Layer | **NOT STARTED** | 0% | M3 |
+| **M3** | User Authentication | **COMPLETE** | 100% | M2 |
+| **M4** | Database & Persistence Layer | **IN PROGRESS** | 35% | M3 |
 | **M5** | User Workspace & Dashboard | **NOT STARTED** | 0% | M4 |
 | **M6** | Universal Template Builder | **NOT STARTED** | 0% | M2, M5 |
 | **M7** | Template → Saved Document Instantiation | **NOT STARTED** | 0% | M6 |
@@ -52,7 +52,7 @@ This document is the authoritative progress tracker for the Documaxxer project. 
   - [x] Create `.context/` knowledge base with all 14 architectural guides.
   - [x] Restructure builder components into `controls/`, `form/`, and `preview/`.
   - [x] Restructure `lib/` into `documents/`, `export/`, `templates/`, and `validation/`.
-  - [ ] Verify build and linting pass cleanly post-restructuring (`npm run build`).
+  - [x] Verify build and linting pass cleanly post-restructuring (`npm run build`).
 - **Acceptance Criteria**: Clean directory layout with identical runtime functionality and zero broken imports.
 
 ---
@@ -73,12 +73,12 @@ This document is the authoritative progress tracker for the Documaxxer project. 
 ### Milestone 3 — User Authentication
 - **Purpose**: Introduce secure user identity so templates, documents, and profiles belong to authenticated accounts.
 - **Dependencies**: M2.
-- **Status**: `NOT STARTED` (0%)
+- **Status**: `COMPLETE` (100%)
 - **Tasks**:
-  - [ ] Establish environment configuration (`.env.example`) with `AUTH_SECRET`.
-  - [ ] Implement Sign Up, Login, Logout, and session persistence.
-  - [ ] Protect account routes, dashboard endpoints, and user resources.
-  - [ ] Ensure server-side session checks verify resource ownership.
+  - [x] Establish environment configuration (`.env.example`) with `AUTH_SECRET`.
+  - [x] Implement Sign Up, Login, Logout, and session persistence.
+  - [x] Protect account routes, dashboard endpoints, and user resources.
+  - [x] Ensure server-side session checks verify resource ownership.
 - **Acceptance Criteria**: Users can register, log in, maintain sessions, and access protected dashboard routes.
 
 ---
@@ -86,11 +86,12 @@ This document is the authoritative progress tracker for the Documaxxer project. 
 ### Milestone 4 — Database & Persistence Layer
 - **Purpose**: Provide permanent cloud persistence for Users, Profiles, Custom Templates, and Saved Documents.
 - **Dependencies**: M3.
-- **Status**: `NOT STARTED` (0%)
+- **Status**: `IN PROGRESS` (35%)
 - **Tasks**:
-  - [ ] Design relational database schema (`User`, `UserProfile`, `Template`, `TemplateVersion`, `SavedDocument`).
-  - [ ] Implement database client and migration scripts.
-  - [ ] Establish Server Actions / API routes for CRUD operations with strict authorization.
+  - [x] Design relational database schema (`User`, `UserProfile`, `Template`, `SavedDocument`).
+  - [x] Implement database client and migration scripts.
+  - [x] Establish authenticated saved-document API routes with strict owner filtering.
+  - [ ] Add profile and user-owned template CRUD operations.
 - **Acceptance Criteria**: Users can store and retrieve documents in a database, with zero cross-tenant data leaks.
 
 ---

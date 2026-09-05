@@ -2,10 +2,10 @@
 
 ## Status Overview
 
-- **Current Milestone**: **Milestone 3 — User Authentication** (Next / In Progress)
-- **Previous Milestone**: **Milestone 2 — Formalize the Document Engine & Data Model** (Complete)
-- **Overall Roadmap Completion**: **~30%** (Client-side builder and schema engine complete; Auth/Persistence/Dashboard/Universal Builder next)
-- **Target Active Focus**: Commencing Milestone 3 (User Authentication & Session Management).
+- **Current Milestone**: **Milestone 4 — Database & Persistence Layer** (Next / In Progress)
+- **Previous Milestone**: **Milestone 3 — User Authentication** (Complete)
+- **Overall Roadmap Completion**: **~40%** (Client-side builder, schema engine, authentication, and initial database schema complete)
+- **Target Active Focus**: Extend authenticated persistence with profile and user-owned template CRUD operations.
 
 ---
 
