@@ -2,10 +2,10 @@
 
 ## Status Overview
 
-- **Current Milestone**: **Milestone 1 — Project Structure Cleanup** (In Progress)
-- **Previous Milestone**: **Milestone 0 — Project Audit** (Complete)
-- **Overall Roadmap Completion**: **~25%** (Client-side MVP builder is ~90% functional; Persistence/Auth/Universal Builder are 0%)
-- **Target Active Focus**: Completing post-restructuring verification and preparing Milestone 2 (Formalize Document Engine & Schema).
+- **Current Milestone**: **Milestone 3 — User Authentication** (Next / In Progress)
+- **Previous Milestone**: **Milestone 2 — Formalize the Document Engine & Data Model** (Complete)
+- **Overall Roadmap Completion**: **~30%** (Client-side builder and schema engine complete; Auth/Persistence/Dashboard/Universal Builder next)
+- **Target Active Focus**: Commencing Milestone 3 (User Authentication & Session Management).
 
 ---
 
@@ -26,6 +26,7 @@
 - **Section Reordering**: HTML5 drag-and-drop ordering for dynamic sections.
 - **Philippine Defaults**: Default `+63` dialing code, Philippine phone format validation, and Philippine-oriented example placeholders.
 - **Dark / Light Theme**: Clean Tailwind v4 theme switching persisted across sessions.
+- **Formalized Document Engine & Schema (M2)**: Full schema decoupling with [`TemplateDefinition`](file:///e:/Github/Documaxxer/types/template.ts), `TemplateSection`, `TemplateField`, and [`SavedDocument`](file:///e:/Github/Documaxxer/types/saved-document.ts). Centralized schema registry `TEMPLATE_DEFINITIONS` covering all 6 built-in templates with `getTemplateDefinition()` lookup.
 
 ### Partially Implemented ⚠️
 - **Export Parity (M10)**: Shared typography tokens align font sizes and margins, but 2-column templates (`executive`, `modern-tech`) render as a single linear flow in DOCX rather than multi-column Word tables.
@@ -34,7 +35,6 @@
 
 ### Missing Features ❌
 - **Cover Letter Builder**: Disabled with a "Coming Soon" badge in [`hero.tsx`](file:///e:/Github/Documaxxer/components/landing/hero.tsx).
-- **M2: Formalized Document / Template Schema**: Document data is currently coupled to specific hardcoded TypeScript interfaces rather than a flexible schema engine.
 - **M3: Authentication**: No user sign-up, sign-in, session cookies, or JWT handling.
 - **M4: Database Persistence**: No cloud database (PostgreSQL/Prisma/Drizzle/Supabase) schema or API routes.
 - **M5: User Dashboard**: No logged-in workspace to view, duplicate, rename, or organize multiple saved documents.
@@ -57,6 +57,7 @@
 
 ## 3. Immediate Next Task
 
-**Finish Milestone 1 verification & commence Milestone 2:**
-1. Ensure the new folder structure is cleanly compiled and linted with zero errors (`npm run build`).
-2. Plan the formal distinction between **Template Schemas** (structure, layout, fields) and **Saved Documents** (user data instances) for Milestone 2.
+**Commence Milestone 3 — User Authentication:**
+1. Establish environment configuration (`.env.example`) with `AUTH_SECRET` and authentication credentials.
+2. Implement auth provider and session handling (Sign Up, Login, Logout, Session Cookies).
+3. Protect private routes, user dashboard, and prepare user ID association for `SavedDocument.ownerId`.

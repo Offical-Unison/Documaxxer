@@ -1,27 +1,16 @@
 import Link from "next/link";
-import Image from "next/image";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 function DocumentLogoIcon() {
   return (
-    <>
-      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white transition-transform duration-200 group-hover:scale-105 dark:bg-blue-500">
-        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
-          <path d="M6 3h5.5L15 6.5V17a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" />
-          <path d="M11 3v4h4" />
-          <path d="M8 11h4" />
-          <path d="M8 14h3" />
-        </svg>
-      </div>
-      <Image
-        src="/icon.svg"
-        alt="Documaxxer Logo"
-        width={32}
-        height={32}
-        className="h-8 w-8 transition-transform duration-200 group-hover:scale-105"
-        priority
-      />
-    </>
+    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white transition-transform duration-200 group-hover:scale-105 dark:bg-blue-500">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+        <path d="M6 3h5.5L15 6.5V17a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" />
+        <path d="M11 3v4h4" />
+        <path d="M8 11h4" />
+        <path d="M8 14h3" />
+      </svg>
+    </div>
   );
 }
 

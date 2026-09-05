@@ -341,3 +341,174 @@ export const DEFAULT_SECTION_TITLES: Record<SectionId, string> = {
 - **Font**: `"calibri"`
 - **Document Type**: `"resume"`
 - **Generate Unlocked**: `false`
+
+---
+
+## 6. Template Definition & Saved Document Schema (Milestone 2)
+
+Milestone 2 establishes a clear architectural separation between **Structure (Templates)** and **Content (Saved Documents)**:
+
+- **`TemplateDefinition`** specifies the *structure* — sections, fields, types, ordering, constraints, and layout.
+- **`SavedDocument`** holds an *instance* — the user's actual document data (`content: DocumentData`), font choice, and ownership metadata.
+- **`DocumentData`** continues to represent the raw user data stored in the instance.
+
+```mermaid
+classDiagram
+    class SavedDocument {
+        +string id
+        +string name
+        +string documentType
+        +string templateId
+        +TemplateDefinition templateSnapshot
+        +DocumentData content
+        +string selectedFontId
+        +string ownerId
+        +string createdAt
+        +string updatedAt
+    }
+    class TemplateDefinition {
+        +string id
+        +string name
+        +string description
+        +string documentType
+        +boolean builtIn
+        +string ownerId
+        +TemplateSection[] sections
+        +TemplateLayout layout
+        +string fontFamily
+    }
+    class TemplateSection {
+        +string id
+        +SectionId type
+        +string title
+        +number order
+        +boolean required
+        +boolean repeatable
+        +string column
+        +TemplateField[] fields
+    }
+    class TemplateField {
+        +string id
+        +string key
+        +string label
+        +TemplateFieldType type
+        +boolean required
+        +string placeholder
+        +string profileMapping
+        +string[] options
+    }
+    class DocumentData {
+        +PersonalDetails personalDetails
+        +string professionalSummary
+        +Experience[] experiences
+        +Education[] education
+        +string[] skills
+        +...optional sections
+    }
+    SavedDocument --> TemplateDefinition : references & snapshots
+    SavedDocument *-- DocumentData : content
+    TemplateDefinition *-- TemplateSection : sections
+    TemplateSection *-- TemplateField : fields
+```
+
+### Template Schemas ([`types/template.ts`](file:///e:/Github/Documaxxer/types/template.ts))
+
+#### `TemplateFieldType`
+Supported input types for form fields:
+```typescript
+export type TemplateFieldType =
+  | "text"
+  | "textarea"
+  | "email"
+  | "phone"
+  | "date"
+  | "url"
+  | "number"
+  | "select"
+  | "multiselect"
+  | "list"
+  | "rich-text";
+```
+
+#### `TemplateField`
+Defines an individual input field within a template section:
+```typescript
+export interface TemplateField {
+  id: string;               // Unique field ID within the section
+  key: string;              // Maps to property in DocumentData entry (e.g. "employer", "role")
+  label: string;            // Form field label
+  type: TemplateFieldType;  // Input control type
+  required: boolean;        // Mandatory validation flag
+  placeholder?: string;     // Input placeholder
+  profileMapping?: string;  // Target key for M8 autofill (e.g. "profile.firstName")
+  options?: string[];       // Select / multiselect options
+}
+```
+
+#### `TemplateSection`
+Defines a document section containing a set of fields:
+```typescript
+export interface TemplateSection {
+  id: string;                    // Unique section ID
+  type: SectionId;               // Maps to SectionId union (determines data model & reducer action)
+  title: string;                 // Default section heading
+  order: number;                 // 0-based display order
+  required: boolean;             // Whether section must contain at least 1 entry
+  fields: TemplateField[];       // Input fields for each entry
+  repeatable?: boolean;          // Whether multiple entries can be added (e.g. multiple jobs)
+  column?: "main" | "rail";      // Column placement for 2-column layouts
+}
+```
+
+#### `TemplateLayout`
+Specifies structural layout parameters:
+```typescript
+export interface TemplateLayout {
+  columns: 1 | 2;                     // 1 = single column, 2 = main + sidebar
+  headerAlignment: "left" | "center"; // Header and name alignment
+  sidebarRatio?: number;              // Width ratio for main column (e.g. 0.65)
+}
+```
+
+#### `TemplateDefinition`
+The complete blueprint for a document type:
+```typescript
+export interface TemplateDefinition {
+  id: string;
+  name: string;
+  description: string;
+  documentType: "resume" | "cv" | "cover-letter";
+  builtIn: boolean;                  // true for code-defined templates, false for user-created
+  ownerId?: string;                  // User ID for custom templates (undefined for built-in)
+  sections: TemplateSection[];       // Ordered section schemas
+  layout: TemplateLayout;            // Layout configuration
+  fontFamily?: string;               // Optional default font override
+  createdAt: string;                 // ISO date-time
+  updatedAt: string;                 // ISO date-time
+}
+```
+
+### Saved Document Schema ([`types/saved-document.ts`](file:///e:/Github/Documaxxer/types/saved-document.ts))
+
+#### `SavedDocument`
+Represents a user's persistent document instance:
+```typescript
+export interface SavedDocument {
+  id: string;                                    // Unique document ID
+  name: string;                                  // Document title (e.g. "Google Application Resume")
+  documentType: "resume" | "cv" | "cover-letter";
+  templateId: string;                            // Reference to parent TemplateDefinition
+  templateSnapshot?: TemplateDefinition;         // Freeze of template at creation time (M11)
+  content: DocumentData;                         // Actual user data
+  selectedFontId: string | null;                 // Selected typography font ID
+  ownerId?: string;                              // Owner user ID (M3+ authentication)
+  createdAt: string;                             // ISO date-time
+  updatedAt: string;                             // ISO date-time
+}
+```
+
+### Relationship to `DocumentData`
+1. **Separation of Structure vs. Content**: `TemplateDefinition` declares *what* data fields are collected and how they are displayed, while `DocumentData` contains the *actual values* entered by the user.
+2. **Key Mapping**: `TemplateField.key` corresponds directly to property keys in `DocumentData` models (e.g. `Experience.employer`, `Education.degree`, `ContactDetails.email`).
+3. **Section Routing**: `TemplateSection.type` links to `SectionId`, determining which array/object in `DocumentData` stores the section's records.
+4. **Snapshot Safety (M11)**: When a document is created, `templateSnapshot` preserves the `TemplateDefinition` state, ensuring that subsequent template updates never alter or corrupt existing documents.

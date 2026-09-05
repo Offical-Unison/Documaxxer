@@ -9,10 +9,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Planned
-- **Milestone 2**: Formalize Document Engine & Schema (separate TemplateDefinition from SavedDocument).
 - **Milestone 3**: Authentication system with session persistence and route protection.
 - **Milestone 4**: Database persistence layer with relational models.
 - **Milestone 5**: User workspace dashboard for saved documents and custom templates.
+- **Milestone 6**: Universal Template Builder allowing visual schema design.
+
+---
+
+## [0.3.0] — 2026-09-05
+
+### Milestone 2 — Formalize Document Engine & Data Model
+
+#### Added
+- **Template Schema Types ([`types/template.ts`](file:///e:/Github/Documaxxer/types/template.ts))**:
+  - `TemplateFieldType`: Supported input control types (`text`, `textarea`, `email`, `phone`, `date`, `url`, `number`, `select`, `multiselect`, `list`, `rich-text`).
+  - `TemplateField`: Declarative field-level schema defining ID, key mapping to `DocumentData`, label, type, validation requirements, placeholder, and `profileMapping` for M8 autofill.
+  - `TemplateSection`: Section-level schema mapping to `SectionId`, with title, display order, required flag, repeatable entries toggle, layout column placement, and child fields.
+  - `TemplateLayout`: Layout configuration specifying column structure (`1` or `2`), header alignment (`left` or `center`), and optional sidebar ratio.
+  - `TemplateDefinition`: Full document schema specification distinguishing built-in vs custom templates, owner user ID, ordered sections, layout, and font overrides.
+- **Saved Document Model ([`types/saved-document.ts`](file:///e:/Github/Documaxxer/types/saved-document.ts))**:
+  - `SavedDocument`: Data model representing an instantiated document, encapsulating `id`, `name`, `documentType`, `templateId`, `content` (`DocumentData`), `selectedFontId`, `ownerId`, timestamps, and an optional `templateSnapshot` for immutable layout preservation.
+- **Data-Driven Template Definitions ([`lib/templates/templates.ts`](file:///e:/Github/Documaxxer/lib/templates/templates.ts))**:
+  - `TEMPLATE_DEFINITIONS`: Complete schema dictionary mapping all 6 built-in templates (`ats-classic`, `modern-tech`, `executive`, `academic`, `research`, `professional`) to full `TemplateDefinition` schema objects.
+  - `getTemplateDefinition()`: Lookup function retrieving the schema definition for any template ID with safe fallback to `DEFAULT_TEMPLATE_ID` (`ats-classic`).
+- **Architectural Foundation**: Fully decouples document structure (templates) from user data instances (saved documents), establishing the foundation for Auth (M3), Database (M4), Dashboard (M5), and Universal Template Builder (M6).
 
 ---
 

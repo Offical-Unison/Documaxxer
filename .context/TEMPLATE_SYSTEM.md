@@ -122,3 +122,55 @@ flowchart TD
 Templates can be chosen in two locations:
 1. **Catalog Route** (`/templates?type=resume|cv`): Visual card grid with descriptions, badges, and template type filtering before entering the editor.
 2. **Preview Toolbar** ([`TemplatePicker`](file:///e:/Github/Documaxxer/components/builder/template-picker.tsx)): Compact selector pinned above the live preview canvas in `/builder`, allowing users to switch templates on the fly without losing entered data.
+
+---
+
+## 7. Data-Driven Template Schemas (Milestone 2: `TEMPLATE_DEFINITIONS`)
+
+In Milestone 0 and 1, templates were defined primarily through lightweight metadata (`ResumeTemplate` with `id`, `name`, `description`, `type`) coupled with hardcoded builder form rendering.
+
+Milestone 2 formalizes templates into fully **data-driven schema objects** defined in [`lib/templates/templates.ts`](file:///e:/Github/Documaxxer/lib/templates/templates.ts) under `TEMPLATE_DEFINITIONS: Record<TemplateId, TemplateDefinition>`.
+
+### Key Differences: Metadata vs. Full Schema
+
+| Capability | Legacy `ResumeTemplate` | New `TemplateDefinition` |
+| :--- | :--- | :--- |
+| **Identity & Scope** | `id`, `name`, `description`, `type` | `id`, `name`, `description`, `documentType`, `builtIn`, `ownerId` |
+| **Section Structure** | Hardcoded in React form containers | Expressed as ordered `TemplateSection[]` arrays |
+| **Field Definitions** | Hardcoded JSX input fields | Declarative `TemplateField[]` with types, labels, required flags, and placeholders |
+| **Autofill Ready** | Not supported | `profileMapping` keys map fields directly to user profile properties (M8) |
+| **Layout Model** | Implicit CSS styles | Explicit `TemplateLayout` (`columns: 1 \| 2`, `headerAlignment`, `sidebarRatio`) |
+| **Extensibility** | Code changes required for new templates | Pure data definition; ready for Universal Template Builder (M6) |
+
+### Built-in Schemas in `TEMPLATE_DEFINITIONS`
+
+All 6 built-in templates have explicit schema representations:
+
+1. **`ats-classic`** (Resume): Single-column, center-aligned header, serif typography. Sections: Personal, Summary, Experience, Education, Skills, Projects, Certifications.
+2. **`modern-tech`** (Resume): Single-column, left-aligned header, sans-serif typography. Emphasizes Skills, Projects, and Experience with technology tags.
+3. **`executive`** (Resume): Two-column layout (`sidebarRatio: 0.65`), left-aligned header. Main column houses Summary, Experience, Education, and Projects; Rail column houses Contact info, Skills, Languages, Certifications, and Memberships.
+4. **`academic`** (CV): Single-column, center-aligned header, serif typography. Comprehensive multi-section structure covering Publications, Presentations, Teaching, Research, Grants, and Awards.
+5. **`research`** (CV): Single-column, left-aligned header, sans-serif typography. Optimized for lab positions, technical methodologies, Publications, Research Experience, and Grants.
+6. **`professional`** (CV): Single-column, left-aligned header, sans-serif typography. Detailed career trajectory covering Work Experience, Leadership, Certifications, Memberships, and References.
+
+### Schema Lookup: `getTemplateDefinition()`
+
+To retrieve a complete template schema by ID:
+
+```typescript
+export function getTemplateDefinition(id: string | null | undefined): TemplateDefinition {
+  if (id && id in TEMPLATE_DEFINITIONS) {
+    return TEMPLATE_DEFINITIONS[id as TemplateId];
+  }
+  return TEMPLATE_DEFINITIONS[DEFAULT_TEMPLATE_ID];
+}
+```
+
+- **Safe Fallback**: If an invalid, null, or undefined ID is passed, it safely defaults to `TEMPLATE_DEFINITIONS["ats-classic"]`.
+- **Runtime Consistency**: Ensures both the upcoming schema-driven builder and export engines always have access to a valid structural definition.
+
+### Foundation for Downstream Milestones
+- **Milestone 3 & 4 (Auth & DB)**: Template schemas are structured to be stored in the database with `builtIn: boolean` and `ownerId?: string`.
+- **Milestone 5 (Workspace Dashboard)**: The dashboard reads template definitions to display available blueprints and render document cards.
+- **Milestone 6 (Universal Template Builder)**: Users will edit, duplicate, and create `TemplateDefinition` objects directly through a GUI without editing code.
+- **Milestone 7 (Template → SavedDocument Flow)**: Instantiating a document will create a `SavedDocument` referencing a `TemplateDefinition` and capturing an immutable snapshot.

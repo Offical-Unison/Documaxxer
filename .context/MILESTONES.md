@@ -10,7 +10,7 @@ This document is the authoritative progress tracker for the Documaxxer project. 
 | :--- | :--- | :--- | :--- | :--- |
 | **M0** | Project Audit & Current-Milestone Detection | **COMPLETE** | 100% | None |
 | **M1** | Project Structure Cleanup | **IN PROGRESS** | 85% | M0 |
-| **M2** | Formalize the Document Engine & Data Model | **NOT STARTED** | 0% | M1 |
+| **M2** | Formalize the Document Engine & Data Model | **COMPLETE** | 100% | M1 |
 | **M3** | User Authentication | **NOT STARTED** | 0% | M2 |
 | **M4** | Database & Persistence Layer | **NOT STARTED** | 0% | M3 |
 | **M5** | User Workspace & Dashboard | **NOT STARTED** | 0% | M4 |
@@ -60,12 +60,12 @@ This document is the authoritative progress tracker for the Documaxxer project. 
 ### Milestone 2 — Formalize the Document Engine & Data Model
 - **Purpose**: Decouple document definition into two distinct entities: **Template Schemas** (structure, fields, styling) and **Saved Documents** (user data instances).
 - **Dependencies**: M1.
-- **Status**: `NOT STARTED` (0%)
+- **Status**: `COMPLETE` (100%)
 - **Tasks**:
-  - [ ] Define `TemplateDefinition`, `TemplateSection`, and `TemplateField` schemas.
-  - [ ] Separate template metadata from user-entered document content.
-  - [ ] Create translation layers bridging existing `DocumentData` to schema-driven definitions.
-  - [ ] Ensure schema handles arbitrary *N* sections (e.g. 4 sections for basic resume vs 15 for academic CV).
+  - [x] Define `TemplateDefinition`, `TemplateSection`, and `TemplateField` schemas.
+  - [x] Separate template metadata from user-entered document content.
+  - [x] Create translation layers bridging existing `DocumentData` to schema-driven definitions.
+  - [x] Ensure schema handles arbitrary *N* sections (e.g. 4 sections for basic resume vs 15 for academic CV).
 - **Acceptance Criteria**: Both simple resumes and complex CVs can be declared and rendered through a unified schema model.
 
 ---

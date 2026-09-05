@@ -1,3 +1,6 @@
+import { TEMPLATE_DEFINITIONS } from "./template-definitions";
+import type { TemplateDefinition } from "@/types/template";
+
 export type TemplateId = "ats-classic" | "modern-tech" | "executive" | "academic" | "research" | "professional";
 
 export interface ResumeTemplate {
@@ -23,3 +26,11 @@ export const DEFAULT_TEMPLATE_ID: TemplateId = "ats-classic";
 export function getTemplate(id: string | null | undefined): ResumeTemplate {
   return RESUME_TEMPLATES.find((template) => template.id === id) ?? RESUME_TEMPLATES[0];
 }
+
+/** Get the full schema definition for a template. Falls back to ats-classic. */
+export function getTemplateDefinition(id: string | null | undefined): TemplateDefinition {
+  return TEMPLATE_DEFINITIONS[id as TemplateId] ?? TEMPLATE_DEFINITIONS["ats-classic"];
+}
+
+export { TEMPLATE_DEFINITIONS };
+export type { TemplateDefinition };

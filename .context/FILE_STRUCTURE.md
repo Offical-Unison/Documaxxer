@@ -29,6 +29,9 @@ e:\Github\Documaxxer\
 ├── public/                         # Static assets, SVG icons, and hero photography
 ├── styles/                         # Global styling and Tailwind CSS v4 entry
 └── types/                          # Global TypeScript interface and type declarations
+    ├── document.ts                 # DocumentData, DocumentState, and section schemas
+    ├── saved-document.ts           # SavedDocument user document instance model
+    └── template.ts                 # TemplateDefinition, TemplateSection, TemplateField schemas
 ```
 
 ---
@@ -113,7 +116,7 @@ Next.js App Router root handling client routing, metadata, and HTML shell.
 - [`docx-export.ts`](file:///e:/Github/Documaxxer/lib/export/docx-export.ts): Full-fidelity native DOCX exporter using the `docx` library. Generates real OOXML paragraphs, tab stops, and bullet lists.
 
 #### `lib/templates/`
-- [`templates.ts`](file:///e:/Github/Documaxxer/lib/templates/templates.ts): Template registry defining the 6 built-in templates (3 Resume, 3 CV) and helper `getTemplate()`.
+- [`templates.ts`](file:///e:/Github/Documaxxer/lib/templates/templates.ts): Template registry defining the 6 built-in templates (3 Resume, 3 CV), `TEMPLATE_DEFINITIONS` data-driven schemas, `getTemplate()`, and `getTemplateDefinition()`.
 
 #### `lib/validation/`
 - [`phone.ts`](file:///e:/Github/Documaxxer/lib/validation/phone.ts): Phone number format validation supporting Philippine mobile numbers and international numbers.
@@ -131,5 +134,7 @@ Next.js App Router root handling client routing, metadata, and HTML shell.
 ### `styles/`, `types/`, & `public/`
 - [`styles/globals.css`](file:///e:/Github/Documaxxer/styles/globals.css): Tailwind CSS v4 imports, theme animations, and print `@media print` rules.
 - [`types/document.ts`](file:///e:/Github/Documaxxer/types/document.ts): Authoritative TypeScript definitions for `DocumentData`, `DocumentState`, `Experience`, `Education`, and 15+ section schemas.
+- [`types/template.ts`](file:///e:/Github/Documaxxer/types/template.ts): Structural schema definitions for document templates (`TemplateDefinition`, `TemplateSection`, `TemplateField`, `TemplateFieldType`, `TemplateLayout`).
+- [`types/saved-document.ts`](file:///e:/Github/Documaxxer/types/saved-document.ts): Data model for user document instances (`SavedDocument`) containing `DocumentData`, template snapshot safety, font choice, and ownership.
 - `public/hero-resume.jpg`: High-resolution marketing hero image.
 - `public/icon.svg`: App favicon and branding mark.

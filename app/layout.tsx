@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import "@/styles/globals.css";
 import { DocumentProvider } from "@/context/document-context";
 import { ThemeProvider } from "@/context/theme-context";
+import { AuthSessionProvider } from "@/components/auth/session-provider";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -37,9 +38,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body className={`${geist.variable} font-sans antialiased`}>
-        <ThemeProvider>
-          <DocumentProvider>{children}</DocumentProvider>
-        </ThemeProvider>
+        <AuthSessionProvider>
+          <ThemeProvider>
+            <DocumentProvider>{children}</DocumentProvider>
+          </ThemeProvider>
+        </AuthSessionProvider>
       </body>
     </html>
   );

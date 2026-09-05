@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ── Auth.js Models ──────────────────────────────
+
+model User {
+  id             String    @id @default(cuid())
+  name           String?
+  email          String    @unique
+  emailVerified  DateTime?
+  hashedPassword String?
+  image          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  accounts  Account[]
+  sessions  Session[]
+  profile   UserProfile?
+  templates Template[]
+  documents SavedDocument[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ── App Models (M4) ─────────────────────────────
+
+model UserProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  data      String   // JSON blob of reusable personal info
+  updatedAt DateTime @updatedAt
+}
+
+model Template {
+  id           String  @id @default(cuid())
+  name         String
+  description  String  @default("")
+  documentType String  @default("resume")
+  builtIn      Boolean @default(false)
+  schema       String  // JSON blob of TemplateDefinition
+  ownerId      String?
+  owner        User?   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  documents SavedDocument[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
+model SavedDocument {
+  id               String  @id @default(cuid())
+  name             String
+  documentType     String  @default("resume")
+  templateId       String
+  template         Template @relation(fields: [templateId], references: [id])
+  templateSnapshot String?  // JSON blob for versioning (M11)
+  content          String   // JSON blob of DocumentData
+  selectedFontId   String?
+  ownerId          String
+  owner            User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
