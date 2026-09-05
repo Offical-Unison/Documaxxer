@@ -1,5 +1,5 @@
 import type { Award, Certification, Education, Experience, Language, OptionalSectionKey, OtherEntry, PersonalDetails, Project, Publication, Presentation, ResearchExperience, TeachingExperience, Grant, Membership, OrganizationRole, LeadershipExperience, Reference, DocumentData, DocumentState, SectionId, VolunteerExperience } from "@/types/document";
-import { DEFAULT_TEMPLATE_ID } from "@/lib/templates";
+import { DEFAULT_TEMPLATE_ID } from "@/lib/templates/templates";
 import { DEFAULT_FONT_ID } from "@/lib/fonts";
 
 export const DEFAULT_SECTION_TITLES: Record<SectionId, string> = {

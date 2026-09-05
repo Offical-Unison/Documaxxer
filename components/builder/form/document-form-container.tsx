@@ -1,16 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { AddButton, EntryCard, Field, TagInput } from "@/components/builder/form-controls";
-import { BulletListInput } from "@/components/builder/bullet-list";
-import { PartialDateField } from "@/components/builder/date-input";
-import { LinkListInput } from "@/components/builder/link-list";
-import { PhoneField } from "@/components/builder/phone-input";
-import { EditableTitle } from "@/components/builder/editable-title";
-import { OptionalDocumentSections } from "@/components/builder/optional-document-sections";
+import { AddButton, EntryCard, Field, TagInput } from "@/components/builder/controls/form-controls";
+import { BulletListInput } from "@/components/builder/controls/bullet-list";
+import { PartialDateField } from "@/components/builder/controls/date-input";
+import { LinkListInput } from "@/components/builder/controls/link-list";
+import { PhoneField } from "@/components/builder/controls/phone-input";
+import { EditableTitle } from "@/components/builder/controls/editable-title";
+import { OptionalDocumentSections } from "@/components/builder/form/optional-document-sections";
 import { useDocumentContext } from "@/context/document-context";
-import { isValidPhoneNumber } from "@/lib/phone";
-import { getDocumentSteps } from "@/lib/document-config";
+import { isValidPhoneNumber } from "@/lib/validation/phone";
+import { getDocumentSteps } from "@/lib/documents/document-config";
 import type { Education, Experience, PersonalDetails } from "@/types/document";
 
 const makeId = () => crypto.randomUUID();

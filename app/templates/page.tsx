@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { TemplatePicker } from "@/components/builder/template-picker";
 import { useDocumentContext } from "@/context/document-context";
 import { BuilderHeader } from "@/components/builder/builder-header";
-import { getTemplate, RESUME_TEMPLATES, type TemplateId } from "@/lib/templates";
+import { getTemplate, RESUME_TEMPLATES, type TemplateId } from "@/lib/templates/templates";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 

@@ -7,8 +7,8 @@ import { getFont } from "@/lib/fonts";
 import type { Education, Experience, DocumentData } from "@/types/document";
 import {
   NAME_HP, SECTION_HEADING_HP, ENTRY_TITLE_HP, BODY_HP, CONTACT_HP, DATE_HP, BODY_PT
-} from "@/lib/document-typography";
-import { MARGIN_MM } from "@/lib/document-blocks";
+} from "@/lib/documents/document-typography";
+import { MARGIN_MM } from "@/lib/documents/document-blocks";
 
 const hasExperienceContent = (item: Experience) => item.employer.trim() || item.role.trim();
 const hasEducationContent = (item: Education) => item.institution.trim();

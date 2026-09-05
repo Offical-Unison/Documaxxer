@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
 import { formatDateRange, formatPartialDate, sortByDateDesc, sortEntriesByRecency } from "@/lib/format";
-import type { TemplateId } from "@/lib/templates";
+import type { TemplateId } from "@/lib/templates/templates";
 import type { Education, Experience, Project, DocumentData, VolunteerExperience } from "@/types/document";
 import {
   sectionHeadingStyle, entryTitleStyle, entrySubtitleStyle,
   bodyStyle, dateStyle,
-} from "@/lib/document-typography";
+} from "@/lib/documents/document-typography";
 
 export const PAGE_WIDTH_MM = 210; // A4 width in mm
 export const PAGE_HEIGHT_MM = 297; // A4 height in mm

@@ -4,18 +4,18 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 import { useDocumentContext } from "@/context/document-context";
 import { COUNTRIES } from "@/lib/countries";
-import { getTemplate } from "@/lib/templates";
+import { getTemplate } from "@/lib/templates/templates";
 import { getFont } from "@/lib/fonts";
-import { countResumeWords } from "@/lib/statistics";
+import { countResumeWords } from "@/lib/documents/statistics";
 import {
   CONTENT_HEIGHT_MM, CONTENT_WIDTH_MM, MARGIN_MM, PAGE_HEIGHT_MM, PAGE_WIDTH_MM,
   SIDEBAR_GAP_MM, SIDEBAR_MAIN_WIDTH_RATIO, SIDEBAR_RAIL_WIDTH_RATIO, TEMPLATE_THEMES,
   buildTemplateBlocks, hasEducationContent, hasExperienceContent, normalizeUrl, paginateBlocks,
   type PreviewBlock,
-} from "@/lib/document-blocks";
+} from "@/lib/documents/document-blocks";
 import {
   nameStyle, headlineStyle, contactStyle, linkStyle, TEXT_COLOR,
-} from "@/lib/document-typography";
+} from "@/lib/documents/document-typography";
 import type { ReactNode } from "react";
 
 /* ════════════════════════════════════════════════════════════════

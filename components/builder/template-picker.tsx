@@ -1,6 +1,6 @@
 "use client";
 
-import { RESUME_TEMPLATES, type TemplateId } from "@/lib/templates";
+import { RESUME_TEMPLATES, type TemplateId } from "@/lib/templates/templates";
 
 import { useDocumentContext } from "@/context/document-context";
 

@@ -19,13 +19,14 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        const saved = JSON.parse(raw) as any;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- localStorage shape is not guaranteed to match current DocumentState
+        const saved = JSON.parse(raw) as Record<string, any>;
         if (saved.document || saved.resume) {
           dispatch({ type: "SET_DOCUMENT", payload: saved.document || saved.resume });
         }
-        dispatch({ type: "SET_TEMPLATE", payload: saved.selectedTemplateId });
-        dispatch({ type: "SET_FONT", payload: saved.selectedFontId });
-        dispatch({ type: "SET_ACTIVE_SECTION", payload: saved.activeSection });
+        dispatch({ type: "SET_TEMPLATE", payload: saved.selectedTemplateId ?? null });
+        dispatch({ type: "SET_FONT", payload: saved.selectedFontId ?? null });
+        dispatch({ type: "SET_ACTIVE_SECTION", payload: saved.activeSection ?? null });
         if (saved.documentType) dispatch({ type: "SET_DOCUMENT_TYPE", payload: saved.documentType });
         if (saved.generateUnlocked) dispatch({ type: "UNLOCK_GENERATE" });
       }
@@ -47,7 +48,7 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
       }
     }, SAVE_DEBOUNCE_MS);
     return () => { if (saveTimeout.current) clearTimeout(saveTimeout.current); };
-  }, [state]);
+  }, [state, isHydrated]);
 
   const value = useMemo(() => ({ state, dispatch, isHydrated }), [state, isHydrated]);
   return <DocumentContext.Provider value={value}>{children}</DocumentContext.Provider>;

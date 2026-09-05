@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { DocumentAllPages, DocumentPreview } from "@/components/builder/document-preview";
-import { GenerateButton } from "@/components/builder/generate-button";
+import { DocumentAllPages, DocumentPreview } from "@/components/builder/preview/document-preview";
+import { GenerateButton } from "@/components/builder/preview/generate-button";
 import { TemplatePicker } from "@/components/builder/template-picker";
-import { FontPicker } from "@/components/builder/font-picker";
+import { FontPicker } from "@/components/builder/controls/font-picker";
 import { useDocumentContext } from "@/context/document-context";
-import type { TemplateId } from "@/lib/templates";
-import { useDocumentPages, type UseResumePagesResult } from "@/components/builder/document-preview";
+import type { TemplateId } from "@/lib/templates/templates";
+import { useDocumentPages, type UseResumePagesResult } from "@/components/builder/preview/document-preview";
 
 function ExpandIcon() {
   return (

@@ -1,6 +1,6 @@
 import { BuilderHeader } from "@/components/builder/builder-header";
-import { DocumentFormContainer } from "@/components/builder/document-form-container";
-import { DocumentPreviewContainer } from "@/components/builder/document-preview-container";
+import { DocumentFormContainer } from "@/components/builder/form/document-form-container";
+import { DocumentPreviewContainer } from "@/components/builder/preview/document-preview-container";
 
 export default function BuilderPage() {
   return (

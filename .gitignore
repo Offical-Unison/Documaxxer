@@ -1,5 +1,27 @@
+# Dependencies
 node_modules
+
+# Build output
 .next
 out
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
 *.log
-.env*.local
+
+# TypeScript
+tsconfig.tsbuildinfo
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
