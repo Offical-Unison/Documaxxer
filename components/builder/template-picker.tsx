@@ -1,6 +1,6 @@
 "use client";
 
-import { RESUME_TEMPLATES, type TemplateId } from "@/lib/templates";
+import { RESUME_TEMPLATES, type TemplateId } from "@/lib/templates/templates";
 
 import { useDocumentContext } from "@/context/document-context";
 
@@ -160,6 +160,34 @@ function TemplateThumbnail({ id }: { id: TemplateId }) {
               <div className="h-1 w-5/6 rounded-full bg-slate-200 dark:bg-slate-700" />
             </div>
           </div>
+        </div>
+      )}
+      {id.includes("cover-letter") && (
+        <div className="flex h-full flex-col gap-1">
+          <div className="h-1.5 w-14 rounded-full bg-slate-800 dark:bg-slate-200" />
+          <div className="h-1 w-10 rounded-full bg-blue-400" />
+          <div className="mt-2 h-0.5 w-16 bg-slate-300 dark:bg-slate-600" />
+          <div className="mt-1 h-1 w-full rounded-full bg-slate-300 dark:bg-slate-600" />
+          <div className="h-1 w-5/6 rounded-full bg-slate-200 dark:bg-slate-700" />
+          <div className="h-1 w-3/4 rounded-full bg-slate-200 dark:bg-slate-700" />
+        </div>
+      )}
+      {id.includes("authorization-letter") && (
+        <div className="flex h-full flex-col gap-1">
+          <div className="flex justify-between"><div className="h-1.5 w-12 rounded-full bg-slate-800 dark:bg-slate-200" /><div className="h-1 w-8 rounded-full bg-slate-400" /></div>
+          <div className="mt-2 h-1 w-20 rounded-full bg-blue-400" />
+          <div className="mt-1 h-1 w-full rounded-full bg-slate-300 dark:bg-slate-600" />
+          <div className="h-1 w-11/12 rounded-full bg-slate-200 dark:bg-slate-700" />
+          <div className="mt-2 h-0.5 w-12 bg-slate-300 dark:bg-slate-600" />
+        </div>
+      )}
+      {id.includes("excuse-letter") && (
+        <div className="flex h-full flex-col gap-1">
+          <div className="h-1.5 w-16 rounded-full bg-slate-800 dark:bg-slate-200" />
+          <div className="mt-2 h-1 w-12 rounded-full bg-slate-400" />
+          <div className="mt-1 h-1 w-full rounded-full bg-slate-300 dark:bg-slate-600" />
+          <div className="h-1 w-full rounded-full bg-slate-200 dark:bg-slate-700" />
+          <div className="h-1 w-2/3 rounded-full bg-slate-200 dark:bg-slate-700" />
         </div>
       )}
     </div>

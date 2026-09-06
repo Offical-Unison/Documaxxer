@@ -1,5 +1,5 @@
-import type { Award, Certification, Education, Experience, Language, OptionalSectionKey, OtherEntry, PersonalDetails, Project, Publication, Presentation, ResearchExperience, TeachingExperience, Grant, Membership, OrganizationRole, LeadershipExperience, Reference, DocumentData, DocumentState, SectionId, VolunteerExperience } from "@/types/document";
-import { DEFAULT_TEMPLATE_ID } from "@/lib/templates";
+import type { Award, Certification, Education, Experience, Language, OptionalSectionKey, OtherEntry, PersonalDetails, Project, Publication, Presentation, ResearchExperience, TeachingExperience, Grant, Membership, OrganizationRole, LeadershipExperience, Reference, DocumentData, DocumentState, SectionId, VolunteerExperience, DocumentType, LetterDetails } from "@/types/document";
+import { DEFAULT_TEMPLATE_ID } from "@/lib/templates/templates";
 import { DEFAULT_FONT_ID } from "@/lib/fonts";
 
 export const DEFAULT_SECTION_TITLES: Record<SectionId, string> = {
@@ -52,6 +52,9 @@ export const initialDocumentData: DocumentData = {
   otherEntries: [],
   optionalSections: [],
   sectionTitles: { ...DEFAULT_SECTION_TITLES },
+  letterDetails: {
+    senderName: "", senderAddress: "", senderEmail: "", senderPhone: "", recipientName: "", recipientTitle: "", recipientOrganization: "", recipientAddress: "", date: "", subject: "", salutation: "Dear Sir or Madam,", body: "", closing: "Sincerely,", authorizedPerson: "", purpose: "", absentDate: "", reason: "",
+  },
 };
 
 export const initialDocumentState: DocumentState = {
@@ -69,6 +72,7 @@ export type DocumentAction =
   | { type: "SET_TEMPLATE"; payload: string | null }
   | { type: "SET_FONT"; payload: string | null }
   | { type: "UPDATE_PERSONAL_DETAILS"; payload: PersonalDetails }
+  | { type: "SET_LETTER_DETAILS"; payload: LetterDetails }
   | { type: "SET_PROFESSIONAL_SUMMARY"; payload: string }
   | { type: "SET_EXPERIENCES"; payload: Experience[] }
   | { type: "SET_EDUCATION"; payload: Education[] }
@@ -90,7 +94,7 @@ export type DocumentAction =
   | { type: "SET_OTHER_ENTRIES"; payload: OtherEntry[] }
   | { type: "SET_OPTIONAL_SECTIONS"; payload: OptionalSectionKey[] }
   | { type: "SET_SECTION_TITLE"; payload: { id: SectionId; title: string } }
-  | { type: "SET_DOCUMENT_TYPE"; payload: "resume" | "cv" }
+  | { type: "SET_DOCUMENT_TYPE"; payload: DocumentType }
   | { type: "UNLOCK_GENERATE" }
   | { type: "RESET_DOCUMENT" };
 
@@ -101,6 +105,7 @@ export function documentReducer(state: DocumentState, action: DocumentAction): D
     case "SET_TEMPLATE": return { ...state, selectedTemplateId: action.payload };
     case "SET_FONT": return { ...state, selectedFontId: action.payload };
     case "UPDATE_PERSONAL_DETAILS": return { ...state, document: { ...state.document, personalDetails: action.payload } };
+    case "SET_LETTER_DETAILS": return { ...state, document: { ...state.document, letterDetails: action.payload } };
     case "SET_PROFESSIONAL_SUMMARY": return { ...state, document: { ...state.document, professionalSummary: action.payload } };
     case "SET_EXPERIENCES": return { ...state, document: { ...state.document, experiences: action.payload } };
     case "SET_EDUCATION": return { ...state, document: { ...state.document, education: action.payload } };

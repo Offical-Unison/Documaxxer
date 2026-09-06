@@ -7,8 +7,8 @@ import { getFont } from "@/lib/fonts";
 import type { Education, Experience, DocumentData } from "@/types/document";
 import {
   NAME_HP, SECTION_HEADING_HP, ENTRY_TITLE_HP, BODY_HP, CONTACT_HP, DATE_HP, BODY_PT
-} from "@/lib/document-typography";
-import { MARGIN_MM } from "@/lib/document-blocks";
+} from "@/lib/documents/document-typography";
+import { MARGIN_MM } from "@/lib/documents/document-blocks";
 
 const hasExperienceContent = (item: Experience) => item.employer.trim() || item.role.trim();
 const hasEducationContent = (item: Education) => item.institution.trim();
@@ -83,7 +83,7 @@ function plainLine(text: string, fontName: string): Paragraph {
 
 
 /** Builds a genuinely editable .docx (real OOXML paragraphs/runs, no image or PDF conversion) and triggers a browser download. */
-export async function exportDocumentToDocx(document: DocumentData, selectedFontId?: string, documentType: "resume" | "cv" = "resume"): Promise<void> {
+export async function exportDocumentToDocx(document: DocumentData, selectedFontId?: string, documentType: string = "resume"): Promise<void> {
   const personal = document.personalDetails;
   const fullName = `${personal.firstName} ${personal.lastName}`.trim() || (documentType === "cv" ? "CV" : "Resume");
   const dial = COUNTRIES.find((country) => country.code === personal.contact.phoneCountry)?.dial ?? "+63";

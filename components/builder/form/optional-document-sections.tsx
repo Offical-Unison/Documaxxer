@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { AddButton, EntryCard, Field, TagInput } from "@/components/builder/form-controls";
-import { BulletListInput } from "@/components/builder/bullet-list";
-import { PartialDateField } from "@/components/builder/date-input";
-import { EditableTitle } from "@/components/builder/editable-title";
+import { AddButton, EntryCard, Field, TagInput } from "@/components/builder/controls/form-controls";
+import { BulletListInput } from "@/components/builder/controls/bullet-list";
+import { PartialDateField } from "@/components/builder/controls/date-input";
+import { EditableTitle } from "@/components/builder/controls/editable-title";
 import { useDocumentContext } from "@/context/document-context";
 import type { Award, Certification, Language, OptionalSectionKey, OtherEntry, Project, Publication, Presentation, ResearchExperience, VolunteerExperience, TeachingExperience, Grant, Membership, OrganizationRole, LeadershipExperience, Reference } from "@/types/document";
 

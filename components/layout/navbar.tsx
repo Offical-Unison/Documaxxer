@@ -1,5 +1,7 @@
+"use client";
+
 import Link from "next/link";
-import Image from "next/image";
+import { useSession } from "next-auth/react";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 function DocumentLogoIcon() {
@@ -18,18 +20,12 @@ function DocumentLogoIcon() {
         <rect x="6" y="17" width="7" height="1" rx="0.5" fill="#CBD5E1"/>
       </svg>
     </div>
-    <Image
-      src="/icon.svg"
-      alt="Documaxxer Logo"
-      width={32}
-      height={32}
-      className="h-8 w-8 transition-transform duration-200 group-hover:scale-105"
-      priority
-    />
   );
 }
 
 export function Navbar() {
+  const { data: session, status } = useSession();
+
   return (
     <header className="sticky top-0 z-40 border-b border-blue-100 bg-white/90 backdrop-blur-xl transition-colors dark:border-blue-950/40 dark:bg-[#0B0F19]/90">
       <nav className="section-shell flex h-16 items-center justify-between" aria-label="Main navigation">
@@ -39,7 +35,29 @@ export function Navbar() {
             Docum<span className="text-blue-600 dark:text-blue-400">axxer</span>
           </span>
         </Link>
-        <ThemeToggle />
+
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+
+          {status === "loading" ? (
+            <div className="h-8 w-16 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link
+                href={session?.user ? "/dashboard" : "/login"}
+                className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                Log in
+              </Link>
+              <Link
+                href={session?.user ? "/dashboard" : "/signup"}
+                className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
+              >
+                Sign up
+              </Link>
+            </div>
+          )}
+        </div>
       </nav>
     </header>
   );

@@ -153,6 +153,26 @@ export interface Reference {
   contactInfo: string;
 }
 
+export interface LetterDetails {
+  senderName: string;
+  senderAddress: string;
+  senderEmail: string;
+  senderPhone: string;
+  recipientName: string;
+  recipientTitle: string;
+  recipientOrganization: string;
+  recipientAddress: string;
+  date: string;
+  subject: string;
+  salutation: string;
+  body: string;
+  closing: string;
+  authorizedPerson: string;
+  purpose: string;
+  absentDate: string;
+  reason: string;
+}
+
 export type OptionalSectionKey = "projects" | "certifications" | "awards" | "volunteerExperiences" | "languages" | "publications" | "presentations" | "researchExperiences" | "teachingExperiences" | "grants" | "memberships" | "organizations" | "leadership" | "references" | "other";
 export type SectionId = "personal" | "summary" | "experience" | "education" | "skills" | OptionalSectionKey;
 
@@ -179,13 +199,16 @@ export interface DocumentData {
   otherEntries: OtherEntry[];
   optionalSections: OptionalSectionKey[];
   sectionTitles: Record<SectionId, string>;
+  letterDetails?: LetterDetails;
 }
 
 export interface DocumentState {
-  documentType: "resume" | "cv";
+  documentType: DocumentType;
   document: DocumentData;
   activeSection: string | null;
   selectedTemplateId: string | null;
   selectedFontId: string | null;
   generateUnlocked: boolean;
 }
+
+export type DocumentType = "resume" | "cv" | "cover-letter" | "authorization-letter" | "excuse-letter";

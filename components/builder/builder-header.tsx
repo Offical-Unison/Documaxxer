@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 function DocumentLogoIcon() {
@@ -12,14 +11,6 @@ function DocumentLogoIcon() {
         <path d="M8 14h3" />
       </svg>
     </div>
-    <Image
-      src="/icon.svg"
-      alt="Documaxxer Logo"
-      width={32}
-      height={32}
-      className="h-8 w-8 transition-transform duration-200 group-hover:scale-105"
-      priority
-    />
   );
 }
 

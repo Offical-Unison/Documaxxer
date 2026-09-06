@@ -1,1 +1,1 @@
-export const APP_NAME = "Resume Studio";
+export const APP_NAME = "Documaxxer";
