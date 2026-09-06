@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 function DocumentLogoIcon() {
@@ -41,28 +41,16 @@ export function Navbar() {
 
           {status === "loading" ? (
             <div className="h-8 w-16 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
-          ) : session?.user ? (
-            <div className="flex items-center gap-3">
-              <span className="hidden text-sm font-medium text-slate-700 dark:text-slate-300 sm:inline">
-                {session.user.name || session.user.email}
-              </span>
-              <button
-                onClick={() => signOut({ callbackUrl: "/" })}
-                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-              >
-                Sign out
-              </button>
-            </div>
           ) : (
             <div className="flex items-center gap-2">
               <Link
-                href="/login"
+                href={session?.user ? "/dashboard" : "/login"}
                 className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
               >
                 Log in
               </Link>
               <Link
-                href="/signup"
+                href={session?.user ? "/dashboard" : "/signup"}
                 className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
               >
                 Sign up

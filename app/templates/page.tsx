@@ -1,13 +1,20 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { TemplatePicker } from "@/components/builder/template-picker";
 import { useDocumentContext } from "@/context/document-context";
 import { BuilderHeader } from "@/components/builder/builder-header";
 import { getTemplate, RESUME_TEMPLATES, type TemplateId } from "@/lib/templates/templates";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { initialDocumentState } from "@/context/document-reducer";
+import type { DocumentType } from "@/types/document";
+
+const documentTypes: DocumentType[] = ["resume", "cv", "cover-letter", "authorization-letter", "excuse-letter"];
+
+function isDocumentType(value: string): value is DocumentType {
+  return documentTypes.includes(value as DocumentType);
+}
 
 function TemplateSelectionContent() {
   const searchParams = useSearchParams();
@@ -17,7 +24,7 @@ function TemplateSelectionContent() {
   
   useEffect(() => {
     if (!isHydrated) return;
-    if (typeParam === "resume" || typeParam === "cv") {
+    if (typeParam && isDocumentType(typeParam)) {
       dispatch({ type: "SET_DOCUMENT_TYPE", payload: typeParam });
       // If the current template doesn't match the new type, reset to the first one of that type
       const currentTemplate = getTemplate(state.selectedTemplateId);
@@ -29,12 +36,43 @@ function TemplateSelectionContent() {
       }
     }
   }, [typeParam, dispatch, state.selectedTemplateId, isHydrated]);
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState("");
 
   const handleTemplateSelect = (id: TemplateId) => {
     dispatch({ type: "SET_TEMPLATE", payload: id });
   };
 
-  const title = state.documentType === "cv" ? "Curriculum Vitae" : "Resume";
+  async function createSelectedTemplate() {
+    if (!state.selectedTemplateId) return;
+    setCreating(true);
+    setCreateError("");
+    try {
+      const response = await fetch("/api/documents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: `Untitled ${state.documentType === "cv" ? "CV" : RESUME_TEMPLATES.find((template) => template.type === state.documentType)?.name ?? "Document"}`,
+          documentType: state.documentType,
+          templateId: state.selectedTemplateId,
+          content: initialDocumentState.document,
+          selectedFontId: state.selectedFontId,
+        }),
+      });
+      if (!response.ok) {
+        setCreateError(response.status === 401 ? "Log in to save a document." : "The document could not be created.");
+        return;
+      }
+      const saved = (await response.json()) as { id: string };
+      window.location.href = `/builder?document=${saved.id}`;
+    } catch {
+      setCreateError("The document could not be created.");
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  const title = state.documentType === "cv" ? "Curriculum Vitae" : RESUME_TEMPLATES.find((template) => template.type === state.documentType)?.name ?? "Document";
 
   return (
     <div className="mx-auto w-full max-w-5xl px-5 py-12 sm:px-8 sm:py-20">
@@ -53,11 +91,10 @@ function TemplateSelectionContent() {
 
       <div className="mt-12 flex justify-center animate-fade-in-up" style={{ animationDelay: "200ms" }}>
         <Button asChild className="group px-8 py-3.5 text-base">
-          <Link href="/builder">
-            Start building <span className="ml-2 inline-block transition-transform group-hover:translate-x-1" aria-hidden="true">→</span>
-          </Link>
+          <button type="button" onClick={() => void createSelectedTemplate()} disabled={creating} className="inline-flex items-center justify-center px-8 py-3.5 text-base">{creating ? "Creating..." : "Use this template"}<span className="ml-2" aria-hidden="true">→</span></button>
         </Button>
       </div>
+      {createError && <p role="alert" className="mt-4 text-center text-sm text-red-600 dark:text-red-400">{createError}</p>}
     </div>
   );
 }

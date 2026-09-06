@@ -1,8 +1,14 @@
-# Documaxxer — Master Milestone Roadmap (M0–M15)
+# Documaxxer Milestone Roadmap
 
-This document is the authoritative progress tracker for the Documaxxer project. Every milestone specifies its core purpose, dependencies, detailed task checklists, acceptance criteria, current status, and completion percentage.
+This roadmap defines Documaxxer as a visual document-template editor. A template is a reusable page design. A document is an instance created from that design and filled with content.
 
----
+## Product Model
+
+- **Template**: reusable visual design containing pages, sections, content blocks, styles, and layout rules.
+- **Document**: editable instance of a template with its own content and layout overrides.
+- **Content block**: movable element such as text, heading, image, logo, table, divider, shape, signature, or spacer.
+- **Document type**: a category such as resume, CV, cover letter, business letter, invoice, proposal, report, or other custom document.
+- **Template version**: an immutable design revision used to protect existing documents from later template edits.
 
 ## Roadmap Summary
 
@@ -10,224 +16,162 @@ This document is the authoritative progress tracker for the Documaxxer project. 
 | :--- | :--- | :--- | :--- | :--- |
 | **M0** | Project Audit & Current-Milestone Detection | **COMPLETE** | 100% | None |
 | **M1** | Project Structure Cleanup | **COMPLETE** | 100% | M0 |
-| **M2** | Formalize the Document Engine & Data Model | **COMPLETE** | 100% | M1 |
+| **M2** | Document Engine & Visual Data Model | **IN PROGRESS** | 90% | M1 |
 | **M3** | User Authentication | **COMPLETE** | 100% | M2 |
-| **M4** | Database & Persistence Layer | **IN PROGRESS** | 35% | M3 |
-| **M5** | User Workspace & Dashboard | **NOT STARTED** | 0% | M4 |
-| **M6** | Universal Template Builder | **NOT STARTED** | 0% | M2, M5 |
-| **M7** | Template → Saved Document Instantiation | **NOT STARTED** | 0% | M6 |
-| **M8** | User Profile & Smart Autofill Suggestions | **NOT STARTED** | 0% | M5, M7 |
+| **M4** | Database & Persistence Layer | **COMPLETE** | 100% | M3 |
+| **M5** | User Workspace & Dashboard | **PARTIAL** | 70% | M4 |
+| **M6** | Visual Template Editor | **IN PROGRESS** | 60% | M2, M5 |
+| **M7** | Template to Document Creation | **NOT STARTED** | 0% | M6 |
+| **M8** | Profile Data & Smart Content | **NOT STARTED** | 0% | M5, M7 |
 | **M9** | Database-Backed Document Autosave | **NOT STARTED** | 0% | M4, M7 |
-| **M10** | True 1:1 Export Parity (Preview/PDF/DOCX) | **PARTIAL** | 65% | M2 |
+| **M10** | Visual Preview, PDF & DOCX Parity | **PARTIAL** | 40% | M2, M6 |
 | **M11** | Template Versioning & Snapshot Safety | **NOT STARTED** | 0% | M6, M7 |
 | **M12** | Document Management Quality | **NOT STARTED** | 0% | M5, M9 |
-| **M13** | Template Management Quality | **NOT STARTED** | 0% | M5, M6 |
-| **M14** | UX Polish, Accessibility & Mobile Builder | **NOT STARTED** | 0% | M12, M13 |
-| **M15** | Production Build & Comprehensive QA | **NOT STARTED** | 0% | M0–M14 |
-
----
+| **M13** | Template Management Quality | **NOT STARTED** | 0% | M5, M6, M11 |
+| **M14** | UX, Accessibility & Responsive Canvas | **NOT STARTED** | 0% | M6, M12, M13 |
+| **M15** | Production Build & Comprehensive QA | **NOT STARTED** | 0% | M0-M14 |
 
 ## Milestone Details
 
-### Milestone 0 — Project Audit & Current-Milestone Detection
-- **Purpose**: Deep code inspection of existing codebase to establish baseline reality and prevent duplicate rewrites.
-- **Dependencies**: None.
+### M0 - Project Audit & Current-Milestone Detection
 - **Status**: `COMPLETE` (100%)
-- **Tasks**:
-  - [x] Inspect package dependencies, scripts, and Next.js 15 / React 19 configuration.
-  - [x] Analyze existing client-side `DocumentProvider` and `useReducer` architecture.
-  - [x] Audit the 6 built-in templates (`ats-classic`, `modern-tech`, `executive`, `academic`, `research`, `professional`).
-  - [x] Evaluate DOCX generator (`lib/export/docx-export.ts`) and PDF print rules (`styles/globals.css`).
-  - [x] Identify known stubs (`statistics-panel.tsx`, `tutorial-container.tsx`, orphaned `tutorial-screen.tsx`).
-- **Acceptance Criteria**: Baseline reality documented with zero assumptions.
+- **Purpose**: Establish the actual baseline and identify working features, stubs, and architectural risks.
 
----
-
-### Milestone 1 — Project Structure Cleanup
-- **Purpose**: Reorganize existing components and utilities into cohesive modular subdirectories without regressing any working features.
-- **Dependencies**: M0.
-- **Status**: `IN PROGRESS` (85%)
-- **Tasks**:
-  - [x] Clean `.gitignore` to exclude build artifacts (`.next/`, `node_modules/`, `.env*`).
-  - [x] Create `.context/` knowledge base with all 14 architectural guides.
-  - [x] Restructure builder components into `controls/`, `form/`, and `preview/`.
-  - [x] Restructure `lib/` into `documents/`, `export/`, `templates/`, and `validation/`.
-  - [x] Verify build and linting pass cleanly post-restructuring (`npm run build`).
-- **Acceptance Criteria**: Clean directory layout with identical runtime functionality and zero broken imports.
-
----
-
-### Milestone 2 — Formalize the Document Engine & Data Model
-- **Purpose**: Decouple document definition into two distinct entities: **Template Schemas** (structure, fields, styling) and **Saved Documents** (user data instances).
-- **Dependencies**: M1.
+### M1 - Project Structure Cleanup
 - **Status**: `COMPLETE` (100%)
+- **Purpose**: Keep the codebase modular and maintainable without regressing existing features.
+
+### M2 - Document Engine & Visual Data Model
+- **Status**: `IN PROGRESS` (90%)
+- **Purpose**: Replace the resume-only mental model with a general document model that can represent arbitrary document types and visual layouts.
 - **Tasks**:
-  - [x] Define `TemplateDefinition`, `TemplateSection`, and `TemplateField` schemas.
-  - [x] Separate template metadata from user-entered document content.
-  - [x] Create translation layers bridging existing `DocumentData` to schema-driven definitions.
-  - [x] Ensure schema handles arbitrary *N* sections (e.g. 4 sections for basic resume vs 15 for academic CV).
-- **Acceptance Criteria**: Both simple resumes and complex CVs can be declared and rendered through a unified schema model.
+  - [x] Preserve existing document content and export structures during the transition.
+  - [x] Define reusable template and saved-document entities.
+  - [x] Define pages, page size, margins, coordinates, stacking order, visibility, and lock state.
+  - [x] Define typed content blocks: text, heading, image, logo, table, divider, shape, signature, and spacer.
+  - [x] Define style tokens for typography, color, borders, fills, alignment, and spacing.
+  - [x] Define a serialized visual template and document format.
+  - [x] Add dedicated content structures for cover, authorization, and excuse letters.
+  - [x] Define grids, snapping, and overflow behavior.
+  - [ ] Define renderer adapters for preview, PDF, and DOCX.
+- **Acceptance Criteria**: A resume, business letter, invoice, and custom document can be represented without resume-specific fields being required.
 
----
-
-### Milestone 3 — User Authentication
-- **Purpose**: Introduce secure user identity so templates, documents, and profiles belong to authenticated accounts.
-- **Dependencies**: M2.
+### M3 - User Authentication
 - **Status**: `COMPLETE` (100%)
+- **Purpose**: Provide secure account identity, login, signup, logout, sessions, and protected resources.
+
+### M4 - Database & Persistence Layer
+- **Status**: `COMPLETE` (100%)
+- **Purpose**: Persist users, profiles, templates, documents, and ownership boundaries in Neon PostgreSQL.
+- **Note**: Existing APIs must be migrated from the old resume-schema payload to the visual template/document payload as M2 and M6 land.
+
+### M5 - User Workspace & Dashboard
+- **Status**: `PARTIAL` (70%)
+- **Purpose**: Provide a workspace for finding and managing templates and document instances.
+- **Note**: The dashboard foundation exists, but its labels and actions must be updated to reflect visual templates rather than resume templates.
+
+### M6 - Visual Template Editor
+- **Status**: `IN PROGRESS` (60%)
+- **Purpose**: Build a graphics-editor-like canvas where users design reusable document templates.
 - **Tasks**:
-  - [x] Establish environment configuration (`.env.example`) with `AUTH_SECRET`.
-  - [x] Implement Sign Up, Login, Logout, and session persistence.
-  - [x] Protect account routes, dashboard endpoints, and user resources.
-  - [x] Ensure server-side session checks verify resource ownership.
-- **Acceptance Criteria**: Users can register, log in, maintain sessions, and access protected dashboard routes.
+  - [x] Create a page canvas with A4, Letter, and custom page-size foundation.
+  - [x] Add, select, resize by coordinates, lock, hide, and delete blocks.
+  - [x] Support direct drag movement and snapping.
+  - [x] Support page tabs and adding multiple pages.
+  - [x] Support visibility, locking, z-order editing, and block duplication.
+  - [ ] Support guides, alignment, distribute, layers panel, grouping, and resize handles.
+  - [x] Add block types for text, headings, images, logos, tables, dividers, shapes, signatures, and spacers.
+  - [x] Provide a properties panel for position, size, typography, colors, and content.
+  - [x] Support multiple pages and page-level layout settings.
+  - [x] Save reusable visual templates independently from documents.
+  - [ ] Allow blank templates and duplication of existing templates.
+- **Acceptance Criteria**: A user can create a multi-page visual design and place elements precisely without editing code or being restricted to resume fields.
 
----
-
-### Milestone 4 — Database & Persistence Layer
-- **Purpose**: Provide permanent cloud persistence for Users, Profiles, Custom Templates, and Saved Documents.
-- **Dependencies**: M3.
-- **Status**: `IN PROGRESS` (35%)
-- **Tasks**:
-  - [x] Design relational database schema (`User`, `UserProfile`, `Template`, `SavedDocument`).
-  - [x] Implement database client and migration scripts.
-  - [x] Establish authenticated saved-document API routes with strict owner filtering.
-  - [ ] Add profile and user-owned template CRUD operations.
-- **Acceptance Criteria**: Users can store and retrieve documents in a database, with zero cross-tenant data leaks.
-
----
-
-### Milestone 5 — User Workspace & Dashboard
-- **Purpose**: Create a clean post-login dashboard managing saved documents, custom templates, and user profile.
-- **Dependencies**: M4.
+### M7 - Template to Document Creation
 - **Status**: `NOT STARTED` (0%)
+- **Purpose**: Create editable document instances from any visual template.
 - **Tasks**:
-  - [ ] Build `/dashboard` route with tabbed or card navigation:
-    - *My Documents* (open, rename, duplicate, delete, export).
-    - *My Templates* (use, edit, duplicate, delete).
-    - *Profile* (view & update reusable data).
-  - [ ] Display document metadata (name, template used, last modified date, document type).
-- **Acceptance Criteria**: Users can manage their portfolio of documents and custom templates from a unified hub.
+  - [ ] Add a "Use template" action for built-in and user-owned templates.
+  - [ ] Copy the template into an immutable document starting point.
+  - [ ] Keep document content and layout edits isolated from the source template.
+  - [ ] Allow users to edit block content while preserving the template's design.
+  - [ ] Support general document types including letters, business documents, invoices, proposals, and reports.
+- **Acceptance Criteria**: Editing a document never changes the source template, and creating a document does not require resume-specific data.
 
----
-
-### Milestone 6 — Universal Template Builder
-- **Purpose**: Replace hardcoded document builders with ONE universal visual builder that creates custom template schemas.
-- **Dependencies**: M2, M5.
+### M8 - Profile Data & Smart Content
 - **Status**: `NOT STARTED` (0%)
+- **Purpose**: Offer reusable user data without making profiles mandatory for general documents.
 - **Tasks**:
-  - [ ] Section management: Add, remove, duplicate, rename, and reorder sections.
-  - [ ] Field management: Add, edit, remove fields (text, textarea, date, list, select).
-  - [ ] Field constraints: Required/optional flags, placeholders, profile mapping keys.
-  - [ ] Live visual template preview updating font, sizing, margins, and spacing in real time.
-- **Acceptance Criteria**: Users can construct a custom template from scratch or duplicate a built-in one without touching code.
+  - [ ] Store reusable identity, company, contact, address, and signature data.
+  - [ ] Map template fields or blocks to profile values.
+  - [ ] Provide non-destructive suggestions and explicit fill actions.
+  - [ ] Support multiple profiles such as personal, freelance, and company identities.
+- **Acceptance Criteria**: Suggested data never silently overwrites a user's custom content.
 
----
-
-### Milestone 7 — Template → Saved Document Instantiation
-- **Purpose**: Enable users to instantiate a clean `SavedDocument` from any built-in or custom template.
-- **Dependencies**: M6.
+### M9 - Database-Backed Document Autosave
 - **Status**: `NOT STARTED` (0%)
+- **Purpose**: Save visual document changes reliably to Neon PostgreSQL.
 - **Tasks**:
-  - [ ] Implement "Use Template" action creating an isolated document record.
-  - [ ] Render the builder form strictly driven by the template's schema fields.
-  - [ ] Guarantee template edits do not destructively overwrite active document content.
-- **Acceptance Criteria**: Clicking "Use Template" produces an editable document adhering exactly to the template schema.
+  - [ ] Debounce document and layout changes to the server.
+  - [ ] Show saving, saved, offline, and failed states.
+  - [ ] Recover local drafts after network interruptions.
+- **Acceptance Criteria**: Layout and content changes survive refresh and temporary network loss.
 
----
+### M10 - Visual Preview, PDF & DOCX Parity
+- **Status**: `PARTIAL` (40%)
+- **Purpose**: Render the same visual document model consistently in the editor, preview, PDF, and editable DOCX.
+- **Tasks**:
+  - [x] Keep existing PDF print and native DOCX export paths.
+  - [ ] Render arbitrary positioned blocks and multi-page layouts in preview.
+  - [ ] Export visual blocks to PDF with matching page sizes and coordinates.
+  - [ ] Export editable DOCX structures where the format supports the design.
+  - [ ] Clearly document format limitations where DOCX cannot exactly reproduce canvas behavior.
+- **Acceptance Criteria**: Exported output matches the designed pages as closely as each target format permits.
 
-### Milestone 8 — User Profile & Smart Autofill Suggestions
-- **Purpose**: Store reusable career data and suggest automatic population without clobbering existing inputs.
-- **Dependencies**: M5, M7.
+### M11 - Template Versioning & Snapshot Safety
 - **Status**: `NOT STARTED` (0%)
+- **Purpose**: Ensure template edits never unexpectedly change existing documents.
 - **Tasks**:
-  - [ ] Build User Profile editor (contact info, headline, education, past roles).
-  - [ ] Map template fields to profile attributes (`profile.email`, `profile.github`).
-  - [ ] Present non-destructive suggestions ("Fill suggested fields", "Dismiss").
-- **Acceptance Criteria**: Users can fill standard fields with 1 click without ever overwriting custom edits silently.
+  - [ ] Store immutable template versions.
+  - [ ] Snapshot the exact version used by each document.
+  - [ ] Offer an explicit update-to-new-version workflow.
+- **Acceptance Criteria**: Existing documents retain their original design after a template is edited.
 
----
-
-### Milestone 9 — Database-Backed Document Autosave
-- **Purpose**: Seamless background autosave to the database with local fallback for network interruptions.
-- **Dependencies**: M4, M7.
+### M12 - Document Management Quality
 - **Status**: `NOT STARTED` (0%)
+- **Purpose**: Make a large document library easy to search, sort, filter, duplicate, archive, and delete.
 - **Tasks**:
-  - [ ] Replace or augment `localStorage` debounce with server persistence.
-  - [ ] Display real-time save state indicators ("Saving...", "Saved", "Offline draft", "Save failed").
-  - [ ] Provide offline recovery using cached local drafts.
-- **Acceptance Criteria**: Keystrokes save reliably to the cloud with debouncing; network dropouts do not lose user data.
+  - [ ] Search by document name, type, and content.
+  - [ ] Sort and filter by dates, type, template, and status.
+  - [ ] Add archive, duplicate, export, and deletion confirmation flows.
+- **Acceptance Criteria**: Users can manage dozens of documents without losing track of versions or types.
 
----
-
-### Milestone 10 — True 1:1 Export Parity
-- **Purpose**: Achieve near-identical visual formatting across Live Preview, Print PDF, and Native Word DOCX.
-- **Dependencies**: M2.
-- **Status**: `PARTIAL` (65%)
-- **Tasks**:
-  - [x] Shared typography tokens (pt for preview/print, hp for Word).
-  - [x] Native OOXML paragraphs, bullets, tab stops, and borders.
-  - [x] CSS `@media print` rules for clean zero-margin A4 PDF printing.
-  - [ ] Multi-column layout normalization in DOCX (Word tables matching preview sidebar).
-  - [ ] Spacing and line-height micro-calibration between DOM and OOXML.
-- **Acceptance Criteria**: Exported PDF and DOCX documents match the on-screen live preview layout within reasonable format constraints.
-
----
-
-### Milestone 11 — Template Versioning & Snapshot Safety
-- **Purpose**: Ensure modifying a template never unintentionally alters existing finalized documents.
-- **Dependencies**: M6, M7.
+### M13 - Template Management Quality
 - **Status**: `NOT STARTED` (0%)
+- **Purpose**: Manage built-in, private, shared, and user-created visual templates.
 - **Tasks**:
-  - [ ] Implement template snapshotting or immutable version IDs on `SavedDocument`.
-  - [ ] Offer optional "Update to latest template version" prompt when opening older documents.
-- **Acceptance Criteria**: Old documents render with their original layout even after the parent template has been redesigned.
+  - [ ] Protect built-in templates from direct mutation.
+  - [ ] Duplicate any template into an owned editable copy.
+  - [ ] Add categories for resumes, letters, business, finance, academic, and custom documents.
+  - [ ] Add template preview thumbnails and version history.
+- **Acceptance Criteria**: Templates are reusable design assets, not accidental containers for one document's content.
 
----
-
-### Milestone 12 — Document Management Quality
-- **Purpose**: Add search, sorting, filtering, and bulk operations for documents in the dashboard.
-- **Dependencies**: M5, M9.
+### M14 - UX, Accessibility & Responsive Canvas
 - **Status**: `NOT STARTED` (0%)
+- **Purpose**: Make the visual editor usable with keyboard, mouse, touch, and assistive technology.
 - **Tasks**:
-  - [ ] Document search by name and content keywords.
-  - [ ] Sorting (last modified, created date, alphabetical, document type).
-  - [ ] Confirmation modals for irreversible deletion.
-- **Acceptance Criteria**: Users with dozens of resumes can quickly locate, organize, duplicate, and clean up their files.
+  - [ ] Add keyboard movement, shortcuts, focus management, and undo/redo.
+  - [ ] Make canvas controls usable on smaller screens.
+  - [ ] Add accessible labels and non-canvas editing alternatives.
+  - [ ] Add onboarding for the visual editing workflow.
+- **Acceptance Criteria**: Users can create and edit templates reliably across desktop and mobile layouts.
 
----
-
-### Milestone 13 — Template Management Quality
-- **Purpose**: Differentiate system templates from user templates and support community/shared layouts.
-- **Dependencies**: M5, M6.
+### M15 - Production Build & Comprehensive QA
 - **Status**: `NOT STARTED` (0%)
+- **Purpose**: Verify the visual editor and all document types for production release.
 - **Tasks**:
-  - [ ] Read-only protection on system built-in templates.
-  - [ ] "Duplicate to My Templates" workflow for modifying system templates.
-  - [ ] Category filtering (Resume, CV, Cover Letter, Academic, Tech).
-- **Acceptance Criteria**: Built-in templates are protected from accidental mutation while remaining fully forkable.
-
----
-
-### Milestone 14 — UX Polish & Accessibility
-- **Purpose**: Elevate mobile builder experience, keyboard accessibility, loading skeletons, and motion design.
-- **Dependencies**: M12, M13.
-- **Status**: `NOT STARTED` (0%)
-- **Tasks**:
-  - [ ] Responsive split-screen collapse for mobile devices.
-  - [ ] Full WCAG 2.1 AA keyboard navigation across all wizard steps.
-  - [ ] Connect [`TutorialScreen`](file:///e:/Github/Documaxxer/components/builder/tutorial-screen.tsx) into user onboarding flow.
-  - [ ] Complete [`StatisticsPanel`](file:///e:/Github/Documaxxer/components/builder/statistics-panel.tsx) with completion rate and page estimation.
-- **Acceptance Criteria**: Smooth mobile editing, accessible screen-reader experience, and seamless onboarding.
-
----
-
-### Milestone 15 — Quality Assurance & Production Build
-- **Purpose**: Rigorous stress testing, linting, cross-browser verification, and production readiness.
-- **Dependencies**: M0–M14.
-- **Status**: `NOT STARTED` (0%)
-- **Tasks**:
-  - [ ] Stress-test edge cases (extreme lengths, multi-page overflow, special characters, unicode).
-  - [ ] Zero TypeScript errors (`npm run build`).
-  - [ ] Zero ESLint warnings (`npm run lint`).
-  - [ ] Performance audit (Lighthouse score > 90 on desktop/mobile).
-- **Acceptance Criteria**: Flawless production build ready for deployment with zero regressions.
+  - [ ] Test long text, overflow, multiple pages, images, tables, special characters, and Unicode.
+  - [ ] Test template/document isolation and ownership boundaries.
+  - [ ] Run lint, type checks, production build, and browser QA.
+  - [ ] Measure editor and export performance.
+- **Acceptance Criteria**: The application is production-ready for general-purpose document template creation.

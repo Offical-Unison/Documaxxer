@@ -1,10 +1,13 @@
 import { BuilderHeader } from "@/components/builder/builder-header";
 import { DocumentFormContainer } from "@/components/builder/form/document-form-container";
 import { DocumentPreviewContainer } from "@/components/builder/preview/document-preview-container";
+import { Suspense } from "react";
+import { SavedDocumentLoader } from "@/components/builder/saved-document-loader";
 
 export default function BuilderPage() {
   return (
     <>
+    <Suspense fallback={null}><SavedDocumentLoader /></Suspense>
     <main className="flex h-[100dvh] flex-col overflow-hidden bg-slate-50 dark:bg-[#0B0F19] print:hidden">
       <BuilderHeader />
       <div className="flex flex-1 justify-center overflow-hidden">

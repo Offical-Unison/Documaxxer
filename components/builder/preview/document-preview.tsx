@@ -17,6 +17,28 @@ import {
   nameStyle, headlineStyle, contactStyle, linkStyle, TEXT_COLOR,
 } from "@/lib/documents/document-typography";
 import type { ReactNode } from "react";
+import type { LetterDetails } from "@/types/document";
+
+function buildLetterBlocks(details: LetterDetails, documentType: string): PreviewBlock[] {
+  const sender = [details.senderName, details.senderAddress, details.senderEmail, details.senderPhone].filter(Boolean);
+  const recipient = [details.recipientName, details.recipientTitle, details.recipientAddress].filter(Boolean);
+  const special = documentType === "authorization-letter"
+    ? [details.authorizedPerson && `Authorized person: ${details.authorizedPerson}`, details.purpose && `Purpose: ${details.purpose}`].filter(Boolean)
+    : documentType === "excuse-letter"
+      ? [details.absentDate && `Date of absence: ${details.absentDate}`, details.reason && `Reason: ${details.reason}`].filter(Boolean)
+      : [];
+  const blocks: PreviewBlock[] = [
+    { id: "letter-sender", type: "content", node: <div style={{ whiteSpace: "pre-line", lineHeight: 1.5 }}>{sender.join("\n")}</div> },
+    { id: "letter-date", type: "content", node: <div style={{ marginTop: "16px" }}>{details.date}</div> },
+    { id: "letter-recipient", type: "content", node: <div style={{ marginTop: "16px", whiteSpace: "pre-line", lineHeight: 1.5 }}>{recipient.join("\n")}</div> },
+    { id: "letter-subject", type: "content", node: details.subject ? <p style={{ marginTop: "12px", fontWeight: 700 }}>Subject: {details.subject}</p> : <></> },
+    { id: "letter-salutation", type: "content", node: <p style={{ marginTop: "20px" }}>{details.salutation}</p> },
+    ...special.map((text, index) => ({ id: `letter-special-${index}`, type: "content" as const, node: <p style={{ marginTop: "10px" }}>{text}</p> })),
+    { id: "letter-body", type: "content", node: <p style={{ marginTop: "16px", whiteSpace: "pre-line", lineHeight: 1.7 }}>{details.body}</p> },
+    { id: "letter-closing", type: "content", node: <p style={{ marginTop: "24px", whiteSpace: "pre-line" }}>{details.closing}{details.senderName ? `\n${details.senderName}` : ""}</p> },
+  ];
+  return blocks;
+}
 
 /* ════════════════════════════════════════════════════════════════
  * useDocumentPages — single source of truth for document layout
@@ -67,6 +89,8 @@ export function useDocumentPages(): UseResumePagesResult {
   const fontStack = getFont(selectedFontId).stack;
 
   const { personalDetails: personal, professionalSummary } = document;
+  const isLetter = state.documentType !== "resume" && state.documentType !== "cv";
+  const letterDetails: LetterDetails = useMemo(() => document.letterDetails ?? { senderName: "", senderAddress: "", senderEmail: "", senderPhone: "", recipientName: "", recipientTitle: "", recipientOrganization: "", recipientAddress: "", date: "", subject: "", salutation: "Dear Sir or Madam,", body: "", closing: "Sincerely,", authorizedPerson: "", purpose: "", absentDate: "", reason: "" }, [document.letterDetails]);
 
   const fullName = `${personal.firstName} ${personal.lastName}`.trim();
   const dial = COUNTRIES.find((country) => country.code === personal.contact.phoneCountry)?.dial ?? "+63";
@@ -80,16 +104,16 @@ export function useDocumentPages(): UseResumePagesResult {
   const experiencesPresent = document.experiences.some(hasExperienceContent);
   const educationPresent = document.education.some(hasEducationContent);
   const skillsPresent = document.skills.length > 0;
-  const isEmpty = !fullName && !personal.headline.trim() && !contactLine && links.length === 0 && !professionalSummary.trim() && !experiencesPresent && !educationPresent && !skillsPresent;
+  const isEmpty = isLetter ? !letterDetails.senderName.trim() && !letterDetails.body.trim() : !fullName && !personal.headline.trim() && !contactLine && links.length === 0 && !professionalSummary.trim() && !experiencesPresent && !educationPresent && !skillsPresent;
 
   const { main: mainBlocks, rail: railBlocks } = useMemo(
-    () => buildTemplateBlocks(document, templateId),
-    [document, templateId]
+    () => isLetter ? { main: buildLetterBlocks(letterDetails, state.documentType), rail: [] } : buildTemplateBlocks(document, templateId),
+    [document, templateId, isLetter, letterDetails, state.documentType]
   );
   const isSidebar = railBlocks.length > 0;
   const wordCount = useMemo(() => countResumeWords(document), [document]);
 
-  const headerNode = fullName || personal.headline.trim() || contactLine || links.length > 0
+  const headerNode = !isLetter && (fullName || personal.headline.trim() || contactLine || links.length > 0)
     ? (
       <header style={{ borderBottom: "1px solid #000", paddingBottom: "10px", textAlign: theme.headerAlign === "center" ? "center" : "left" }}>
         {fullName && <h2 style={nameStyle}>{fullName}</h2>}

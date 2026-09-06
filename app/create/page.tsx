@@ -78,6 +78,24 @@ export default function CreateDocumentPage() {
                 </svg>
               }
             />
+            <SelectionCard
+              title="COVER LETTER"
+              description="A focused letter introducing your experience and interest in a specific opportunity."
+              href="/templates?type=cover-letter"
+              icon={<span className="text-xl font-bold">CL</span>}
+            />
+            <SelectionCard
+              title="AUTHORIZATION LETTER"
+              description="A formal letter authorizing another person to complete a task or represent you."
+              href="/templates?type=authorization-letter"
+              icon={<span className="text-xl font-bold">AL</span>}
+            />
+            <SelectionCard
+              title="EXCUSE LETTER"
+              description="A formal letter explaining an absence, delay, or request for consideration."
+              href="/templates?type=excuse-letter"
+              icon={<span className="text-xl font-bold">EL</span>}
+            />
           </div>
         </div>
       </div>

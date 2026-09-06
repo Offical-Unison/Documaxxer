@@ -1,7 +1,21 @@
-export { auth as middleware } from "@/lib/auth/auth";
+import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth/auth";
+
+export default auth((request) => {
+  const { pathname } = request.nextUrl;
+  const isAuthenticated = !!request.auth?.user;
+
+  if (isAuthenticated && (pathname === "/login" || pathname === "/signup")) {
+    return NextResponse.redirect(new URL("/dashboard", request.nextUrl.origin));
+  }
+
+  if (!isAuthenticated && pathname.startsWith("/dashboard")) {
+    return NextResponse.redirect(new URL("/login", request.nextUrl.origin));
+  }
+
+  return NextResponse.next();
+});
 
 export const config = {
-  // Protected routes — require authentication
-  // Currently only the dashboard (future). Builder stays public for now.
-  matcher: ["/dashboard/:path*"],
+  matcher: ["/dashboard/:path*", "/login", "/signup"],
 };

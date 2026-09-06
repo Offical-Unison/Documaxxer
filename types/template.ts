@@ -81,7 +81,7 @@ export interface TemplateDefinition {
   /** Short description of the template */
   description: string;
   /** What type of document this template creates */
-  documentType: "resume" | "cv" | "cover-letter";
+  documentType: string;
   /** Whether this is a built-in (code-defined) template or user-created */
   builtIn: boolean;
   /** Owner user ID — undefined for built-in templates */

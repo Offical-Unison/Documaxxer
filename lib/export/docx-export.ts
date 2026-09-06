@@ -83,7 +83,7 @@ function plainLine(text: string, fontName: string): Paragraph {
 
 
 /** Builds a genuinely editable .docx (real OOXML paragraphs/runs, no image or PDF conversion) and triggers a browser download. */
-export async function exportDocumentToDocx(document: DocumentData, selectedFontId?: string, documentType: "resume" | "cv" = "resume"): Promise<void> {
+export async function exportDocumentToDocx(document: DocumentData, selectedFontId?: string, documentType: string = "resume"): Promise<void> {
   const personal = document.personalDetails;
   const fullName = `${personal.firstName} ${personal.lastName}`.trim() || (documentType === "cv" ? "CV" : "Resume");
   const dial = COUNTRIES.find((country) => country.code === personal.contact.phoneCountry)?.dial ?? "+63";

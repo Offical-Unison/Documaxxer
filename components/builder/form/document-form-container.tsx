@@ -11,7 +11,7 @@ import { OptionalDocumentSections } from "@/components/builder/form/optional-doc
 import { useDocumentContext } from "@/context/document-context";
 import { isValidPhoneNumber } from "@/lib/validation/phone";
 import { getDocumentSteps } from "@/lib/documents/document-config";
-import type { Education, Experience, PersonalDetails } from "@/types/document";
+import type { Education, Experience, PersonalDetails, LetterDetails } from "@/types/document";
 
 const makeId = () => crypto.randomUUID();
 
@@ -28,6 +28,12 @@ function Section({ title, description, children }: { title: React.ReactNode; des
 }
 
 export function DocumentFormContainer() {
+  const { state } = useDocumentContext();
+  if (state.documentType !== "resume" && state.documentType !== "cv") return <LetterDocumentForm />;
+  return <ResumeDocumentForm />;
+}
+
+function ResumeDocumentForm() {
   const { state, dispatch } = useDocumentContext();
   const { document } = state;
   const steps = getDocumentSteps(state.documentType);
@@ -215,6 +221,23 @@ export function DocumentFormContainer() {
       </form>
     </div>
   );
+}
+
+function LetterDocumentForm() {
+  const { state, dispatch } = useDocumentContext();
+  const details: LetterDetails = state.document.letterDetails ?? {
+    senderName: "", senderAddress: "", senderEmail: "", senderPhone: "", recipientName: "", recipientTitle: "", recipientOrganization: "", recipientAddress: "", date: "", subject: "", salutation: "Dear Sir or Madam,", body: "", closing: "Sincerely,", authorizedPerson: "", purpose: "", absentDate: "", reason: "",
+  };
+  const update = (key: keyof LetterDetails, value: string) => dispatch({ type: "SET_LETTER_DETAILS", payload: { ...details, [key]: value } });
+  const isAuthorization = state.documentType === "authorization-letter";
+  const isExcuse = state.documentType === "excuse-letter";
+  const title = isAuthorization ? "Build your authorization letter" : isExcuse ? "Build your excuse letter" : "Build your cover letter";
+
+  return <div className="min-w-0 pb-12"><div className="border-b border-slate-200/60 pb-5 dark:border-slate-700/60"><p className="eyebrow">Letter Content</p><h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 dark:text-slate-50">{title}</h1><p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Fill in the fields for this letter type. The preview updates as you write.</p></div><form className="mt-8 space-y-6" onSubmit={(event) => { event.preventDefault(); dispatch({ type: "UNLOCK_GENERATE" }); }}><div className="grid gap-4 sm:grid-cols-2"><LetterField label="Your name" value={details.senderName} onChange={(value) => update("senderName", value)} required /><LetterField label="Your address" value={details.senderAddress} onChange={(value) => update("senderAddress", value)} /><LetterField label="Your email" value={details.senderEmail} onChange={(value) => update("senderEmail", value)} type="email" /><LetterField label="Your phone" value={details.senderPhone} onChange={(value) => update("senderPhone", value)} /><LetterField label={isExcuse ? "Recipient name" : "Recipient name"} value={details.recipientName} onChange={(value) => update("recipientName", value)} /><LetterField label="Recipient title or organization" value={details.recipientTitle || details.recipientOrganization} onChange={(value) => { update("recipientTitle", value); update("recipientOrganization", value); }} /><LetterField label="Recipient address" value={details.recipientAddress} onChange={(value) => update("recipientAddress", value)} /><LetterField label="Date" value={details.date} onChange={(value) => update("date", value)} type="date" /><LetterField label="Subject" value={details.subject} onChange={(value) => update("subject", value)} /></div>{isAuthorization && <LetterField label="Person being authorized" value={details.authorizedPerson} onChange={(value) => update("authorizedPerson", value)} required />}{isAuthorization && <LetterField label="Purpose of authorization" value={details.purpose} onChange={(value) => update("purpose", value)} required />}{isExcuse && <div className="grid gap-4 sm:grid-cols-2"><LetterField label="Date of absence" value={details.absentDate} onChange={(value) => update("absentDate", value)} /><LetterField label="Reason" value={details.reason} onChange={(value) => update("reason", value)} required /></div>}<LetterField label="Salutation" value={details.salutation} onChange={(value) => update("salutation", value)} /><label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Letter body<textarea value={details.body} onChange={(event) => update("body", event.target.value)} rows={10} required className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 dark:border-slate-700 dark:bg-[#1A2234] dark:text-slate-100" placeholder={isAuthorization ? "I authorize..." : isExcuse ? "Please accept this letter as..." : "I am writing to express my interest..."} /></label><LetterField label="Closing" value={details.closing} onChange={(value) => update("closing", value)} /><button type="submit" className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700">Finish letter</button></form></div>;
+}
+
+function LetterField({ label, value, onChange, type = "text", required = false }: { label: string; value: string; onChange: (value: string) => void; type?: string; required?: boolean }) {
+  return <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}<input type={type} value={value} onChange={(event) => onChange(event.target.value)} required={required} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 dark:border-slate-700 dark:bg-[#1A2234] dark:text-slate-100" /></label>;
 }
 
 function ExperienceEditor({ item, index, showErrors, onChange, onRemove }: { item: Experience; index: number; showErrors: boolean; onChange: (item: Experience) => void; onRemove: () => void }) {

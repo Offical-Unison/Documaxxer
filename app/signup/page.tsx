@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { useEffect, useState } from "react";
+import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function SignupPage() {
   const router = useRouter();
+  const { status } = useSession();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -14,9 +15,20 @@ export default function SignupPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.replace("/dashboard");
+    }
+  }, [router, status]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+
+    if (!name.trim()) {
+      setError("Please enter your full name.");
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
@@ -34,29 +46,38 @@ export default function SignupPage() {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          password,
+        }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        setError(data.error || "Something went wrong.");
+        setError(
+          typeof data?.error === "string" && data.error
+            ? data.error
+            : "Something went wrong while creating your account.",
+        );
         return;
       }
 
-      // Auto sign in after successful signup
       const signInResult = await signIn("credentials", {
-        email,
+        email: email.trim().toLowerCase(),
         password,
         redirect: false,
+        callbackUrl: "/dashboard",
       });
 
       if (signInResult?.error) {
-        setError("Account created but sign in failed. Please try logging in.");
-      } else {
-        router.push("/");
-        router.refresh();
+        setError("Account created, but sign in failed. Please log in from the sign-in page.");
+        return;
       }
+
+      router.replace("/dashboard");
+      router.refresh();
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {

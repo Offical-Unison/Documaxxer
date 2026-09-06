@@ -1,35 +1,54 @@
 "use client";
 
-import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { useEffect, useState } from "react";
+import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { status } = useSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.replace("/dashboard");
+    }
+  }, [router, status]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+
+    if (!email.trim() || !password) {
+      setError("Please enter both email and password.");
+      return;
+    }
+
     setLoading(true);
 
     try {
       const result = await signIn("credentials", {
-        email,
+        email: email.trim().toLowerCase(),
         password,
         redirect: false,
+        callbackUrl: "/dashboard",
       });
 
       if (result?.error) {
-        setError("Invalid email or password.");
-      } else {
-        router.push("/");
-        router.refresh();
+        const errorMessage =
+          result.error === "CredentialsSignin"
+            ? "Invalid email or password."
+            : "Unable to sign in. Please try again.";
+        setError(errorMessage);
+        return;
       }
+
+      router.replace("/dashboard");
+      router.refresh();
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {

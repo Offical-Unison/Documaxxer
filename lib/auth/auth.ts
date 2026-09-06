@@ -6,9 +6,11 @@ import { prisma } from "./prisma";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
+  trustHost: true,
   session: { strategy: "jwt" },
   pages: {
     signIn: "/login",
+    error: "/login",
   },
   providers: [
     Credentials({
@@ -37,14 +39,29 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.name = user.name ?? token.name;
+        token.email = user.email ?? token.email;
       }
       return token;
     },
     async session({ session, token }) {
-      if (session.user && token.id) {
-        session.user.id = token.id as string;
+      if (session.user) {
+        session.user.id = (token.id as string | undefined) ?? session.user.id;
+        session.user.name = (token.name as string | undefined) ?? session.user.name;
+        session.user.email = (token.email as string | undefined) ?? session.user.email;
       }
       return session;
+    },
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/") && !url.startsWith("//")) {
+        return `${baseUrl}${url}`;
+      }
+
+      if (new URL(url).origin === baseUrl) {
+        return url;
+      }
+
+      return `${baseUrl}/dashboard`;
     },
   },
 });

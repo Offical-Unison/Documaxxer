@@ -1,7 +1,8 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useReducer, useRef, useState, type Dispatch, type ReactNode } from "react";
-import { initialDocumentState, documentReducer, type DocumentAction } from "@/context/document-reducer";
+import { useSession } from "next-auth/react";
+import { initialDocumentData, initialDocumentState, documentReducer, type DocumentAction } from "@/context/document-reducer";
 import type { DocumentState } from "@/types/document";
 
 interface DocumentContextValue { state: DocumentState; dispatch: Dispatch<DocumentAction>; isHydrated: boolean; }
@@ -11,9 +12,11 @@ const STORAGE_KEY = "documaxxer:document-state:v1";
 const SAVE_DEBOUNCE_MS = 500;
 
 export function DocumentProvider({ children }: { children: ReactNode }) {
+  const { status } = useSession();
   const [state, dispatch] = useReducer(documentReducer, initialDocumentState);
   const [isHydrated, setIsHydrated] = useState(false);
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const profileApplied = useRef(false);
 
   useEffect(() => {
     try {
@@ -36,6 +39,53 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
       setIsHydrated(true);
     }
   }, []);
+
+  useEffect(() => {
+    if (!isHydrated || status !== "authenticated" || profileApplied.current) return;
+    let cancelled = false;
+
+    async function applyProfile() {
+      const response = await fetch("/api/profile");
+      if (!response.ok) return;
+      const result = (await response.json()) as { data?: Record<string, unknown> };
+      if (cancelled) return;
+
+      const profile = result.data ?? {};
+      const firstName = typeof profile.firstName === "string" ? profile.firstName : "";
+      const lastName = typeof profile.lastName === "string" ? profile.lastName : "";
+      const email = typeof profile.email === "string" ? profile.email : "";
+      const location = typeof profile.location === "string" ? profile.location : "";
+      const personal = state.document.personalDetails;
+      const letterDetails = state.document.letterDetails ?? initialDocumentData.letterDetails!;
+
+      dispatch({
+        type: "UPDATE_PERSONAL_DETAILS",
+        payload: {
+          ...personal,
+          firstName: personal.firstName || firstName,
+          lastName: personal.lastName || lastName,
+          contact: {
+            ...personal.contact,
+            email: personal.contact.email || email,
+            location: personal.contact.location || location,
+          },
+        },
+      });
+      dispatch({
+        type: "SET_LETTER_DETAILS",
+        payload: {
+          ...letterDetails,
+          senderName: letterDetails.senderName || [firstName, lastName].filter(Boolean).join(" "),
+          senderEmail: letterDetails.senderEmail || email,
+          senderAddress: letterDetails.senderAddress || location,
+        },
+      });
+      profileApplied.current = true;
+    }
+
+    void applyProfile().catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [isHydrated, state.document.letterDetails, state.document.personalDetails, status]);
 
   useEffect(() => {
     if (!isHydrated) return;

@@ -15,7 +15,7 @@ export interface SavedDocument {
   /** User-assigned document name (e.g. "Google Application Resume") */
   name: string;
   /** Document type */
-  documentType: "resume" | "cv" | "cover-letter";
+  documentType: string;
   /** The template this document was created from */
   templateId: string;
   /**

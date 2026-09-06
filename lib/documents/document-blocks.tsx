@@ -28,6 +28,15 @@ export const TEMPLATE_THEMES: Record<TemplateId, TemplateTheme> = {
   academic: { fontStack: FONT_STACK_SERIF, headerAlign: "center" },
   research: { fontStack: FONT_STACK_SANS, headerAlign: "left" },
   professional: { fontStack: FONT_STACK_SANS, headerAlign: "left" },
+  "cover-letter-classic": { fontStack: FONT_STACK_SERIF, headerAlign: "left" },
+  "cover-letter-modern": { fontStack: FONT_STACK_SANS, headerAlign: "left" },
+  "cover-letter-minimal": { fontStack: FONT_STACK_SERIF, headerAlign: "left" },
+  "authorization-letter-formal": { fontStack: FONT_STACK_SERIF, headerAlign: "left" },
+  "authorization-letter-business": { fontStack: FONT_STACK_SANS, headerAlign: "left" },
+  "authorization-letter-simple": { fontStack: FONT_STACK_SERIF, headerAlign: "left" },
+  "excuse-letter-school": { fontStack: FONT_STACK_SERIF, headerAlign: "left" },
+  "excuse-letter-work": { fontStack: FONT_STACK_SANS, headerAlign: "left" },
+  "excuse-letter-medical": { fontStack: FONT_STACK_SERIF, headerAlign: "left" },
 };
 
 export const SIDEBAR_MAIN_WIDTH_RATIO = 0.65;

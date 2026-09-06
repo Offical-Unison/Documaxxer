@@ -429,6 +429,28 @@ const professional: TemplateDefinition = {
 
 // ── Exported Registry ────────────────────────────────────────
 
+const letterTemplate = (id: TemplateId, documentType: "cover-letter" | "authorization-letter" | "excuse-letter", name: string, description: string): TemplateDefinition => ({
+  id,
+  name,
+  description,
+  documentType,
+  builtIn: true,
+  sections: [],
+  layout: { columns: 1, headerAlignment: "left" },
+  createdAt: ISO_NOW,
+  updatedAt: ISO_NOW,
+});
+
+const coverLetterClassic = letterTemplate("cover-letter-classic", "cover-letter", "Classic Cover Letter", "A traditional job application letter with a clear, formal hierarchy.");
+const coverLetterModern = letterTemplate("cover-letter-modern", "cover-letter", "Modern Cover Letter", "A contemporary cover letter with a crisp, confident presentation.");
+const coverLetterMinimal = letterTemplate("cover-letter-minimal", "cover-letter", "Minimal Cover Letter", "A restrained cover letter that keeps attention on your message.");
+const authorizationLetterFormal = letterTemplate("authorization-letter-formal", "authorization-letter", "Formal Authorization", "A formal authorization letter for offices, agencies, and legal transactions.");
+const authorizationLetterBusiness = letterTemplate("authorization-letter-business", "authorization-letter", "Business Authorization", "A structured authorization letter for company and professional use.");
+const authorizationLetterSimple = letterTemplate("authorization-letter-simple", "authorization-letter", "Simple Authorization", "A straightforward authorization letter for everyday requests.");
+const excuseLetterSchool = letterTemplate("excuse-letter-school", "excuse-letter", "School Excuse Letter", "An excuse letter structured for a student absence or school request.");
+const excuseLetterWork = letterTemplate("excuse-letter-work", "excuse-letter", "Work Excuse Letter", "A professional absence letter for an employer or workplace.");
+const excuseLetterMedical = letterTemplate("excuse-letter-medical", "excuse-letter", "Medical Excuse Letter", "A clear absence letter organized around recovery and medical leave.");
+
 /** Full schema definitions for all built-in templates, keyed by TemplateId */
 export const TEMPLATE_DEFINITIONS: Record<TemplateId, TemplateDefinition> = {
   "ats-classic": atsClassic,
@@ -437,5 +459,14 @@ export const TEMPLATE_DEFINITIONS: Record<TemplateId, TemplateDefinition> = {
   academic,
   research,
   professional,
+  "cover-letter-classic": coverLetterClassic,
+  "cover-letter-modern": coverLetterModern,
+  "cover-letter-minimal": coverLetterMinimal,
+  "authorization-letter-formal": authorizationLetterFormal,
+  "authorization-letter-business": authorizationLetterBusiness,
+  "authorization-letter-simple": authorizationLetterSimple,
+  "excuse-letter-school": excuseLetterSchool,
+  "excuse-letter-work": excuseLetterWork,
+  "excuse-letter-medical": excuseLetterMedical,
 };
 

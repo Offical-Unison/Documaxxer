@@ -3,8 +3,8 @@ import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/auth/prisma";
 import { getTemplateDefinition } from "@/lib/templates/templates";
 
-function isDocumentType(value: unknown): value is "resume" | "cv" {
-  return value === "resume" || value === "cv";
+function isDocumentType(value: unknown): value is "resume" | "cv" | "cover-letter" | "authorization-letter" | "excuse-letter" {
+  return value === "resume" || value === "cv" || value === "cover-letter" || value === "authorization-letter" || value === "excuse-letter";
 }
 
 export async function GET() {
@@ -58,11 +58,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "A valid documentType and content are required." }, { status: 400 });
     }
 
-    const definition = getTemplateDefinition(templateId);
-    const template = await prisma.template.upsert({
-      where: { id: templateId },
-      update: {},
-      create: {
+    const existingTemplate = await prisma.template.findUnique({ where: { id: templateId } });
+    const definition = existingTemplate ? JSON.parse(existingTemplate.schema) : getTemplateDefinition(templateId);
+    const template = existingTemplate ?? await prisma.template.create({
+      data: {
         id: templateId,
         name: definition.name,
         description: definition.description,
