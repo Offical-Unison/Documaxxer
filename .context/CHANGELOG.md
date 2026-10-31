@@ -16,6 +16,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.4.0] — 2026-10-31
+
+### Export completion & bug fixes
+
+#### Added
+- Shared layout module (`lib/documents/document-layout.ts`) used by preview, PDF and DOCX for section order, visible entries, letters and export file names.
+- DOCX export for cover, authorization and excuse letters (classic / modern / minimal styles); all 20 resume/CV sections; template header alignment; two-column sidebar as a table; real hyperlinks.
+- Visual template editor: load/edit saved templates (`?template=<id>`), save as copy, new, resize handles (E/S/SE), layers panel, keyboard nudge/delete/duplicate, zoom, page delete, page background and custom size, image/logo upload, rendering for every block type.
+- Visual template export to PDF (per-page `@page` sizes) and editable DOCX (floating positioned tables and images).
+- Database autosave for saved documents with a save-status badge, flush on page close, and "Save to my documents" for signed-in users editing a local draft.
+- Log out, session-aware Dashboard/Log in links, dashboard template management (open/delete visual templates), profile phone field.
+- Export controls and preview on screens below the `xl` breakpoint.
+
+#### Fixed
+- Pagination could loop forever (frozen tab) when a block was taller than a page or when the measuring container was hidden on small screens.
+- PDF pagination collapsed to one page when the preview pane was hidden; pagination now re-measures when the font or header changes.
+- Saving visual templates always failed (`business-document` rejected by the API).
+- Signed-out users could not start a document from the templates page.
+- Edits to documents opened from the dashboard were never saved back to the database.
+- Dashboard "PDF" overwrote the local draft; template links ignored the selected template.
+- Recipient title field in letters never kept its value; recipient organization was not shown.
+- Older/partial drafts in localStorage or the database could crash the builder (now normalized on load).
+- Document creation accepted unknown or other users' template ids.
+- Object URLs were revoked before downloads started in some browsers.
+- DOCX layout drifted up to ~70pt from the preview: line heights now match the preview's CSS line-height, bullet indents match, sidebar entries stack like the preview, Word's default table cell margins are removed, and kerning is enabled (Word now within ~4pt of the preview).
+- The two-column preview sidebar showed stray "•" separators at line ends; contact details are now one per line.
+
 ## [0.3.0] — 2026-09-05
 
 ### Milestone 2 — Formalize Document Engine & Data Model

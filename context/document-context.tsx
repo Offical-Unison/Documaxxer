@@ -2,8 +2,8 @@
 
 import { createContext, useContext, useEffect, useMemo, useReducer, useRef, useState, type Dispatch, type ReactNode } from "react";
 import { useSession } from "next-auth/react";
-import { initialDocumentData, initialDocumentState, documentReducer, type DocumentAction } from "@/context/document-reducer";
-import type { DocumentState } from "@/types/document";
+import { initialDocumentState, documentReducer, type DocumentAction } from "@/context/document-reducer";
+import { isDocumentType, type DocumentState } from "@/types/document";
 
 interface DocumentContextValue { state: DocumentState; dispatch: Dispatch<DocumentAction>; isHydrated: boolean; }
 const DocumentContext = createContext<DocumentContextValue | undefined>(undefined);
@@ -29,8 +29,8 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
         }
         dispatch({ type: "SET_TEMPLATE", payload: saved.selectedTemplateId ?? null });
         dispatch({ type: "SET_FONT", payload: saved.selectedFontId ?? null });
-        dispatch({ type: "SET_ACTIVE_SECTION", payload: saved.activeSection ?? null });
-        if (saved.documentType) dispatch({ type: "SET_DOCUMENT_TYPE", payload: saved.documentType });
+        dispatch({ type: "SET_ACTIVE_SECTION", payload: typeof saved.activeSection === "string" ? saved.activeSection : null });
+        if (isDocumentType(saved.documentType)) dispatch({ type: "SET_DOCUMENT_TYPE", payload: saved.documentType });
         if (saved.generateUnlocked) dispatch({ type: "UNLOCK_GENERATE" });
       }
     } catch {
@@ -42,50 +42,23 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isHydrated || status !== "authenticated" || profileApplied.current) return;
-    let cancelled = false;
+    profileApplied.current = true;
 
     async function applyProfile() {
       const response = await fetch("/api/profile");
       if (!response.ok) return;
       const result = (await response.json()) as { data?: Record<string, unknown> };
-      if (cancelled) return;
-
       const profile = result.data ?? {};
-      const firstName = typeof profile.firstName === "string" ? profile.firstName : "";
-      const lastName = typeof profile.lastName === "string" ? profile.lastName : "";
-      const email = typeof profile.email === "string" ? profile.email : "";
-      const location = typeof profile.location === "string" ? profile.location : "";
-      const personal = state.document.personalDetails;
-      const letterDetails = state.document.letterDetails ?? initialDocumentData.letterDetails!;
-
+      const read = (key: string) => (typeof profile[key] === "string" ? (profile[key] as string).trim() : "");
+      // Fills only empty fields — never overwrites content the user already typed.
       dispatch({
-        type: "UPDATE_PERSONAL_DETAILS",
-        payload: {
-          ...personal,
-          firstName: personal.firstName || firstName,
-          lastName: personal.lastName || lastName,
-          contact: {
-            ...personal.contact,
-            email: personal.contact.email || email,
-            location: personal.contact.location || location,
-          },
-        },
+        type: "APPLY_PROFILE",
+        payload: { firstName: read("firstName"), lastName: read("lastName"), email: read("email"), phone: read("phone"), location: read("location") },
       });
-      dispatch({
-        type: "SET_LETTER_DETAILS",
-        payload: {
-          ...letterDetails,
-          senderName: letterDetails.senderName || [firstName, lastName].filter(Boolean).join(" "),
-          senderEmail: letterDetails.senderEmail || email,
-          senderAddress: letterDetails.senderAddress || location,
-        },
-      });
-      profileApplied.current = true;
     }
 
     void applyProfile().catch(() => undefined);
-    return () => { cancelled = true; };
-  }, [isHydrated, state.document.letterDetails, state.document.personalDetails, status]);
+  }, [isHydrated, status]);
 
   useEffect(() => {
     if (!isHydrated) return;

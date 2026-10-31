@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/auth/prisma";
+import { resolveTemplateForDocument } from "@/lib/templates/resolve-template";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -38,12 +39,13 @@ export async function PATCH(request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
 
-  const { name, content, selectedFontId } = body as {
+  const { name, content, selectedFontId, templateId } = body as {
     name?: unknown;
     content?: unknown;
     selectedFontId?: unknown;
+    templateId?: unknown;
   };
-  if (name === undefined && content === undefined && selectedFontId === undefined) {
+  if (name === undefined && content === undefined && selectedFontId === undefined && templateId === undefined) {
     return NextResponse.json({ error: "At least one field is required." }, { status: 400 });
   }
   if (name !== undefined && (typeof name !== "string" || !name.trim())) {
@@ -53,15 +55,29 @@ export async function PATCH(request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: "Content must be an object." }, { status: 400 });
   }
 
-  const existing = await prisma.savedDocument.findFirst({ where: { id, ownerId }, select: { id: true } });
+  if (templateId !== undefined && (typeof templateId !== "string" || !templateId.trim())) {
+    return NextResponse.json({ error: "templateId must be a non-empty string." }, { status: 400 });
+  }
+
+  const existing = await prisma.savedDocument.findFirst({ where: { id, ownerId }, select: { id: true, documentType: true, templateId: true } });
   if (!existing) {
     return NextResponse.json({ error: "Document not found." }, { status: 404 });
+  }
+
+  let templateUpdate: { templateId: string; templateSnapshot: string } | undefined;
+  if (typeof templateId === "string" && templateId !== existing.templateId) {
+    const template = await resolveTemplateForDocument(templateId, ownerId, existing.documentType);
+    if (!template.ok) {
+      return NextResponse.json({ error: template.error }, { status: template.status });
+    }
+    templateUpdate = { templateId: template.id, templateSnapshot: template.snapshot };
   }
 
   const document = await prisma.savedDocument.update({
     where: { id: existing.id },
     data: {
-      ...(name !== undefined ? { name: (name as string).trim() } : {}),
+      ...(name !== undefined ? { name: (name as string).trim().slice(0, 200) } : {}),
+      ...(templateUpdate ?? {}),
       ...(content !== undefined ? { content: JSON.stringify(content) } : {}),
       ...(selectedFontId !== undefined ? { selectedFontId: typeof selectedFontId === "string" ? selectedFontId : null } : {}),
     },

@@ -4,8 +4,15 @@ import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/auth/prisma";
 import { RESUME_TEMPLATES, TEMPLATE_DEFINITIONS } from "@/lib/templates/templates";
 
-function isDocumentType(value: unknown): value is "resume" | "cv" | "cover-letter" | "authorization-letter" | "excuse-letter" {
-  return value === "resume" || value === "cv" || value === "cover-letter" || value === "authorization-letter" || value === "excuse-letter";
+const MAX_SCHEMA_BYTES = 8_000_000; // images are stored inline as data URLs
+
+/** Visual templates may describe any kind of document (invoice, report, …), not only the built-in types. */
+function isTemplateDocumentType(value: unknown): value is string {
+  return typeof value === "string" && /^[a-z0-9][a-z0-9-]{0,59}$/.test(value);
+}
+
+function templateKind(schema: unknown): "visual" | "form" {
+  return schema && typeof schema === "object" && Array.isArray((schema as { pages?: unknown }).pages) ? "visual" : "form";
 }
 
 export async function GET() {
@@ -22,10 +29,10 @@ export async function GET() {
 
   return NextResponse.json({
     builtIn: builtInTemplates,
-    owned: userTemplates.map((template) => ({
-      ...template,
-      schema: JSON.parse(template.schema),
-    })),
+    owned: userTemplates.map((template) => {
+      const schema = JSON.parse(template.schema) as unknown;
+      return { ...template, schema, kind: templateKind(schema) };
+    }),
   });
 }
 
@@ -46,22 +53,26 @@ export async function POST(request: Request) {
     documentType?: unknown;
     schema?: unknown;
   };
-  if (typeof name !== "string" || !name.trim() || !isDocumentType(documentType) || !schema || typeof schema !== "object" || Array.isArray(schema)) {
-    return NextResponse.json({ error: "Name, documentType, and schema are required." }, { status: 400 });
+  if (typeof name !== "string" || !name.trim() || !isTemplateDocumentType(documentType) || !schema || typeof schema !== "object" || Array.isArray(schema)) {
+    return NextResponse.json({ error: "Name, a valid documentType (lowercase letters, numbers, dashes), and schema are required." }, { status: 400 });
+  }
+  const serialized = JSON.stringify({ ...schema, id: undefined });
+  if (serialized.length > MAX_SCHEMA_BYTES) {
+    return NextResponse.json({ error: "Template is too large. Use smaller images." }, { status: 413 });
   }
 
   const id = randomUUID();
   const template = await prisma.template.create({
     data: {
       id,
-      name: name.trim(),
-      description: typeof description === "string" ? description.trim() : "",
+      name: name.trim().slice(0, 120),
+      description: typeof description === "string" ? description.trim().slice(0, 500) : "",
       documentType,
       builtIn: false,
-      schema: JSON.stringify(schema),
+      schema: JSON.stringify({ ...schema, id }),
       ownerId: session.user.id,
     },
   });
 
-  return NextResponse.json({ ...template, schema }, { status: 201 });
+  return NextResponse.json({ ...template, schema: JSON.parse(template.schema), kind: templateKind(schema) }, { status: 201 });
 }

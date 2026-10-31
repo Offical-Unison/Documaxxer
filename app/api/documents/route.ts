@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/auth/prisma";
-import { getTemplateDefinition } from "@/lib/templates/templates";
-
-function isDocumentType(value: unknown): value is "resume" | "cv" | "cover-letter" | "authorization-letter" | "excuse-letter" {
-  return value === "resume" || value === "cv" || value === "cover-letter" || value === "authorization-letter" || value === "excuse-letter";
-}
+import { resolveTemplateForDocument } from "@/lib/templates/resolve-template";
+import { isDocumentType } from "@/types/document";
 
 export async function GET() {
   const session = await auth();
@@ -58,29 +55,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "A valid documentType and content are required." }, { status: 400 });
     }
 
-    const existingTemplate = await prisma.template.findUnique({ where: { id: templateId } });
-    const definition = existingTemplate ? JSON.parse(existingTemplate.schema) : getTemplateDefinition(templateId);
-    const template = existingTemplate ?? await prisma.template.create({
-      data: {
-        id: templateId,
-        name: definition.name,
-        description: definition.description,
-        documentType: definition.documentType,
-        builtIn: true,
-        schema: JSON.stringify(definition),
-      },
-    });
-
-    if (template.documentType !== documentType) {
-      return NextResponse.json({ error: "Template and document type do not match." }, { status: 400 });
+    const template = await resolveTemplateForDocument(templateId, session.user.id, documentType);
+    if (!template.ok) {
+      return NextResponse.json({ error: template.error }, { status: template.status });
     }
 
     const document = await prisma.savedDocument.create({
       data: {
-        name: name.trim(),
+        name: name.trim().slice(0, 200),
         documentType,
         templateId: template.id,
-        templateSnapshot: JSON.stringify(definition),
+        templateSnapshot: template.snapshot,
         content: JSON.stringify(content),
         selectedFontId: typeof selectedFontId === "string" ? selectedFontId : null,
         ownerId: session.user.id,

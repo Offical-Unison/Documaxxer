@@ -20,11 +20,11 @@ This roadmap defines Documaxxer as a visual document-template editor. A template
 | **M3** | User Authentication | **COMPLETE** | 100% | M2 |
 | **M4** | Database & Persistence Layer | **COMPLETE** | 100% | M3 |
 | **M5** | User Workspace & Dashboard | **PARTIAL** | 70% | M4 |
-| **M6** | Visual Template Editor | **IN PROGRESS** | 60% | M2, M5 |
+| **M6** | Visual Template Editor | **IN PROGRESS** | 85% | M2, M5 |
 | **M7** | Template to Document Creation | **NOT STARTED** | 0% | M6 |
 | **M8** | Profile Data & Smart Content | **NOT STARTED** | 0% | M5, M7 |
-| **M9** | Database-Backed Document Autosave | **NOT STARTED** | 0% | M4, M7 |
-| **M10** | Visual Preview, PDF & DOCX Parity | **PARTIAL** | 40% | M2, M6 |
+| **M9** | Database-Backed Document Autosave | **PARTIAL** | 70% | M4, M7 |
+| **M10** | Visual Preview, PDF & DOCX Parity | **IN PROGRESS** | 80% | M2, M6 |
 | **M11** | Template Versioning & Snapshot Safety | **NOT STARTED** | 0% | M6, M7 |
 | **M12** | Document Management Quality | **NOT STARTED** | 0% | M5, M9 |
 | **M13** | Template Management Quality | **NOT STARTED** | 0% | M5, M6, M11 |
@@ -71,7 +71,7 @@ This roadmap defines Documaxxer as a visual document-template editor. A template
 - **Note**: The dashboard foundation exists, but its labels and actions must be updated to reflect visual templates rather than resume templates.
 
 ### M6 - Visual Template Editor
-- **Status**: `IN PROGRESS` (60%)
+- **Status**: `IN PROGRESS` (85%)
 - **Purpose**: Build a graphics-editor-like canvas where users design reusable document templates.
 - **Tasks**:
   - [x] Create a page canvas with A4, Letter, and custom page-size foundation.
@@ -79,12 +79,14 @@ This roadmap defines Documaxxer as a visual document-template editor. A template
   - [x] Support direct drag movement and snapping.
   - [x] Support page tabs and adding multiple pages.
   - [x] Support visibility, locking, z-order editing, and block duplication.
-  - [ ] Support guides, alignment, distribute, layers panel, grouping, and resize handles.
+  - [x] Support guides, layers panel, and resize handles.
+  - [ ] Support alignment/distribute commands and grouping.
   - [x] Add block types for text, headings, images, logos, tables, dividers, shapes, signatures, and spacers.
   - [x] Provide a properties panel for position, size, typography, colors, and content.
   - [x] Support multiple pages and page-level layout settings.
   - [x] Save reusable visual templates independently from documents.
-  - [ ] Allow blank templates and duplication of existing templates.
+  - [x] Allow blank templates and duplication of existing templates.
+  - [x] Export visual templates to PDF and editable DOCX.
 - **Acceptance Criteria**: A user can create a multi-page visual design and place elements precisely without editing code or being restricted to resume fields.
 
 ### M7 - Template to Document Creation
@@ -109,23 +111,24 @@ This roadmap defines Documaxxer as a visual document-template editor. A template
 - **Acceptance Criteria**: Suggested data never silently overwrites a user's custom content.
 
 ### M9 - Database-Backed Document Autosave
-- **Status**: `NOT STARTED` (0%)
+- **Status**: `PARTIAL` (70%)
 - **Purpose**: Save visual document changes reliably to Neon PostgreSQL.
 - **Tasks**:
-  - [ ] Debounce document and layout changes to the server.
-  - [ ] Show saving, saved, offline, and failed states.
+  - [x] Debounce document changes to the server (form-based documents).
+  - [x] Show saving, saved, and failed states.
   - [ ] Recover local drafts after network interruptions.
 - **Acceptance Criteria**: Layout and content changes survive refresh and temporary network loss.
 
 ### M10 - Visual Preview, PDF & DOCX Parity
-- **Status**: `PARTIAL` (40%)
+- **Status**: `IN PROGRESS` (80%)
 - **Purpose**: Render the same visual document model consistently in the editor, preview, PDF, and editable DOCX.
 - **Tasks**:
   - [x] Keep existing PDF print and native DOCX export paths.
   - [ ] Render arbitrary positioned blocks and multi-page layouts in preview.
-  - [ ] Export visual blocks to PDF with matching page sizes and coordinates.
-  - [ ] Export editable DOCX structures where the format supports the design.
-  - [ ] Clearly document format limitations where DOCX cannot exactly reproduce canvas behavior.
+  - [x] Export visual blocks to PDF with matching page sizes and coordinates.
+  - [x] Export editable DOCX structures where the format supports the design.
+  - [x] Clearly document format limitations where DOCX cannot exactly reproduce canvas behavior.
+  - [x] Resume, CV and letter exports share one layout definition across preview, PDF and DOCX.
 - **Acceptance Criteria**: Exported output matches the designed pages as closely as each target format permits.
 
 ### M11 - Template Versioning & Snapshot Safety

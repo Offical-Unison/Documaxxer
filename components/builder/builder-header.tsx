@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { AccountLinks } from "@/components/layout/account-links";
 
 function DocumentLogoIcon() {
   return (
@@ -16,7 +17,7 @@ function DocumentLogoIcon() {
 
 export function BuilderHeader() {
   return (
-    <header className="sticky top-0 z-40 border-b border-blue-100 bg-white/90 shadow-[0_1px_3px_rgba(15,23,42,0.04)] backdrop-blur-xl transition-colors dark:border-blue-950/40 dark:bg-[#0B0F19]/90">
+    <header className="sticky top-0 z-40 print:hidden border-b border-blue-100 bg-white/90 shadow-[0_1px_3px_rgba(15,23,42,0.04)] backdrop-blur-xl transition-colors dark:border-blue-950/40 dark:bg-[#0B0F19]/90">
       <div className="flex h-16 w-full items-center justify-between px-5 sm:px-8">
         <div className="flex items-center gap-4">
           <Link href="/" className="group flex items-center gap-2.5 transition-opacity hover:opacity-90">
@@ -34,6 +35,7 @@ export function BuilderHeader() {
           >
             ← Back to Home
           </Link>
+          <AccountLinks compact />
           <ThemeToggle />
         </div>
       </div>

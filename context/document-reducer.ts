@@ -96,11 +96,108 @@ export type DocumentAction =
   | { type: "SET_SECTION_TITLE"; payload: { id: SectionId; title: string } }
   | { type: "SET_DOCUMENT_TYPE"; payload: DocumentType }
   | { type: "UNLOCK_GENERATE" }
+  | { type: "SET_GENERATE_UNLOCKED"; payload: boolean }
+  | { type: "APPLY_PROFILE"; payload: ProfileValues }
+  | { type: "START_NEW_DOCUMENT"; payload: { documentType: DocumentType; templateId: string } }
   | { type: "RESET_DOCUMENT" };
+
+export interface ProfileValues {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  location: string;
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any -- normalizes untrusted JSON (localStorage, database) */
+const asString = (value: unknown, fallback = ""): string => (typeof value === "string" ? value : fallback);
+const asArray = <T>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : []);
+const asRecord = (value: unknown): Record<string, any> => (value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, any>) : {});
+
+/**
+ * Merges possibly-partial document JSON (older localStorage drafts, saved
+ * database rows) with the current defaults so every field the UI and the
+ * exporters read is guaranteed to exist.
+ */
+export function normalizeDocumentData(raw: unknown): DocumentData {
+  const data = asRecord(raw);
+  const personal = asRecord(data.personalDetails);
+  const contact = asRecord(personal.contact);
+  const letter = asRecord(data.letterDetails);
+  const defaults = initialDocumentData;
+  const letterDefaults = defaults.letterDetails!;
+
+  return {
+    personalDetails: {
+      firstName: asString(personal.firstName),
+      lastName: asString(personal.lastName),
+      headline: asString(personal.headline),
+      contact: {
+        email: asString(contact.email),
+        phoneCountry: asString(contact.phoneCountry, defaults.personalDetails.contact.phoneCountry),
+        phoneNumber: asString(contact.phoneNumber),
+        location: asString(contact.location),
+      },
+      links: asArray(personal.links),
+    },
+    professionalSummary: asString(data.professionalSummary),
+    experiences: asArray<Experience>(data.experiences).map((item) => ({ ...item, highlights: asArray<string>(item.highlights) })),
+    education: asArray<Education>(data.education).map((item) => ({ ...item, awards: asArray(item.awards) })),
+    skills: asArray<string>(data.skills).filter((skill) => typeof skill === "string"),
+    projects: asArray<Project>(data.projects).map((item) => ({ ...item, technologies: asArray<string>(item.technologies), highlights: asArray<string>(item.highlights) })),
+    certifications: asArray(data.certifications),
+    languages: asArray(data.languages),
+    awards: asArray<Award>(data.awards).map((item) => ({ ...item, highlights: asArray<string>(item.highlights) })),
+    volunteerExperiences: asArray<VolunteerExperience>(data.volunteerExperiences).map((item) => ({ ...item, highlights: asArray<string>(item.highlights) })),
+    publications: asArray<Publication>(data.publications).map((item) => ({ ...item, highlights: asArray<string>(item.highlights) })),
+    presentations: asArray<Presentation>(data.presentations).map((item) => ({ ...item, highlights: asArray<string>(item.highlights) })),
+    researchExperiences: asArray<ResearchExperience>(data.researchExperiences).map((item) => ({ ...item, highlights: asArray<string>(item.highlights) })),
+    teachingExperiences: asArray<TeachingExperience>(data.teachingExperiences).map((item) => ({ ...item, highlights: asArray<string>(item.highlights) })),
+    grants: asArray<Grant>(data.grants).map((item) => ({ ...item, highlights: asArray<string>(item.highlights) })),
+    memberships: asArray<Membership>(data.memberships).map((item) => ({ ...item, highlights: asArray<string>(item.highlights) })),
+    organizations: asArray<OrganizationRole>(data.organizations).map((item) => ({ ...item, highlights: asArray<string>(item.highlights) })),
+    leadership: asArray<LeadershipExperience>(data.leadership).map((item) => ({ ...item, highlights: asArray<string>(item.highlights) })),
+    references: asArray(data.references),
+    otherEntries: asArray<OtherEntry>(data.otherEntries).map((item) => ({ ...item, highlights: asArray<string>(item.highlights) })),
+    optionalSections: asArray<OptionalSectionKey>(data.optionalSections).filter((key, index, all) => key in DEFAULT_SECTION_TITLES && all.indexOf(key) === index),
+    sectionTitles: { ...DEFAULT_SECTION_TITLES, ...asRecord(data.sectionTitles) },
+    letterDetails: Object.fromEntries(
+      Object.entries(letterDefaults).map(([key, fallback]) => [key, asString(letter[key], fallback)]),
+    ) as unknown as LetterDetails,
+  };
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+function applyProfile(document: DocumentData, profile: ProfileValues): DocumentData {
+  const personal = document.personalDetails;
+  const letter = document.letterDetails ?? initialDocumentData.letterDetails!;
+  const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(" ");
+  return {
+    ...document,
+    personalDetails: {
+      ...personal,
+      firstName: personal.firstName || profile.firstName,
+      lastName: personal.lastName || profile.lastName,
+      contact: {
+        ...personal.contact,
+        email: personal.contact.email || profile.email,
+        phoneNumber: personal.contact.phoneNumber || profile.phone,
+        location: personal.contact.location || profile.location,
+      },
+    },
+    letterDetails: {
+      ...letter,
+      senderName: letter.senderName || fullName,
+      senderEmail: letter.senderEmail || profile.email,
+      senderPhone: letter.senderPhone || profile.phone,
+      senderAddress: letter.senderAddress || profile.location,
+    },
+  };
+}
 
 export function documentReducer(state: DocumentState, action: DocumentAction): DocumentState {
   switch (action.type) {
-    case "SET_DOCUMENT": return { ...state, document: action.payload };
+    case "SET_DOCUMENT": return { ...state, document: normalizeDocumentData(action.payload) };
     case "SET_ACTIVE_SECTION": return { ...state, activeSection: action.payload };
     case "SET_TEMPLATE": return { ...state, selectedTemplateId: action.payload };
     case "SET_FONT": return { ...state, selectedFontId: action.payload };
@@ -129,6 +226,9 @@ export function documentReducer(state: DocumentState, action: DocumentAction): D
     case "SET_SECTION_TITLE": return { ...state, document: { ...state.document, sectionTitles: { ...state.document.sectionTitles, [action.payload.id]: action.payload.title } } };
     case "SET_DOCUMENT_TYPE": return { ...state, documentType: action.payload };
     case "UNLOCK_GENERATE": return { ...state, generateUnlocked: true };
+    case "SET_GENERATE_UNLOCKED": return { ...state, generateUnlocked: action.payload };
+    case "APPLY_PROFILE": return { ...state, document: applyProfile(state.document, action.payload) };
+    case "START_NEW_DOCUMENT": return { ...initialDocumentState, documentType: action.payload.documentType, selectedTemplateId: action.payload.templateId, selectedFontId: state.selectedFontId };
     case "RESET_DOCUMENT": return initialDocumentState;
     default: return state;
   }

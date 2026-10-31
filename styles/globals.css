@@ -118,3 +118,11 @@ body {
     border-color: #000000 !important;
   }
 }
+/* Visual templates keep their designed colors when printed to PDF. */
+@media print {
+  .visual-print-root,
+  .visual-print-root * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

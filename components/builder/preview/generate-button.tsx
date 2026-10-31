@@ -3,28 +3,35 @@
 import { useState } from "react";
 import { useDocumentContext } from "@/context/document-context";
 import { exportDocumentToDocx } from "@/lib/export/docx-export";
+import { printDocument } from "@/lib/export/download";
+import { getExportBaseName } from "@/lib/documents/document-layout";
 
 export function GenerateButton() {
   const { state } = useDocumentContext();
   const [isExportingDocx, setIsExportingDocx] = useState(false);
   const [docxError, setDocxError] = useState<string | null>(null);
 
-  const handlePdf = () => window.print();
+  const handlePdf = () => printDocument(getExportBaseName(state.document, state.documentType));
 
   const handleDocx = async () => {
     setDocxError(null);
     setIsExportingDocx(true);
     try {
-      await exportDocumentToDocx(state.document, state.selectedFontId ?? undefined, state.documentType);
+      await exportDocumentToDocx({
+        document: state.document,
+        documentType: state.documentType,
+        templateId: state.selectedTemplateId,
+        fontId: state.selectedFontId,
+      });
     } catch {
-      setDocxError(`Couldn't generate the Word document. Please try again.`);
+      setDocxError("Couldn't generate the Word document. Please try again.");
     } finally {
       setIsExportingDocx(false);
     }
   };
 
   return (
-    <div>
+    <div className="w-full">
       <div className="grid gap-2 sm:grid-cols-2">
         <button
           type="button"
@@ -42,7 +49,8 @@ export function GenerateButton() {
           {isExportingDocx ? "Preparing…" : "Download Word (.docx)"}
         </button>
       </div>
-      {docxError && <p className="mt-2 text-center text-xs text-red-600 dark:text-red-400">{docxError}</p>}
+      <p className="mt-2 text-center text-xs text-slate-400 dark:text-slate-500">PDF opens your browser&apos;s print dialog — choose &quot;Save as PDF&quot;.</p>
+      {docxError && <p role="alert" className="mt-2 text-center text-xs text-red-600 dark:text-red-400">{docxError}</p>}
     </div>
   );
 }

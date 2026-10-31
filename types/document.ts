@@ -212,3 +212,8 @@ export interface DocumentState {
 }
 
 export type DocumentType = "resume" | "cv" | "cover-letter" | "authorization-letter" | "excuse-letter";
+export const DOCUMENT_TYPES: DocumentType[] = ["resume", "cv", "cover-letter", "authorization-letter", "excuse-letter"];
+
+export function isDocumentType(value: unknown): value is DocumentType {
+  return typeof value === "string" && (DOCUMENT_TYPES as string[]).includes(value);
+}

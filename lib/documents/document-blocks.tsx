@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
-import { formatDateRange, formatPartialDate, sortByDateDesc, sortEntriesByRecency } from "@/lib/format";
-import type { TemplateId } from "@/lib/templates/templates";
-import type { Education, Experience, Project, DocumentData, VolunteerExperience } from "@/types/document";
+import { formatDateRange, formatPartialDate } from "@/lib/format";
+import { getResumeLayout, normalizeUrl, selectVisibleEntries, type LayoutSectionKey } from "@/lib/documents/document-layout";
+import type { Education, Experience, DocumentData } from "@/types/document";
 import {
   sectionHeadingStyle, entryTitleStyle, entrySubtitleStyle,
   bodyStyle, dateStyle,
@@ -12,32 +12,6 @@ export const PAGE_HEIGHT_MM = 297; // A4 height in mm
 export const MARGIN_MM = 25.4; // 1 inch
 export const CONTENT_WIDTH_MM = PAGE_WIDTH_MM - MARGIN_MM * 2;
 export const CONTENT_HEIGHT_MM = PAGE_HEIGHT_MM - MARGIN_MM * 2;
-
-export interface TemplateTheme {
-  fontStack: string;
-  headerAlign: "left" | "center";
-}
-
-const FONT_STACK_SERIF = "Georgia, 'Times New Roman', serif";
-const FONT_STACK_SANS = "'Segoe UI', Helvetica, Arial, sans-serif";
-
-export const TEMPLATE_THEMES: Record<TemplateId, TemplateTheme> = {
-  "ats-classic": { fontStack: FONT_STACK_SERIF, headerAlign: "center" },
-  "modern-tech": { fontStack: FONT_STACK_SANS, headerAlign: "left" },
-  executive: { fontStack: FONT_STACK_SANS, headerAlign: "left" },
-  academic: { fontStack: FONT_STACK_SERIF, headerAlign: "center" },
-  research: { fontStack: FONT_STACK_SANS, headerAlign: "left" },
-  professional: { fontStack: FONT_STACK_SANS, headerAlign: "left" },
-  "cover-letter-classic": { fontStack: FONT_STACK_SERIF, headerAlign: "left" },
-  "cover-letter-modern": { fontStack: FONT_STACK_SANS, headerAlign: "left" },
-  "cover-letter-minimal": { fontStack: FONT_STACK_SERIF, headerAlign: "left" },
-  "authorization-letter-formal": { fontStack: FONT_STACK_SERIF, headerAlign: "left" },
-  "authorization-letter-business": { fontStack: FONT_STACK_SANS, headerAlign: "left" },
-  "authorization-letter-simple": { fontStack: FONT_STACK_SERIF, headerAlign: "left" },
-  "excuse-letter-school": { fontStack: FONT_STACK_SERIF, headerAlign: "left" },
-  "excuse-letter-work": { fontStack: FONT_STACK_SANS, headerAlign: "left" },
-  "excuse-letter-medical": { fontStack: FONT_STACK_SERIF, headerAlign: "left" },
-};
 
 export const SIDEBAR_MAIN_WIDTH_RATIO = 0.65;
 export const SIDEBAR_RAIL_WIDTH_RATIO = 1 - SIDEBAR_MAIN_WIDTH_RATIO;
@@ -63,10 +37,7 @@ function sectionContent(id: string, node: ReactNode, customStyle?: React.CSSProp
   return { id, type: "content", node: <div style={{ marginTop: "8px", ...customStyle }}>{node}</div> };
 }
 
-export function normalizeUrl(url: string): string {
-  if (!url) return "#";
-  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
-}
+export { normalizeUrl };
 
 export function EntryHeading({ primary, secondary, dateRange, subItems, customPrimaryStyle, customSecondaryStyle }: { primary: ReactNode; secondary?: string; dateRange?: string; subItems?: ReactNode; customPrimaryStyle?: React.CSSProperties; customSecondaryStyle?: React.CSSProperties; }) {
   return (
@@ -87,29 +58,14 @@ export function EntryHeading({ primary, secondary, dateRange, subItems, customPr
  * Central builder for all templates.
  * Returns the main blocks, and optionally rail blocks if it's a two-column template.
  */
-export function buildTemplateBlocks(document: DocumentData, templateId: TemplateId): { main: PreviewBlock[]; rail: PreviewBlock[] } {
+export function buildTemplateBlocks(document: DocumentData, templateId: string): { main: PreviewBlock[]; rail: PreviewBlock[] } {
   const { professionalSummary, sectionTitles } = document;
 
-  const experiences = sortEntriesByRecency((document.experiences || []).filter(hasExperienceContent));
-  const education = sortEntriesByRecency((document.education || []).filter(hasEducationContent));
-  
-  const hasProjectContent = (item: Project) => item.name.trim();
-  const projects = sortByDateDesc((document.projects || []).filter(hasProjectContent));
-  const certifications = sortByDateDesc((document.certifications || []).filter((item) => item.name.trim()));
-  const awards = sortByDateDesc((document.awards || []).filter((item) => item.title.trim()));
-  const hasVolunteerContent = (item: VolunteerExperience) => item.organization.trim() || item.role.trim();
-  const volunteering = sortByDateDesc((document.volunteerExperiences || []).filter(hasVolunteerContent));
-  const organizations = sortByDateDesc((document.organizations || []).filter((item) => item.organization.trim() || item.role.trim()));
-  const leadership = sortByDateDesc((document.leadership || []).filter((item) => item.organization.trim() || item.role.trim()));
-  const teaching = sortByDateDesc((document.teachingExperiences || []).filter((item) => item.role.trim() || item.institution.trim()));
-  const grants = sortByDateDesc((document.grants || []).filter((item) => item.name.trim() || item.issuer.trim()));
-  const memberships = sortByDateDesc((document.memberships || []).filter((item) => item.organization.trim() || item.role.trim()));
-  const references = (document.references || []).filter((item) => item.name.trim());
-  const languages = (document.languages || []).filter((item) => item.name.trim());
-  const publications = sortByDateDesc((document.publications || []).filter((item) => item.title.trim()));
-  const presentations = sortByDateDesc((document.presentations || []).filter((item) => item.title.trim()));
-  const research = sortByDateDesc((document.researchExperiences || []).filter((item) => item.role.trim() || item.project.trim()));
-  const otherEntries = sortByDateDesc((document.otherEntries || []).filter((entry) => entry.name.trim()));
+  const {
+    experiences, education, projects, certifications, awards, volunteerExperiences: volunteering, organizations, leadership,
+    teachingExperiences: teaching, grants, memberships, references, languages, publications, presentations,
+    researchExperiences: research, otherEntries,
+  } = selectVisibleEntries(document);
 
   const main: PreviewBlock[] = [];
   const rail: PreviewBlock[] = [];
@@ -166,8 +122,8 @@ export function buildTemplateBlocks(document: DocumentData, templateId: Template
     if (techStyle) {
       target.push(sectionContent("skills-content", (
         <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-          {document.skills.map((skill) => (
-            <span key={skill} style={{ ...bodyStyle, fontWeight: 500, padding: "2px 8px", backgroundColor: "#f1f5f9", borderRadius: "4px", border: "1px solid #e2e8f0" }}>{skill}</span>
+          {document.skills.map((skill, index) => (
+            <span key={`${skill}-${index}`} style={{ ...bodyStyle, fontWeight: 500, padding: "2px 8px", backgroundColor: "#f1f5f9", borderRadius: "4px", border: "1px solid #e2e8f0" }}>{skill}</span>
           ))}
         </div>
       )));
@@ -401,146 +357,40 @@ export function buildTemplateBlocks(document: DocumentData, templateId: Template
     });
   };
 
-  // Build based on template
-  if (templateId === "ats-classic") {
-    addSummary(main);
-    addExperiences(main);
-    addEducation(main);
-    addSkills(main);
-    addProjects(main);
-    addCertifications(main);
-    addAwards(main);
-    addLeadership(main);
-    addOrganizations(main);
-    addVolunteering(main);
-    addLanguages(main);
-    addPublications(main);
-    addResearch(main);
-    addTeaching(main);
-    addPresentations(main);
-    addGrants(main);
-    addMemberships(main);
-    addReferences(main);
-    addOther(main);
-  } 
-  else if (templateId === "modern-tech") {
-    addSummary(main);
-    addProjects(main);
-    addExperiences(main);
-    addEducation(main);
-    addSkills(main, true); // tech style
-    addCertifications(main);
-    addAwards(main);
-    addLeadership(main);
-    addOrganizations(main);
-    addVolunteering(main);
-    addLanguages(main);
-    addPublications(main);
-    addResearch(main);
-    addTeaching(main);
-    addPresentations(main);
-    addGrants(main);
-    addMemberships(main);
-    addReferences(main);
-    addOther(main);
-  } 
-  else if (templateId === "executive") {
-    // 2 columns
-    addSummary(main);
-    addExperiences(main);
-    addProjects(main);
-    
-    addEducation(rail);
-    addSkills(rail);
-    addCertifications(rail);
-    addLanguages(rail);
-    addAwards(rail);
-    addLeadership(rail);
-    addOrganizations(rail);
-    addVolunteering(rail);
-    addPublications(rail);
-    addResearch(rail);
-    addTeaching(rail);
-    addPresentations(rail);
-    addGrants(rail);
-    addMemberships(rail);
-    addReferences(rail);
-    addOther(rail);
-  }
-  else if (templateId === "academic") {
-    addSummary(main);
-    addEducation(main);
-    addSkills(main);
-    addExperiences(main);
-    addResearch(main);
-    addTeaching(main);
-    addPublications(main);
-    addPresentations(main);
-    addAwards(main);
-    addGrants(main);
-    addMemberships(main);
-    addCertifications(main);
-    addLanguages(main);
-    addProjects(main);
-    addLeadership(main);
-    addOrganizations(main);
-    addVolunteering(main);
-    addReferences(main);
-    addOther(main);
-  }
-  else if (templateId === "research") {
-    // Research focuses on research and publications first
-    addSummary(main);
-    addResearch(main);
-    addTeaching(main);
-    addPublications(main);
-    addPresentations(main);
-    addEducation(main);
-    addSkills(main);
-    addExperiences(main);
-    addProjects(main);
-    addAwards(main);
-    addGrants(main);
-    addMemberships(main);
-    addCertifications(main);
-    addLeadership(main);
-    addOrganizations(main);
-    addVolunteering(main);
-    addLanguages(main);
-    addReferences(main);
-    addOther(main);
-  }
-  else if (templateId === "professional") {
-    // Modern 2-column professional CV
-    addSummary(main);
-    addExperiences(main);
-    addProjects(main);
-    
-    addEducation(rail);
-    addSkills(rail);
-    addCertifications(rail);
-    addLanguages(rail);
-    addAwards(rail);
-    addLeadership(rail);
-    addOrganizations(rail);
-    addVolunteering(rail);
-    addPublications(rail);
-    addResearch(rail);
-    addTeaching(rail);
-    addPresentations(rail);
-    addGrants(rail);
-    addMemberships(rail);
-    addReferences(rail);
-    addOther(rail);
-  }
+  const layout = getResumeLayout(templateId, document.optionalSections);
+  const sectionBuilders: Record<LayoutSectionKey, (target: PreviewBlock[]) => void> = {
+    summary: addSummary,
+    experience: addExperiences,
+    education: addEducation,
+    skills: (target) => addSkills(target, layout.skillChips),
+    projects: addProjects,
+    certifications: addCertifications,
+    awards: addAwards,
+    volunteerExperiences: addVolunteering,
+    languages: addLanguages,
+    publications: addPublications,
+    presentations: addPresentations,
+    researchExperiences: addResearch,
+    teachingExperiences: addTeaching,
+    grants: addGrants,
+    memberships: addMemberships,
+    organizations: addOrganizations,
+    leadership: addLeadership,
+    references: addReferences,
+    other: addOther,
+  };
+  layout.main.forEach((key) => sectionBuilders[key](main));
+  layout.rail.forEach((key) => sectionBuilders[key](rail));
 
   return { main, rail };
 }
 
 /**
- * Greedily fills pages up to the measured content-area height. Blocks are
- * atomic (never split). A trailing section header left alone at the bottom
- * of a page is pushed onto the next page so it isn't orphaned from its content.
+ * Greedily fills pages up to the measured content-area height in a single
+ * pass. Blocks are atomic (never split). A section header is kept with the
+ * block that follows it, so a heading is never orphaned at the bottom of a
+ * page. A block taller than a whole page gets a page of its own (and is
+ * clipped) rather than being moved forever.
  *
  * A small safety margin (PAGINATION_SAFETY_PX) is subtracted from the
  * available content height to account for subpixel rounding drift between
@@ -557,69 +407,26 @@ export function paginateBlocks(
 ): PreviewBlock[][] {
   if (blocks.length === 0) return [[]];
   const safeHeight = contentHeight - PAGINATION_SAFETY_PX;
+  // Nothing measurable (e.g. measuring container not mounted yet): keep everything on one page.
+  if (!Number.isFinite(safeHeight) || safeHeight <= 0) return [blocks];
+
+  const heightOf = (block: PreviewBlock | undefined) => (block ? Math.max(0, heights[block.id] ?? 0) : 0);
   const pages: PreviewBlock[][] = [[]];
   let used = firstPageReservedHeight;
-  let pageIndex = 0;
 
-  blocks.forEach((block) => {
-    const h = heights[block.id] ?? 0;
-    if (pages[pageIndex].length > 0 && used + h > safeHeight) {
-      pageIndex += 1;
-      pages[pageIndex] = [];
+  blocks.forEach((block, index) => {
+    const height = heightOf(block);
+    // Keep a header together with the block that follows it.
+    const needed = block.type === "header" ? height + heightOf(blocks[index + 1]) : height;
+    const current = pages[pages.length - 1];
+    // Never break directly after a header — it already reserved room for this block.
+    if (current.length > 0 && used + needed > safeHeight && current[current.length - 1].type !== "header") {
+      pages.push([]);
       used = pageReservedHeight;
     }
-    pages[pageIndex].push(block);
-    used += h;
+    pages[pages.length - 1].push(block);
+    used += height;
   });
-
-  // Orphan-header fix: push trailing headers to the next page.
-  // Re-validate cascading overflow: if the next page now exceeds the safe
-  // height, push its last block(s) onto yet another page until stable.
-  let changed = true;
-  while (changed) {
-    changed = false;
-    for (let i = 0; i < pages.length - 1; i += 1) {
-      const page = pages[i];
-      const last = page[page.length - 1];
-      if (last?.type === "header") {
-        page.pop();
-        pages[i + 1].unshift(last);
-        changed = true;
-      }
-    }
-    // Check last page — if it ends with an orphan header and there's no next page, create one.
-    const lastPage = pages[pages.length - 1];
-    if (lastPage.length > 1 && lastPage[lastPage.length - 1]?.type === "header") {
-      const orphan = lastPage.pop()!;
-      pages.push([orphan]);
-      changed = true;
-    }
-
-    // Re-validate page heights after header moves — if any page overflows,
-    // push its trailing blocks to the next page.
-    for (let i = 0; i < pages.length; i += 1) {
-      const reserved = i === 0 ? firstPageReservedHeight : pageReservedHeight;
-      let pageUsed = reserved;
-      let overflowStart = -1;
-      for (let j = 0; j < pages[i].length; j += 1) {
-        const h = heights[pages[i][j].id] ?? 0;
-        if (pages[i].length > 1 && j > 0 && pageUsed + h > safeHeight) {
-          overflowStart = j;
-          break;
-        }
-        pageUsed += h;
-      }
-      if (overflowStart > 0) {
-        const overflow = pages[i].splice(overflowStart);
-        if (i + 1 < pages.length) {
-          pages[i + 1].unshift(...overflow);
-        } else {
-          pages.push(overflow);
-        }
-        changed = true;
-      }
-    }
-  }
 
   const nonEmpty = pages.filter((page) => page.length > 0);
   return nonEmpty.length > 0 ? nonEmpty : [[]];

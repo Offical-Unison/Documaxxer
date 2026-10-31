@@ -105,3 +105,18 @@ export const linkStyle: React.CSSProperties = {
   whiteSpace: "pre-wrap",
   wordBreak: "break-word",
 };
+
+// ── Letters ──────────────────────────────────────────────────
+export const LETTER_BODY_PT = 11;
+export const LETTER_NAME_PT = 18;
+export const LETTER_BODY_HP = LETTER_BODY_PT * 2;   // 22
+export const LETTER_NAME_HP = LETTER_NAME_PT * 2;   // 36
+export const LETTER_LINE_HEIGHT = 1.5;
+
+export const letterTextStyle: React.CSSProperties = {
+  fontSize: `${LETTER_BODY_PT}pt`,
+  color: TEXT_COLOR,
+  lineHeight: LETTER_LINE_HEIGHT,
+  whiteSpace: "pre-line",
+  wordBreak: "break-word",
+};

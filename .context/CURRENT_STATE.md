@@ -4,8 +4,8 @@
 
 - **Current Milestone**: **M2 - Document Engine & Visual Data Model** (In Progress)
 - **Previous Milestone**: **M5 - User Workspace & Dashboard foundation** (Partial, being reworked)
-- **Overall Roadmap Completion**: **~45%**
-- **Target Active Focus**: Add resize handles, guides, grouping, renderer adapters, and visual-template duplication.
+- **Overall Roadmap Completion**: **~55%**
+- **Target Active Focus**: Create document instances from visual templates (M7), template versioning (M11), alignment/grouping tools.
 
 ## Product Direction
 
@@ -28,14 +28,16 @@ A user should be able to:
 - Neon PostgreSQL configuration with Prisma migrations.
 - Authenticated profile, template, and saved-document APIs.
 - Workspace dashboard foundation.
-- Existing PDF print and native DOCX export paths.
+- PDF (print) and native DOCX export for resumes, CVs and all three letter types, driven by one shared layout module, available on every screen size.
+- Visual template editor with load/save/copy, resize handles, layers, image upload, and PDF/DOCX export.
+- Database autosave for saved documents, logout, and session-aware navigation.
 - Existing template definitions that can be migrated into visual block templates.
 - Dedicated editable structures and previews now exist for cover, authorization, and excuse letters.
 
 ## What Must Be Reworked
 
 - The current `TemplateField` and resume section model is not the final template model.
-- The current `/template-builder` is now a functional visual canvas foundation with direct drag movement and multi-page editing, but it does not yet support resize handles, guides, or renderer adapters.
+- The `/template-builder` supports move/resize, guides, layers and export, but not alignment/distribute commands or grouping, and visual templates cannot yet be turned into document instances (M7).
 - The current `/builder` supports dedicated letter forms and previews, but does not yet render arbitrary saved visual blocks.
 - Template creation and document creation must become separate workflows.
 - Saved documents must store content and layout independently from their source template.

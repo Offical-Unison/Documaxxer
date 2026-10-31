@@ -18,6 +18,7 @@ export const CORE_STEPS: DocumentStep[] = [
   { id: "additional", label: "Additional" },
 ];
 
-export function getDocumentSteps(_documentType: string): DocumentStep[] {
+/** Resume and CV share the same guided steps; letters use their own single-page form. */
+export function getDocumentSteps(): DocumentStep[] {
   return CORE_STEPS;
 }

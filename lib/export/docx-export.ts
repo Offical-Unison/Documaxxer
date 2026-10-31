@@ -1,20 +1,29 @@
-"use client";
-
-import { AlignmentType, BorderStyle, convertMillimetersToTwip, Document, LineRuleType, Packer, Paragraph, TabStopPosition, TabStopType, TextRun } from "docx";
-import { COUNTRIES } from "@/lib/countries";
-import { formatDateRange, formatPartialDate, sortByDateDesc, sortEntriesByRecency } from "@/lib/format";
-import { getFont } from "@/lib/fonts";
-import type { Education, Experience, DocumentData } from "@/types/document";
 import {
-  NAME_HP, SECTION_HEADING_HP, ENTRY_TITLE_HP, BODY_HP, CONTACT_HP, DATE_HP, BODY_PT
+  AlignmentType, BorderStyle, convertMillimetersToTwip, Document, ExternalHyperlink, LineRuleType, Packer, Paragraph,
+  ShadingType, Table, TableBorders, TableCell, TableLayoutType, TableRow, TabStopType, TextRun, VerticalAlign, WidthType,
+  type ParagraphChild,
+} from "docx";
+import { formatDateRange, formatPartialDate } from "@/lib/format";
+import { getFont } from "@/lib/fonts";
+import type { DocumentData } from "@/types/document";
+import {
+  NAME_HP, SECTION_HEADING_HP, ENTRY_TITLE_HP, BODY_HP, CONTACT_HP, DATE_HP, BODY_PT,
+  LETTER_BODY_HP, LETTER_LINE_HEIGHT, LETTER_NAME_HP,
 } from "@/lib/documents/document-typography";
-import { MARGIN_MM } from "@/lib/documents/document-blocks";
-
-const hasExperienceContent = (item: Experience) => item.employer.trim() || item.role.trim();
-const hasEducationContent = (item: Education) => item.institution.trim();
+import {
+  CONTENT_WIDTH_MM, MARGIN_MM, PAGE_HEIGHT_MM, PAGE_WIDTH_MM, SIDEBAR_GAP_MM, SIDEBAR_RAIL_WIDTH_RATIO,
+} from "@/lib/documents/document-blocks";
+import {
+  buildLetterContent, getContactLine, getExportBaseName, getLetterSignOff, getResumeLayout, isLetterType, normalizeUrl,
+  selectVisibleEntries, type LayoutSectionKey,
+} from "@/lib/documents/document-layout";
+import { normalizeDocumentData } from "@/context/document-reducer";
+import { downloadBlob } from "@/lib/export/download";
 
 // All text is black — no accent colors
 const BLACK = "000000";
+/** Sidebar fill matching the preview's `bg-blue-50/60` rail. */
+const RAIL_FILL = "F3F7FE";
 
 /**
  * Convert preview CSS spacing to DOCX twips.
@@ -22,271 +31,420 @@ const BLACK = "000000";
  * 1 inch = 96 CSS-px = 1440 twips → 1 CSS-px = 15 twips.
  */
 const PX_TO_TWIP = 15;
+const PT_TO_TWIP = 20;
 
 /* ── Spacing constants matching preview CSS ───────────────────── */
 // sectionHeadingStyle: marginTop: 14px, paddingBottom: 4px
 const SECTION_HEADING_BEFORE = 14 * PX_TO_TWIP; // 210 twips
 const SECTION_HEADING_AFTER = 4 * PX_TO_TWIP;   // 60 twips
-
 // sectionContent wrapper: marginTop: 8px
 const ENTRY_BEFORE = 8 * PX_TO_TWIP;  // 120 twips
-
 // bodyStyle lineHeight: 1.5 → 150% of single spacing. Single spacing = 240 twips.
 const BODY_LINE_SPACING = Math.round(BODY_PT * 20 * 1.5); // pt × 20 = twips-per-line, × 1.5
-
 // Bullet/plain line: marginBottom: 2px
 const BULLET_AFTER = 2 * PX_TO_TWIP;  // 30 twips
+// Highlight lists sit in a wrapper with marginTop: 4px; detail lines (org, authors, location) use marginTop: 2px.
+const LIST_BEFORE = 4 * PX_TO_TWIP;   // 60 twips
+const DETAIL_BEFORE = 2 * PX_TO_TWIP; // 30 twips
 
-function sectionHeading(text: string, fontName: string): Paragraph {
-  return new Paragraph({
-    spacing: { before: SECTION_HEADING_BEFORE, after: SECTION_HEADING_AFTER },
-    border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: BLACK } },
-    children: [new TextRun({ text: text.toUpperCase(), bold: true, color: BLACK, size: SECTION_HEADING_HP, font: fontName })],
+/**
+ * The preview inherits CSS `line-height: 1.5` (Tailwind preflight), so every
+ * line box is 1.5 × its font size. Word's "single" / "1.5 lines" are multiples
+ * of the font's own line gap instead, so heights are set explicitly in points.
+ */
+const lineHeight = (fontPt: number, factor = 1.5) => ({ line: Math.round(fontPt * factor * PT_TO_TWIP), lineRule: LineRuleType.AT_LEAST });
+// Preview list: ul padding-left 16px + li padding-left 2px → text starts 18px from the margin.
+const BULLET_INDENT = { left: 18 * PX_TO_TWIP, hanging: 12 * PX_TO_TWIP };
+
+const CONTENT_WIDTH_TWIP = convertMillimetersToTwip(CONTENT_WIDTH_MM);
+const SIDEBAR_GAP_TWIP = convertMillimetersToTwip(SIDEBAR_GAP_MM);
+const RAIL_PADDING_TWIP = 12 * PX_TO_TWIP;
+
+export interface DocxExportInput {
+  document: DocumentData;
+  documentType: string;
+  templateId?: string | null;
+  fontId?: string | null;
+}
+
+/* ── Shared run helpers ───────────────────────────────────────── */
+
+interface RunStyle { size: number; font: string; bold?: boolean }
+
+/** Splits on "\n" into runs separated by real line breaks (Word ignores raw newlines). */
+function textRuns(text: string, style: RunStyle): TextRun[] {
+  return text.split("\n").map((line, index) => new TextRun({
+    text: line, bold: style.bold, size: style.size, font: style.font, color: BLACK, break: index > 0 ? 1 : undefined,
+  }));
+}
+
+function hyperlink(text: string, url: string, style: RunStyle): ExternalHyperlink {
+  return new ExternalHyperlink({
+    link: normalizeUrl(url),
+    children: [new TextRun({ text, size: style.size, font: style.font, color: BLACK, underline: {} })],
   });
 }
 
-function entryHeading(primary: string, secondary: string, dateRange: string, fontName: string, rightSecondary?: string): Paragraph[] {
-  const runsPrimary: TextRun[] = [new TextRun({ text: primary, bold: true, size: ENTRY_TITLE_HP, color: BLACK, font: fontName })];
-  if (dateRange) runsPrimary.push(new TextRun({ text: `\t${dateRange}`, size: DATE_HP, color: BLACK, font: fontName }));
+/* ── Resume / CV ──────────────────────────────────────────────── */
 
-  const paras = [
-    new Paragraph({ tabStops: [{ type: TabStopType.RIGHT, position: TabStopPosition.MAX }], spacing: { before: ENTRY_BEFORE }, children: runsPrimary })
-  ];
+class ResumeWriter {
+  /**
+   * @param stacked Narrow sidebar columns: the preview's flex row wraps there, so the
+   *                date and grade sit on their own lines instead of being right-aligned.
+   */
+  constructor(private readonly font: string, private readonly rightTab: number, private readonly stacked = false) {}
 
-  if (secondary || rightSecondary) {
-    const runsSecondary: TextRun[] = [];
-    if (secondary) runsSecondary.push(new TextRun({ text: secondary, bold: true, size: BODY_HP, color: BLACK, font: fontName }));
-    if (rightSecondary) runsSecondary.push(new TextRun({ text: `\t${rightSecondary}`, size: BODY_HP, color: BLACK, font: fontName }));
-    paras.push(
-      new Paragraph({ tabStops: [{ type: TabStopType.RIGHT, position: TabStopPosition.MAX }], children: runsSecondary })
-    );
+  /** Sidebar blocks each carry an extra 12px top margin in the preview (`mt-3`). */
+  private get blockGap() {
+    return this.stacked ? 12 * PX_TO_TWIP : 0;
   }
 
-  return paras;
+  heading(text: string): Paragraph {
+    return new Paragraph({
+      spacing: { before: SECTION_HEADING_BEFORE + this.blockGap, after: SECTION_HEADING_AFTER, ...lineHeight(SECTION_HEADING_HP / 2) },
+      border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: BLACK, space: 3 } },
+      keepNext: true,
+      children: [new TextRun({ text: text.toUpperCase(), bold: true, color: BLACK, size: SECTION_HEADING_HP, font: this.font })],
+    });
+  }
+
+  /** Bold title on the left, date right-aligned on the same line (preview: flex space-between). */
+  entry(primary: ParagraphChild[] | string, secondary: string, dateRange: string, rightSecondary?: string): Paragraph[] {
+    const tabStops = [{ type: TabStopType.RIGHT, position: this.rightTab }];
+    const spacing = lineHeight(ENTRY_TITLE_HP / 2);
+    const run = (text: string, bold = false) => new TextRun({ text, bold, size: BODY_HP, color: BLACK, font: this.font });
+    const first: ParagraphChild[] = typeof primary === "string"
+      ? [new TextRun({ text: primary, bold: true, size: ENTRY_TITLE_HP, color: BLACK, font: this.font })]
+      : [...primary];
+
+    if (this.stacked) {
+      const lines = [new Paragraph({ keepNext: true, keepLines: true, spacing: { before: ENTRY_BEFORE + this.blockGap, ...spacing }, children: first })];
+      if (secondary) lines.push(new Paragraph({ keepNext: true, spacing, children: [run(secondary, true)] }));
+      if (dateRange) lines.push(new Paragraph({ keepNext: true, spacing, children: [new TextRun({ text: dateRange, size: DATE_HP, color: BLACK, font: this.font })] }));
+      if (rightSecondary) lines.push(new Paragraph({ spacing, children: [run(rightSecondary)] }));
+      return lines;
+    }
+
+    if (dateRange) first.push(new TextRun({ text: `\t${dateRange}`, size: DATE_HP, color: BLACK, font: this.font }));
+    const paragraphs = [new Paragraph({ tabStops, keepNext: true, keepLines: true, spacing: { before: ENTRY_BEFORE, ...spacing }, children: first })];
+    if (secondary || rightSecondary) {
+      const runs: TextRun[] = [];
+      if (secondary) runs.push(run(secondary, true));
+      if (rightSecondary) runs.push(run(`\t${rightSecondary}`));
+      paragraphs.push(new Paragraph({ tabStops, keepLines: true, spacing, children: runs }));
+    }
+    return paragraphs;
+  }
+
+  line(text: string | ParagraphChild[], options: { bullet?: boolean; before?: number; bold?: boolean } = {}): Paragraph {
+    return new Paragraph({
+      bullet: options.bullet ? { level: 0 } : undefined,
+      indent: options.bullet ? BULLET_INDENT : undefined,
+      // A line that opens a content block (before = ENTRY_BEFORE) also gets the sidebar block gap.
+      spacing: { before: options.before === ENTRY_BEFORE ? ENTRY_BEFORE + this.blockGap : options.before, after: BULLET_AFTER, line: BODY_LINE_SPACING, lineRule: LineRuleType.AT_LEAST },
+      children: typeof text === "string" ? textRuns(text, { size: BODY_HP, font: this.font, bold: options.bold }) : text,
+    });
+  }
+
+  lines(items: string[]): Paragraph[] {
+    return items.filter((line) => line.trim()).map((line, index) => this.line(line, { before: index === 0 ? LIST_BEFORE : undefined }));
+  }
 }
 
-function bulletLine(text: string, fontName: string): Paragraph {
-  return new Paragraph({
-    bullet: { level: 0 },
-    spacing: { after: BULLET_AFTER, line: BODY_LINE_SPACING, lineRule: LineRuleType.AT_LEAST },
-    children: [new TextRun({ text, size: BODY_HP, color: BLACK, font: fontName })],
-  });
+function buildResumeSections(document: DocumentData, keys: LayoutSectionKey[], writer: ResumeWriter, font: string): Paragraph[] {
+  const visible = selectVisibleEntries(document);
+  const titles = document.sectionTitles;
+  const out: Paragraph[] = [];
+
+  const builders: Record<LayoutSectionKey, () => void> = {
+    summary: () => {
+      if (!document.professionalSummary.trim()) return;
+      out.push(writer.heading(titles.summary), writer.line(document.professionalSummary, { before: ENTRY_BEFORE }));
+    },
+    experience: () => {
+      if (!visible.experiences.length) return;
+      out.push(writer.heading(titles.experience));
+      visible.experiences.forEach((item) => {
+        out.push(...writer.entry(item.role || "—", [item.employer, item.location].filter(Boolean).join(", "), formatDateRange(item.startDate, item.endDate, item.current)));
+        item.highlights.filter((line) => line.trim()).forEach((line, index) => out.push(writer.line(line, { bullet: true, before: index === 0 ? LIST_BEFORE : undefined })));
+      });
+    },
+    education: () => {
+      if (!visible.education.length) return;
+      out.push(writer.heading(titles.education));
+      visible.education.forEach((item) => {
+        const grade = item.gradeLabel?.trim() && item.gradeValue?.trim() ? `${item.gradeLabel.trim()}: ${item.gradeValue.trim()}` : undefined;
+        out.push(...writer.entry(item.institution, [item.degree, item.fieldOfStudy].filter(Boolean).join(", "), formatDateRange(item.startDate, item.endDate, item.current), grade));
+        const awards = item.awards.filter((award) => award.name.trim()).map((award) => award.name).join(" • ");
+        if (awards) out.push(writer.line(awards, { before: 4 * PX_TO_TWIP }));
+      });
+    },
+    skills: () => {
+      if (!visible.skills.length) return;
+      out.push(writer.heading(titles.skills), writer.line(visible.skills.join(" • "), { before: ENTRY_BEFORE }));
+    },
+    projects: () => {
+      if (!visible.projects.length) return;
+      out.push(writer.heading(titles.projects));
+      visible.projects.forEach((item) => {
+        const tech = item.technologies.filter(Boolean).join(", ");
+        const primary: ParagraphChild[] = [new TextRun({ text: item.name, bold: true, size: ENTRY_TITLE_HP, color: BLACK, font })];
+        if (tech) primary.push(new TextRun({ text: ` | ${tech}`, size: ENTRY_TITLE_HP, color: BLACK, font }));
+        out.push(...writer.entry(primary, "", formatPartialDate(item.date)), ...writer.lines(item.highlights));
+      });
+    },
+    certifications: () => {
+      if (!visible.certifications.length) return;
+      out.push(writer.heading(titles.certifications));
+      visible.certifications.forEach((item) => {
+        out.push(...writer.entry(item.name, "", formatPartialDate(item.date)));
+        if (item.issuingOrganization?.trim()) out.push(writer.line(item.issuingOrganization.trim(), { before: DETAIL_BEFORE }));
+      });
+    },
+    awards: () => {
+      if (!visible.awards.length) return;
+      out.push(writer.heading(titles.awards));
+      visible.awards.forEach((item) => out.push(...writer.entry(item.title, "", formatPartialDate(item.date)), ...writer.lines(item.highlights)));
+    },
+    volunteerExperiences: () => {
+      if (!visible.volunteerExperiences.length) return;
+      out.push(writer.heading(titles.volunteerExperiences));
+      visible.volunteerExperiences.forEach((item) => out.push(...writer.entry([item.role, item.organization].filter(Boolean).join(" | "), "", formatPartialDate(item.date)), ...writer.lines(item.highlights)));
+    },
+    languages: () => {
+      if (!visible.languages.length) return;
+      out.push(writer.heading(titles.languages), writer.line(visible.languages.map((item) => (item.proficiency ? `${item.name} (${item.proficiency})` : item.name)).join(" • "), { before: ENTRY_BEFORE }));
+    },
+    publications: () => {
+      if (!visible.publications.length) return;
+      out.push(writer.heading(titles.publications));
+      visible.publications.forEach((item) => {
+        out.push(...writer.entry(item.title, item.publisher, formatPartialDate(item.date)));
+        if (item.authors.trim()) out.push(writer.line(`Authors: ${item.authors}`, { before: DETAIL_BEFORE }));
+        if (item.url.trim()) out.push(writer.line([hyperlink(item.url, item.url, { size: BODY_HP, font })], { before: DETAIL_BEFORE }));
+        out.push(...writer.lines(item.highlights));
+      });
+    },
+    presentations: () => {
+      if (!visible.presentations.length) return;
+      out.push(writer.heading(titles.presentations));
+      visible.presentations.forEach((item) => {
+        out.push(...writer.entry(item.title, item.event, formatPartialDate(item.date)));
+        if (item.location.trim()) out.push(writer.line(`Location: ${item.location}`, { before: DETAIL_BEFORE }));
+        out.push(...writer.lines(item.highlights));
+      });
+    },
+    researchExperiences: () => {
+      if (!visible.researchExperiences.length) return;
+      out.push(writer.heading(titles.researchExperiences));
+      visible.researchExperiences.forEach((item) => out.push(...writer.entry(item.role, [item.organization, item.project].filter(Boolean).join(" | "), formatPartialDate(item.date)), ...writer.lines(item.highlights)));
+    },
+    teachingExperiences: () => {
+      if (!visible.teachingExperiences.length) return;
+      out.push(writer.heading(titles.teachingExperiences));
+      visible.teachingExperiences.forEach((item) => {
+        out.push(...writer.entry(item.role, item.institution, formatPartialDate(item.date)));
+        if (item.location.trim()) out.push(writer.line(`Location: ${item.location}`, { before: DETAIL_BEFORE }));
+        out.push(...writer.lines(item.highlights));
+      });
+    },
+    grants: () => {
+      if (!visible.grants.length) return;
+      out.push(writer.heading(titles.grants));
+      visible.grants.forEach((item) => out.push(...writer.entry(item.name, item.issuer, formatPartialDate(item.date)), ...writer.lines(item.highlights)));
+    },
+    memberships: () => {
+      if (!visible.memberships.length) return;
+      out.push(writer.heading(titles.memberships));
+      visible.memberships.forEach((item) => out.push(...writer.entry(item.role, item.organization, formatPartialDate(item.date)), ...writer.lines(item.highlights)));
+    },
+    organizations: () => {
+      if (!visible.organizations.length) return;
+      out.push(writer.heading(titles.organizations));
+      visible.organizations.forEach((item) => out.push(...writer.entry(item.role, item.organization, formatPartialDate(item.date)), ...writer.lines(item.highlights)));
+    },
+    leadership: () => {
+      if (!visible.leadership.length) return;
+      out.push(writer.heading(titles.leadership));
+      visible.leadership.forEach((item) => out.push(...writer.entry(item.role, item.organization, formatPartialDate(item.date)), ...writer.lines(item.highlights)));
+    },
+    references: () => {
+      if (!visible.references.length) return;
+      out.push(writer.heading(titles.references));
+      visible.references.forEach((item) => {
+        out.push(writer.line(item.name, { bold: true, before: ENTRY_BEFORE }));
+        [item.title, item.company, item.contactInfo].filter((value) => value?.trim()).forEach((value) => out.push(writer.line(value)));
+      });
+    },
+    other: () => {
+      if (!visible.otherEntries.length) return;
+      out.push(writer.heading(titles.other));
+      visible.otherEntries.forEach((item) => out.push(...writer.entry(item.name, "", formatPartialDate(item.date)), ...writer.lines(item.highlights)));
+    },
+  };
+
+  keys.forEach((key) => builders[key]());
+  return out;
 }
 
-function plainLine(text: string, fontName: string): Paragraph {
-  return new Paragraph({
-    spacing: { after: BULLET_AFTER, line: BODY_LINE_SPACING, lineRule: LineRuleType.AT_LEAST },
-    children: [new TextRun({ text, size: BODY_HP, color: BLACK, font: fontName })],
-  });
-}
-
-
-
-/** Builds a genuinely editable .docx (real OOXML paragraphs/runs, no image or PDF conversion) and triggers a browser download. */
-export async function exportDocumentToDocx(document: DocumentData, selectedFontId?: string, documentType: string = "resume"): Promise<void> {
+function buildResumeBody(document: DocumentData, templateId: string | null | undefined, font: string): (Paragraph | Table)[] {
+  const layout = getResumeLayout(templateId, document.optionalSections);
   const personal = document.personalDetails;
-  const fullName = `${personal.firstName} ${personal.lastName}`.trim() || (documentType === "cv" ? "CV" : "Resume");
-  const dial = COUNTRIES.find((country) => country.code === personal.contact.phoneCountry)?.dial ?? "+63";
-  const phoneLine = personal.contact.phoneNumber ? `${dial} ${personal.contact.phoneNumber}` : "";
-  const contactLine = [personal.contact.location, personal.contact.email, phoneLine].filter(Boolean).join("  •  ");
+  const fullName = `${personal.firstName} ${personal.lastName}`.trim();
+  const contactLine = getContactLine(document);
   const links = personal.links.filter((link) => link.name.trim() && link.url.trim());
+  const contact: RunStyle = { size: CONTACT_HP, font };
 
-  // Resolve the font name from the selected font ID
-  const resolvedFont = getFont(selectedFontId);
-  // Use the first font in the stack (the actual font name) for DOCX
-  const fontName = resolvedFont.name;
+  const railChildren = buildResumeSections(document, layout.rail, new ResumeWriter(font, 0), font);
+  // Same rule as the preview: the sidebar only exists when it has sections to show.
+  const isSidebar = railChildren.length > 0;
+  const alignment = layout.headerAlign === "center" ? AlignmentType.CENTER : AlignmentType.LEFT;
 
-  const children: Paragraph[] = [
-    new Paragraph({
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 0 },
-      children: [new TextRun({ text: fullName, bold: true, size: NAME_HP, color: BLACK, font: fontName })],
-    }),
-  ];
-  if (personal.headline.trim()) {
-    children.push(new Paragraph({
-      alignment: AlignmentType.CENTER,
-      spacing: { after: BULLET_AFTER },
-      children: [new TextRun({ text: personal.headline, size: BODY_HP, color: BLACK, font: fontName })],
-    }));
+  // Header lines; the last one carries the 1px bottom rule the preview draws under the header.
+  const headerLines: { children: ParagraphChild[]; before: number; line: ReturnType<typeof lineHeight> }[] = [];
+  const bodyLine = lineHeight(CONTACT_HP / 2);
+  // nameStyle uses line-height 1.2; the other header lines inherit 1.5.
+  if (fullName) headerLines.push({ before: 0, line: lineHeight(NAME_HP / 2, 1.2), children: [new TextRun({ text: fullName, bold: true, size: NAME_HP, color: BLACK, font })] });
+  if (personal.headline.trim()) headerLines.push({ before: 4 * PX_TO_TWIP, line: bodyLine, children: textRuns(personal.headline, { size: BODY_HP, font }) });
+  if (!isSidebar && contactLine) headerLines.push({ before: 6 * PX_TO_TWIP, line: bodyLine, children: [new TextRun({ text: contactLine, size: CONTACT_HP, color: BLACK, font })] });
+  if (!isSidebar && links.length) {
+    headerLines.push({
+      before: 2 * PX_TO_TWIP,
+      line: bodyLine,
+      children: links.flatMap((link, index) => [
+        ...(index > 0 ? [new TextRun({ text: "  •  ", size: CONTACT_HP, color: BLACK, font })] : []),
+        hyperlink(link.name, link.url, contact),
+      ]),
+    });
   }
-  if (contactLine) {
-    children.push(new Paragraph({
-      alignment: AlignmentType.CENTER,
-      spacing: { after: BULLET_AFTER },
-      children: [new TextRun({ text: contactLine, size: CONTACT_HP, color: BLACK, font: fontName })],
-    }));
-  }
-  if (links.length > 0) {
-    children.push(new Paragraph({
-      alignment: AlignmentType.CENTER,
-      spacing: { after: ENTRY_BEFORE },
-      children: links.map((link, index) => new TextRun({ text: `${index > 0 ? "  •  " : ""}${link.name}`, size: CONTACT_HP, color: BLACK, underline: {}, font: fontName })),
-    }));
-  }
-
-  // Add a bottom border paragraph to match the preview header border
-  children.push(new Paragraph({
-    spacing: { after: 0 },
-    border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: BLACK } },
-    children: [new TextRun({ text: "", size: 2 })],
+  const header = headerLines.map((line, index) => new Paragraph({
+    alignment,
+    keepNext: true,
+    spacing: { before: line.before, ...line.line },
+    border: index === headerLines.length - 1 ? { bottom: { style: BorderStyle.SINGLE, size: 4, color: BLACK, space: 7 } } : undefined,
+    children: line.children,
   }));
 
-  if (document.professionalSummary.trim()) {
-    children.push(sectionHeading(document.sectionTitles.summary, fontName));
-    children.push(new Paragraph({
-      children: [new TextRun({ text: document.professionalSummary, color: BLACK, size: BODY_HP, font: fontName })],
-      spacing: { after: BULLET_AFTER, line: BODY_LINE_SPACING, lineRule: LineRuleType.AT_LEAST },
-    }));
+  if (!isSidebar) {
+    return [...header, ...buildResumeSections(document, layout.main, new ResumeWriter(font, CONTENT_WIDTH_TWIP), font)];
   }
 
-  const experiences = sortEntriesByRecency((document.experiences || []).filter(hasExperienceContent));
-  if (experiences.length > 0) {
-    children.push(sectionHeading(document.sectionTitles.experience, fontName));
-    experiences.forEach((item) => {
-      children.push(...entryHeading(item.role || "—", [item.employer, item.location].filter(Boolean).join(", "), formatDateRange(item.startDate, item.endDate, item.current), fontName));
-      item.highlights.filter((line) => line.trim()).forEach((line) => children.push(bulletLine(line, fontName)));
-    });
-  }
+  // Two-column templates: a borderless table — sidebar (left) and main column (right), like the preview.
+  const railWidth = Math.round(CONTENT_WIDTH_TWIP * SIDEBAR_RAIL_WIDTH_RATIO - SIDEBAR_GAP_TWIP / 2);
+  const mainWidth = CONTENT_WIDTH_TWIP - railWidth;
+  const railInner = railWidth - RAIL_PADDING_TWIP * 2;
+  const mainInner = mainWidth - SIDEBAR_GAP_TWIP;
 
-  const education = sortEntriesByRecency((document.education || []).filter(hasEducationContent));
-  if (education.length > 0) {
-    children.push(sectionHeading(document.sectionTitles.education, fontName));
-    education.forEach((item) => {
-      const gradeLabel = item.gradeLabel?.trim();
-      const gradeValue = item.gradeValue?.trim();
-      const rightSecondary = gradeLabel && gradeValue ? `${gradeLabel}: ${gradeValue}` : undefined;
+  // Sidebar contact block: one item per line, line-height 1.6 (preview).
+  const railLine = lineHeight(CONTACT_HP / 2, 1.6);
+  const rail: Paragraph[] = [];
+  // The rail's 12px top padding is expressed as spacing on its first line: Word lines up all cells
+  // of a row by the largest top cell margin, which would push the main column down as well.
+  if (contactLine) contactLine.split("  •  ").forEach((part, index) => rail.push(new Paragraph({ spacing: { before: index === 0 ? RAIL_PADDING_TWIP : 0, ...railLine }, children: [new TextRun({ text: part, size: CONTACT_HP, color: BLACK, font })] })));
+  links.forEach((link, index) => rail.push(new Paragraph({ spacing: { before: index === 0 ? 4 * PX_TO_TWIP : 0, ...railLine }, children: [hyperlink(link.name, link.url, contact)] })));
+  rail.push(...buildResumeSections(document, layout.rail, new ResumeWriter(font, railInner, true), font));
+  const main = buildResumeSections(document, layout.main, new ResumeWriter(font, mainInner), font);
 
-      children.push(...entryHeading(item.institution, [item.degree, item.fieldOfStudy].filter(Boolean).join(", "), formatDateRange(item.startDate, item.endDate, item.current), fontName, rightSecondary));
-
-      const awards = item.awards.filter((award) => award.name.trim()).map((award) => award.name).join(" • ");
-      if (awards) children.push(plainLine(awards, fontName));
-    });
-  }
-
-  if ((document.skills || []).length > 0) {
-    children.push(sectionHeading(document.sectionTitles.skills, fontName));
-    (document.skills || []).forEach((skill) => children.push(bulletLine(skill, fontName)));
-  }
-
-  (document.optionalSections || []).forEach((key) => {
-    if (key === "projects") {
-      const projects = sortByDateDesc((document.projects || []).filter((item) => item.name.trim()));
-      if (projects.length === 0) return;
-      children.push(sectionHeading(document.sectionTitles.projects, fontName));
-      projects.forEach((item) => {
-        const techLine = item.technologies.filter(Boolean).join(", ");
-        const primaryText = item.name;
-
-        const runsPrimary: TextRun[] = [new TextRun({ text: primaryText, bold: true, size: ENTRY_TITLE_HP, color: BLACK, font: fontName })];
-        if (techLine) runsPrimary.push(new TextRun({ text: ` | ${techLine}`, size: ENTRY_TITLE_HP, color: BLACK, font: fontName }));
-        if (item.date) runsPrimary.push(new TextRun({ text: `\t${formatPartialDate(item.date)}`, size: DATE_HP, color: BLACK, font: fontName }));
-
-        children.push(new Paragraph({ tabStops: [{ type: TabStopType.RIGHT, position: TabStopPosition.MAX }], spacing: { before: ENTRY_BEFORE }, children: runsPrimary }));
-
-        // No bullets for project descriptions — plain paragraphs
-        item.highlights.filter((line) => line.trim()).forEach((line) => children.push(plainLine(line, fontName)));
-      });
-    }
-    if (key === "certifications") {
-      const items = sortByDateDesc((document.certifications || []).filter((item) => item.name.trim()));
-      if (items.length === 0) return;
-      children.push(sectionHeading(document.sectionTitles.certifications, fontName));
-      items.forEach((item) => {
-        children.push(...entryHeading(item.name, "", formatPartialDate(item.date), fontName));
-        const org = item.issuingOrganization?.trim();
-        if (org) children.push(plainLine(org, fontName));
-      });
-    }
-    if (key === "awards") {
-      const items = sortByDateDesc((document.awards || []).filter((item) => item.title.trim()));
-      if (items.length === 0) return;
-      children.push(sectionHeading(document.sectionTitles.awards, fontName));
-      items.forEach((item) => {
-        children.push(...entryHeading(item.title, "", formatPartialDate(item.date), fontName));
-        item.highlights.filter((line) => line.trim()).forEach((line) => children.push(plainLine(line, fontName)));
-      });
-    }
-    if (key === "volunteerExperiences") {
-      const items = sortByDateDesc((document.volunteerExperiences || []).filter((item) => item.organization.trim() || item.role.trim()));
-      if (items.length === 0) return;
-      children.push(sectionHeading(document.sectionTitles.volunteerExperiences, fontName));
-      items.forEach((item) => {
-        children.push(...entryHeading([item.role, item.organization].filter(Boolean).join(" | "), "", formatPartialDate(item.date), fontName));
-        item.highlights.filter((line) => line.trim()).forEach((line) => children.push(plainLine(line, fontName)));
-      });
-    }
-    if (key === "languages") {
-      const items = (document.languages || []).filter((item) => item.name.trim());
-      if (items.length === 0) return;
-      children.push(sectionHeading(document.sectionTitles.languages, fontName));
-      children.push(new Paragraph({
-        spacing: { line: BODY_LINE_SPACING, lineRule: LineRuleType.AT_LEAST },
-        children: [new TextRun({ text: items.map((item) => (item.proficiency ? `${item.name} (${item.proficiency})` : item.name)).join(" • "), color: BLACK, size: BODY_HP, font: fontName })],
-      }));
-    }
-    if (key === "other") {
-      const items = sortByDateDesc((document.otherEntries || []).filter((entry) => entry.name.trim()));
-      if (items.length === 0) return;
-      children.push(sectionHeading(document.sectionTitles.other, fontName));
-      items.forEach((item) => {
-        children.push(...entryHeading(item.name, "", formatPartialDate(item.date), fontName));
-        // No bullets for other/custom section descriptions — plain paragraphs
-        item.highlights.filter((line) => line.trim()).forEach((line) => children.push(plainLine(line, fontName)));
-      });
-    }
-    if (key === "publications") {
-      const items = sortByDateDesc((document.publications || []).filter((entry) => entry.title.trim()));
-      if (items.length === 0) return;
-      children.push(sectionHeading(document.sectionTitles.publications, fontName));
-      items.forEach((item) => {
-        children.push(...entryHeading(item.title, item.publisher, formatPartialDate(item.date), fontName));
-        if (item.authors.trim()) children.push(plainLine(`Authors: ${item.authors}`, fontName));
-        if (item.url.trim()) children.push(plainLine(`URL: ${item.url}`, fontName));
-        item.highlights.filter((line) => line.trim()).forEach((line) => children.push(plainLine(line, fontName)));
-      });
-    }
-    if (key === "presentations") {
-      const items = sortByDateDesc((document.presentations || []).filter((entry) => entry.title.trim()));
-      if (items.length === 0) return;
-      children.push(sectionHeading(document.sectionTitles.presentations, fontName));
-      items.forEach((item) => {
-        children.push(...entryHeading(item.title, item.event, formatPartialDate(item.date), fontName));
-        if (item.location.trim()) children.push(plainLine(`Location: ${item.location}`, fontName));
-        item.highlights.filter((line) => line.trim()).forEach((line) => children.push(plainLine(line, fontName)));
-      });
-    }
-    if (key === "researchExperiences") {
-      const items = sortByDateDesc((document.researchExperiences || []).filter((entry) => entry.role.trim() || entry.project.trim()));
-      if (items.length === 0) return;
-      children.push(sectionHeading(document.sectionTitles.researchExperiences, fontName));
-      items.forEach((item) => {
-        const secondary = [item.organization, item.project].filter(Boolean).join(" | ");
-        children.push(...entryHeading(item.role, secondary, formatPartialDate(item.date), fontName));
-        item.highlights.filter((line) => line.trim()).forEach((line) => children.push(plainLine(line, fontName)));
-      });
-    }
+  const table = new Table({
+    width: { size: CONTENT_WIDTH_TWIP, type: WidthType.DXA },
+    columnWidths: [railWidth, mainWidth],
+    layout: TableLayoutType.FIXED,
+    borders: TableBorders.NONE,
+    margins: { top: 0, bottom: 0, left: 0, right: 0 },
+    rows: [new TableRow({
+      cantSplit: false,
+      children: [
+        new TableCell({
+          width: { size: railWidth, type: WidthType.DXA },
+          shading: { type: ShadingType.CLEAR, fill: RAIL_FILL, color: "auto" },
+          margins: { top: 0, bottom: RAIL_PADDING_TWIP, left: RAIL_PADDING_TWIP, right: RAIL_PADDING_TWIP },
+          verticalAlign: VerticalAlign.TOP,
+          children: rail,
+        }),
+        new TableCell({
+          width: { size: mainWidth, type: WidthType.DXA },
+          margins: { top: 0, bottom: 0, left: SIDEBAR_GAP_TWIP, right: 0 },
+          verticalAlign: VerticalAlign.TOP,
+          children: main.length ? main : [new Paragraph({})],
+        }),
+      ],
+    })],
   });
 
-  const doc = new Document({
+  // Word requires a paragraph after a table at the end of a section.
+  // 12px gap between header and columns (preview: mt-3) as an exact-height spacer; a 1pt line closes the section.
+  const spacer = (height: number) => new Paragraph({ spacing: { before: 0, after: 0, line: height, lineRule: LineRuleType.EXACT }, children: [new TextRun({ text: "", size: 2 })] });
+  return [...header, spacer(12 * PX_TO_TWIP), table, spacer(PT_TO_TWIP)];
+}
+
+/* ── Letters ──────────────────────────────────────────────────── */
+
+function buildLetterBody(document: DocumentData, documentType: string, templateId: string | null | undefined, font: string): Paragraph[] {
+  const letter = buildLetterContent(document.letterDetails!, documentType, templateId);
+  const body: RunStyle = { size: LETTER_BODY_HP, font };
+  const lineSpacing = lineHeight(LETTER_BODY_HP / 2, LETTER_LINE_HEIGHT);
+  const para = (text: string, before = 0, bold = false) =>
+    new Paragraph({ spacing: { before, ...lineSpacing }, children: textRuns(text, { ...body, bold }) });
+  const out: Paragraph[] = [];
+
+  if (letter.style === "modern") {
+    if (letter.senderName) out.push(new Paragraph({ spacing: lineHeight(LETTER_NAME_HP / 2, 1.2), children: [new TextRun({ text: letter.senderName, bold: true, size: LETTER_NAME_HP, color: BLACK, font })] }));
+    if (letter.senderName || letter.senderLines.length) {
+      out.push(new Paragraph({
+        spacing: { before: 3 * PT_TO_TWIP, ...lineSpacing },
+        border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: BLACK, space: 7 } },
+        children: textRuns(letter.senderLines.join(" • "), body),
+      }));
+    }
+    if (letter.date) out.push(para(letter.date, 15 * PT_TO_TWIP));
+  } else if (letter.style === "classic") {
+    if (letter.senderName) out.push(para(letter.senderName, 0, true));
+    if (letter.senderLines.length) out.push(para(letter.senderLines.join("\n")));
+    if (letter.date) out.push(para(letter.date, 12 * PT_TO_TWIP));
+  } else if (letter.date) {
+    out.push(para(letter.date));
+  }
+
+  if (letter.recipientLines.length) out.push(para(letter.recipientLines.join("\n"), 12 * PT_TO_TWIP));
+  if (letter.subject) out.push(para(letter.style === "minimal" ? `Re: ${letter.subject}` : `Subject: ${letter.subject}`, 12 * PT_TO_TWIP, letter.style !== "minimal"));
+  if (letter.salutation) out.push(para(letter.salutation, 12 * PT_TO_TWIP));
+  letter.details.forEach((line, index) => out.push(para(line, index === 0 ? 9 * PT_TO_TWIP : 2 * PT_TO_TWIP)));
+  letter.paragraphs.forEach((paragraph) => out.push(para(paragraph, 9 * PT_TO_TWIP)));
+  const signOff = getLetterSignOff(letter);
+  if (signOff) out.push(new Paragraph({ keepLines: true, spacing: { before: 15 * PT_TO_TWIP, ...lineSpacing }, children: textRuns(signOff, body) }));
+  if (letter.style === "minimal" && letter.senderLines.length) out.push(para(letter.senderLines.join("\n"), 2 * PT_TO_TWIP));
+
+  return out.length ? out : [new Paragraph({})];
+}
+
+/* ── Public API ───────────────────────────────────────────────── */
+
+/** Builds a genuinely editable .docx document (real OOXML paragraphs/runs — no images or HTML). */
+export function buildDocumentDocx({ document: raw, documentType, templateId, fontId }: DocxExportInput): Document {
+  const document = normalizeDocumentData(raw);
+  const font = getFont(fontId).name;
+  const letter = isLetterType(documentType);
+  const children = letter
+    ? buildLetterBody(document, documentType, templateId, font)
+    : buildResumeBody(document, templateId, font);
+
+  return new Document({
     creator: "Documaxxer",
-    title: fullName,
-    description: "Exported Resume",
+    title: getExportBaseName(document, documentType).replace(/_/g, " "),
+    description: `Exported ${documentType} from Documaxxer`,
     styles: {
       default: {
         document: {
-          run: {
-            font: fontName,
-            size: BODY_HP,
-            color: BLACK,
-          },
+          // Kerning on (Word's default is off) — browsers kern, so line widths and wraps match the preview.
+          run: { font, size: letter ? LETTER_BODY_HP : BODY_HP, color: BLACK, kern: 2 },
+          paragraph: { spacing: { after: 0 } },
         },
       },
     },
     sections: [{
       properties: {
         page: {
-          size: { width: convertMillimetersToTwip(210), height: convertMillimetersToTwip(297) },
+          size: { width: convertMillimetersToTwip(PAGE_WIDTH_MM), height: convertMillimetersToTwip(PAGE_HEIGHT_MM) },
           margin: {
             top: convertMillimetersToTwip(MARGIN_MM),
             right: convertMillimetersToTwip(MARGIN_MM),
@@ -298,18 +456,10 @@ export async function exportDocumentToDocx(document: DocumentData, selectedFontI
       children,
     }],
   });
-  const blob = await Packer.toBlob(doc);
-  const suffix = documentType === "cv" ? "_CV" : "_Resume";
-  downloadBlob(blob, `${fullName.replace(/\s+/g, "_") || documentType}${suffix}.docx`);
 }
 
-function downloadBlob(blob: Blob, fileName: string): void {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = fileName;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
+/** Builds the .docx and triggers a browser download. */
+export async function exportDocumentToDocx(input: DocxExportInput): Promise<void> {
+  const blob = await Packer.toBlob(buildDocumentDocx(input));
+  downloadBlob(blob, `${getExportBaseName(normalizeDocumentData(input.document), input.documentType)}.docx`);
 }

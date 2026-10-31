@@ -32,8 +32,8 @@ export async function PATCH(request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
 
-  const { name, description, schema } = body as { name?: unknown; description?: unknown; schema?: unknown };
-  if (name === undefined && description === undefined && schema === undefined) {
+  const { name, description, schema, documentType } = body as { name?: unknown; description?: unknown; schema?: unknown; documentType?: unknown };
+  if (name === undefined && description === undefined && schema === undefined && documentType === undefined) {
     return NextResponse.json({ error: "At least one field is required." }, { status: 400 });
   }
   if (name !== undefined && (typeof name !== "string" || !name.trim())) {
@@ -42,16 +42,26 @@ export async function PATCH(request: Request, { params }: RouteContext) {
   if (schema !== undefined && (!schema || typeof schema !== "object" || Array.isArray(schema))) {
     return NextResponse.json({ error: "Schema must be an object." }, { status: 400 });
   }
+  if (schema !== undefined && JSON.stringify(schema).length > 8_000_000) {
+    return NextResponse.json({ error: "Template is too large. Use smaller images." }, { status: 413 });
+  }
+  if (documentType !== undefined && (typeof documentType !== "string" || !/^[a-z0-9][a-z0-9-]{0,59}$/.test(documentType))) {
+    return NextResponse.json({ error: "documentType must use lowercase letters, numbers, and dashes." }, { status: 400 });
+  }
 
-  const existing = await prisma.template.findFirst({ where: { id, ownerId, builtIn: false }, select: { id: true } });
+  const existing = await prisma.template.findFirst({ where: { id, ownerId, builtIn: false }, select: { id: true, _count: { select: { documents: true } } } });
   if (!existing) return NextResponse.json({ error: "Template not found." }, { status: 404 });
+  if (documentType !== undefined && existing._count.documents > 0) {
+    return NextResponse.json({ error: "The document type of a template that is used by saved documents cannot change." }, { status: 409 });
+  }
 
   const template = await prisma.template.update({
     where: { id: existing.id },
     data: {
-      ...(name !== undefined ? { name: (name as string).trim() } : {}),
-      ...(description !== undefined ? { description: typeof description === "string" ? description.trim() : "" } : {}),
-      ...(schema !== undefined ? { schema: JSON.stringify(schema) } : {}),
+      ...(name !== undefined ? { name: (name as string).trim().slice(0, 120) } : {}),
+      ...(description !== undefined ? { description: typeof description === "string" ? description.trim().slice(0, 500) : "" } : {}),
+      ...(documentType !== undefined ? { documentType: documentType as string } : {}),
+      ...(schema !== undefined ? { schema: JSON.stringify({ ...(schema as object), id: existing.id }) } : {}),
     },
   });
 

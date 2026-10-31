@@ -7,7 +7,6 @@ import { GenerateButton } from "@/components/builder/preview/generate-button";
 import { TemplatePicker } from "@/components/builder/template-picker";
 import { FontPicker } from "@/components/builder/controls/font-picker";
 import { useDocumentContext } from "@/context/document-context";
-import type { TemplateId } from "@/lib/templates/templates";
 import { useDocumentPages, type UseResumePagesResult } from "@/components/builder/preview/document-preview";
 
 function ExpandIcon() {
@@ -21,19 +20,25 @@ function ExpandIcon() {
   );
 }
 
+/**
+ * Owns the single pagination instance used by the on-screen preview AND the
+ * print/PDF pages. Always mounted (even while visually hidden on small screens)
+ * so "Download PDF" prints correctly paginated pages from any viewport.
+ */
 export function DocumentPreviewContainer() {
   const { state, dispatch } = useDocumentContext();
   const resumePages = useDocumentPages();
   const [pageIndex, setPageIndex] = useState(0);
   const [expanded, setExpanded] = useState(false);
 
-  const changeTemplate = (id: TemplateId) => {
+  const changeTemplate = (id: string) => {
     dispatch({ type: "SET_TEMPLATE", payload: id });
     setPageIndex(0);
   };
 
   return (
     <div aria-labelledby="preview-title" className="flex h-full flex-col">
+      {resumePages.measuringContainer}
       <DocumentPrintPortal resumePages={resumePages} />
       <div className="sticky top-0 z-10 mx-auto mb-6 flex w-full flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white/80 p-3 shadow-sm backdrop-blur-xl dark:border-slate-800/80 dark:bg-[#121824]/80 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-1 min-w-0 items-center gap-3">
@@ -72,6 +77,41 @@ export function DocumentPreviewContainer() {
   );
 }
 
+/**
+ * Preview + export controls for viewports where the side preview pane is
+ * hidden (below the xl breakpoint). Printing still uses the always-mounted
+ * pages from DocumentPreviewContainer.
+ */
+export function MobilePreviewPanel() {
+  const { state, dispatch } = useDocumentContext();
+  const resumePages = useDocumentPages();
+  const [pageIndex, setPageIndex] = useState(0);
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="mt-10 rounded-2xl border border-slate-200/80 bg-white/80 p-4 shadow-sm dark:border-slate-800/80 dark:bg-[#121824]/80 xl:hidden">
+      {resumePages.measuringContainer}
+      <div className="grid gap-3 sm:grid-cols-[1fr_140px_auto] sm:items-end">
+        <TemplatePicker variant="compact" selectedId={state.selectedTemplateId} onSelect={(id) => dispatch({ type: "SET_TEMPLATE", payload: id })} />
+        <FontPicker selectedId={state.selectedFontId} onSelect={(id) => dispatch({ type: "SET_FONT", payload: id })} />
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="min-h-9 rounded-xl border border-slate-200/80 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700/80 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+        >
+          Preview
+        </button>
+      </div>
+      {state.generateUnlocked ? (
+        <div className="mt-4"><GenerateButton /></div>
+      ) : (
+        <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">Finish the form to unlock PDF and Word downloads.</p>
+      )}
+      {open && <ExpandedPreviewModal resumePages={resumePages} pageIndex={pageIndex} onPageIndexChange={setPageIndex} onClose={() => setOpen(false)} />}
+    </div>
+  );
+}
+
 function DocumentPrintPortal({ resumePages }: { resumePages: UseResumePagesResult }) {
   const [printRoot, setPrintRoot] = useState<HTMLElement | null>(null);
 
@@ -106,10 +146,10 @@ function ExpandedPreviewModal({
   if (typeof document === "undefined") return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center" role="dialog" aria-modal="true" aria-label="Expanded document preview">
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center print:hidden" role="dialog" aria-modal="true" aria-label="Expanded document preview">
       <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity" onClick={stableOnClose} />
 
-      <div className="relative z-10 flex w-full max-w-4xl flex-col items-center gap-3 px-4 py-6 sm:px-8 sm:py-8 animate-fade-in-scale" style={{ maxHeight: "100vh" }}>
+      <div className="relative z-10 flex w-full max-w-4xl flex-col items-center gap-3 px-4 py-6 sm:px-8 sm:py-8 animate-fade-in-scale" style={{ maxHeight: "100vh", height: "100dvh" }}>
         <div className="flex w-full items-center justify-end">
           <button
             type="button"
@@ -125,7 +165,9 @@ function ExpandedPreviewModal({
           <DocumentPreview resumePages={resumePages} pageIndex={pageIndex} onPageIndexChange={onPageIndexChange} maxHeight="100%" hideFooter className="h-full w-full" />
         </div>
 
-        <DocumentPreview resumePages={resumePages} pageIndex={pageIndex} onPageIndexChange={onPageIndexChange} footerOnly />
+        <div className="rounded-lg bg-white/90 px-3 py-1.5 dark:bg-slate-900/90">
+          <DocumentPreview resumePages={resumePages} pageIndex={pageIndex} onPageIndexChange={onPageIndexChange} footerOnly />
+        </div>
       </div>
     </div>,
     document.body

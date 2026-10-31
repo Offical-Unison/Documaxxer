@@ -2,41 +2,67 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
+import { createPortal } from "react-dom";
 import { useDocumentContext } from "@/context/document-context";
-import { COUNTRIES } from "@/lib/countries";
+import { initialDocumentData } from "@/context/document-reducer";
 import { getTemplate } from "@/lib/templates/templates";
 import { getFont } from "@/lib/fonts";
-import { countResumeWords } from "@/lib/documents/statistics";
+import { countDocumentWords } from "@/lib/documents/statistics";
 import {
   CONTENT_HEIGHT_MM, CONTENT_WIDTH_MM, MARGIN_MM, PAGE_HEIGHT_MM, PAGE_WIDTH_MM,
-  SIDEBAR_GAP_MM, SIDEBAR_MAIN_WIDTH_RATIO, SIDEBAR_RAIL_WIDTH_RATIO, TEMPLATE_THEMES,
+  SIDEBAR_GAP_MM, SIDEBAR_MAIN_WIDTH_RATIO, SIDEBAR_RAIL_WIDTH_RATIO,
   buildTemplateBlocks, hasEducationContent, hasExperienceContent, normalizeUrl, paginateBlocks,
   type PreviewBlock,
 } from "@/lib/documents/document-blocks";
+import { buildLetterContent, getContactLine, getLetterSignOff, getResumeLayout, isLetterType } from "@/lib/documents/document-layout";
 import {
-  nameStyle, headlineStyle, contactStyle, linkStyle, TEXT_COLOR,
+  nameStyle, headlineStyle, contactStyle, linkStyle, letterTextStyle, LETTER_NAME_PT, TEXT_COLOR,
 } from "@/lib/documents/document-typography";
 import type { ReactNode } from "react";
 import type { LetterDetails } from "@/types/document";
 
-function buildLetterBlocks(details: LetterDetails, documentType: string): PreviewBlock[] {
-  const sender = [details.senderName, details.senderAddress, details.senderEmail, details.senderPhone].filter(Boolean);
-  const recipient = [details.recipientName, details.recipientTitle, details.recipientAddress].filter(Boolean);
-  const special = documentType === "authorization-letter"
-    ? [details.authorizedPerson && `Authorized person: ${details.authorizedPerson}`, details.purpose && `Purpose: ${details.purpose}`].filter(Boolean)
-    : documentType === "excuse-letter"
-      ? [details.absentDate && `Date of absence: ${details.absentDate}`, details.reason && `Reason: ${details.reason}`].filter(Boolean)
-      : [];
-  const blocks: PreviewBlock[] = [
-    { id: "letter-sender", type: "content", node: <div style={{ whiteSpace: "pre-line", lineHeight: 1.5 }}>{sender.join("\n")}</div> },
-    { id: "letter-date", type: "content", node: <div style={{ marginTop: "16px" }}>{details.date}</div> },
-    { id: "letter-recipient", type: "content", node: <div style={{ marginTop: "16px", whiteSpace: "pre-line", lineHeight: 1.5 }}>{recipient.join("\n")}</div> },
-    { id: "letter-subject", type: "content", node: details.subject ? <p style={{ marginTop: "12px", fontWeight: 700 }}>Subject: {details.subject}</p> : <></> },
-    { id: "letter-salutation", type: "content", node: <p style={{ marginTop: "20px" }}>{details.salutation}</p> },
-    ...special.map((text, index) => ({ id: `letter-special-${index}`, type: "content" as const, node: <p style={{ marginTop: "10px" }}>{text}</p> })),
-    { id: "letter-body", type: "content", node: <p style={{ marginTop: "16px", whiteSpace: "pre-line", lineHeight: 1.7 }}>{details.body}</p> },
-    { id: "letter-closing", type: "content", node: <p style={{ marginTop: "24px", whiteSpace: "pre-line" }}>{details.closing}{details.senderName ? `\n${details.senderName}` : ""}</p> },
-  ];
+function buildLetterBlocks(details: LetterDetails, documentType: string, templateId: string | null): PreviewBlock[] {
+  const letter = buildLetterContent(details, documentType, templateId);
+  const text = (id: string, content: ReactNode, style: React.CSSProperties = {}): PreviewBlock => ({
+    id, type: "content", node: <p style={{ ...letterTextStyle, ...style }}>{content}</p>,
+  });
+  const blocks: PreviewBlock[] = [];
+
+  if (letter.style === "modern") {
+    if (letter.senderName || letter.senderLines.length) {
+      blocks.push({
+        id: "letter-letterhead",
+        type: "content",
+        node: (
+          <header style={{ borderBottom: "1px solid #000", paddingBottom: "10px" }}>
+            {letter.senderName && <h2 style={{ ...letterTextStyle, fontSize: `${LETTER_NAME_PT}pt`, fontWeight: 700, lineHeight: 1.2 }}>{letter.senderName}</h2>}
+            {letter.senderLines.length > 0 && <p style={{ ...letterTextStyle, marginTop: "4px" }}>{letter.senderLines.join(" • ")}</p>}
+          </header>
+        ),
+      });
+    }
+    if (letter.date) blocks.push(text("letter-date", letter.date, { marginTop: "20px" }));
+  } else if (letter.style === "classic") {
+    if (letter.senderName || letter.senderLines.length) {
+      blocks.push(text("letter-sender", <>{letter.senderName && <strong>{letter.senderName}</strong>}{letter.senderName && letter.senderLines.length > 0 && "\n"}{letter.senderLines.join("\n")}</>));
+    }
+    if (letter.date) blocks.push(text("letter-date", letter.date, { marginTop: "16px" }));
+  } else if (letter.date) {
+    blocks.push(text("letter-date", letter.date));
+  }
+
+  if (letter.recipientLines.length) blocks.push(text("letter-recipient", letter.recipientLines.join("\n"), { marginTop: "16px" }));
+  if (letter.subject) {
+    blocks.push(text("letter-subject", letter.style === "minimal" ? `Re: ${letter.subject}` : `Subject: ${letter.subject}`, { marginTop: "16px", fontWeight: letter.style === "minimal" ? 400 : 700 }));
+  }
+  if (letter.salutation) blocks.push(text("letter-salutation", letter.salutation, { marginTop: "16px" }));
+  letter.details.forEach((line, index) => blocks.push(text(`letter-detail-${index}`, line, { marginTop: index === 0 ? "12px" : "2px" })));
+  letter.paragraphs.forEach((paragraph, index) => blocks.push(text(`letter-body-${index}`, paragraph, { marginTop: "12px" })));
+  const signOff = getLetterSignOff(letter);
+  if (signOff) blocks.push(text("letter-closing", signOff, { marginTop: "20px" }));
+  if (letter.style === "minimal" && letter.senderLines.length) {
+    blocks.push(text("letter-sender-footer", letter.senderLines.join("\n"), { marginTop: "2px" }));
+  }
   return blocks;
 }
 
@@ -74,7 +100,9 @@ function measureBlocks(container: HTMLDivElement | null, blocks: PreviewBlock[])
 
   const children = Array.from(container.children) as HTMLElement[];
   children.forEach((child, index) => {
-    const nextTop = index < children.length - 1 ? children[index + 1].offsetTop : container.scrollHeight;
+    // offsetTop is relative to the measuring root (which also holds the header), so the
+    // container's bottom edge must be expressed in the same frame — not as bare scrollHeight.
+    const nextTop = index < children.length - 1 ? children[index + 1].offsetTop : container.offsetTop + container.scrollHeight;
     const block = blocks[index];
     if (block) heights[block.id] = nextTop - child.offsetTop;
   });
@@ -85,17 +113,15 @@ export function useDocumentPages(): UseResumePagesResult {
   const { state } = useDocumentContext();
   const { document, selectedTemplateId, selectedFontId } = state;
   const templateId = getTemplate(selectedTemplateId).id;
-  const theme = TEMPLATE_THEMES[templateId];
+  const headerAlign = getResumeLayout(templateId).headerAlign;
   const fontStack = getFont(selectedFontId).stack;
 
   const { personalDetails: personal, professionalSummary } = document;
-  const isLetter = state.documentType !== "resume" && state.documentType !== "cv";
-  const letterDetails: LetterDetails = useMemo(() => document.letterDetails ?? { senderName: "", senderAddress: "", senderEmail: "", senderPhone: "", recipientName: "", recipientTitle: "", recipientOrganization: "", recipientAddress: "", date: "", subject: "", salutation: "Dear Sir or Madam,", body: "", closing: "Sincerely,", authorizedPerson: "", purpose: "", absentDate: "", reason: "" }, [document.letterDetails]);
+  const isLetter = isLetterType(state.documentType);
+  const letterDetails: LetterDetails = document.letterDetails ?? initialDocumentData.letterDetails!;
 
   const fullName = `${personal.firstName} ${personal.lastName}`.trim();
-  const dial = COUNTRIES.find((country) => country.code === personal.contact.phoneCountry)?.dial ?? "+63";
-  const phoneLine = personal.contact.phoneNumber ? `${dial} ${personal.contact.phoneNumber}` : "";
-  const contactLine = [personal.contact.location, personal.contact.email, phoneLine].filter(Boolean).join("  •  ");
+  const contactLine = getContactLine(document);
   const links = useMemo(
     () => personal.links.filter((link) => link.name.trim() && link.url.trim()),
     [personal.links]
@@ -104,18 +130,19 @@ export function useDocumentPages(): UseResumePagesResult {
   const experiencesPresent = document.experiences.some(hasExperienceContent);
   const educationPresent = document.education.some(hasEducationContent);
   const skillsPresent = document.skills.length > 0;
-  const isEmpty = isLetter ? !letterDetails.senderName.trim() && !letterDetails.body.trim() : !fullName && !personal.headline.trim() && !contactLine && links.length === 0 && !professionalSummary.trim() && !experiencesPresent && !educationPresent && !skillsPresent;
+  const letterHasContent = [letterDetails.senderName, letterDetails.recipientName, letterDetails.subject, letterDetails.body].some((value) => value.trim());
+  const isEmpty = isLetter ? !letterHasContent : !fullName && !personal.headline.trim() && !contactLine && links.length === 0 && !professionalSummary.trim() && !experiencesPresent && !educationPresent && !skillsPresent;
 
   const { main: mainBlocks, rail: railBlocks } = useMemo(
-    () => isLetter ? { main: buildLetterBlocks(letterDetails, state.documentType), rail: [] } : buildTemplateBlocks(document, templateId),
-    [document, templateId, isLetter, letterDetails, state.documentType]
+    () => isLetter ? { main: buildLetterBlocks(letterDetails, state.documentType, selectedTemplateId), rail: [] } : buildTemplateBlocks(document, templateId),
+    [document, templateId, isLetter, letterDetails, state.documentType, selectedTemplateId]
   );
   const isSidebar = railBlocks.length > 0;
-  const wordCount = useMemo(() => countResumeWords(document), [document]);
+  const wordCount = useMemo(() => countDocumentWords(document, state.documentType), [document, state.documentType]);
 
   const headerNode = !isLetter && (fullName || personal.headline.trim() || contactLine || links.length > 0)
     ? (
-      <header style={{ borderBottom: "1px solid #000", paddingBottom: "10px", textAlign: theme.headerAlign === "center" ? "center" : "left" }}>
+      <header style={{ borderBottom: "1px solid #000", paddingBottom: "10px", textAlign: headerAlign }}>
         {fullName && <h2 style={nameStyle}>{fullName}</h2>}
         {personal.headline.trim() && <p style={{ ...headlineStyle, marginTop: "4px" }}>{personal.headline}</p>}
         {!isSidebar && contactLine && <p style={{ ...contactStyle, marginTop: "6px" }}>{contactLine}</p>}
@@ -139,30 +166,47 @@ export function useDocumentPages(): UseResumePagesResult {
   const railIntroMeasureRef = useRef<HTMLDivElement>(null);
   const contentAreaRef = useRef<HTMLDivElement>(null);
   const [pages, setPages] = useState<DocumentPage[]>([{ main: [], rail: [] }]);
+  // The measuring container is portaled to <body> so it is measurable even when
+  // the preview pane is hidden (e.g. below the xl breakpoint) — otherwise every
+  // block measures 0px and the printed PDF collapses onto a single page.
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+  useEffect(() => setPortalTarget(window.document.body), []);
+  // Web fonts load after the first measurement; fallback fonts wrap fewer lines, so the
+  // stale heights would let content spill into the bottom margin. Re-measure once they arrive.
+  const [fontsVersion, setFontsVersion] = useState(0);
+  useEffect(() => {
+    const fonts = window.document.fonts;
+    if (!fonts) return;
+    let active = true;
+    const bump = () => { if (active) setFontsVersion((version) => version + 1); };
+    fonts.ready.then(bump);
+    fonts.addEventListener("loadingdone", bump);
+    return () => { active = false; fonts.removeEventListener("loadingdone", bump); };
+  }, []);
 
   const measureWidthMM = isSidebar ? CONTENT_WIDTH_MM * SIDEBAR_MAIN_WIDTH_RATIO - SIDEBAR_GAP_MM / 2 : CONTENT_WIDTH_MM;
   const railWidthMM = CONTENT_WIDTH_MM * SIDEBAR_RAIL_WIDTH_RATIO - SIDEBAR_GAP_MM / 2;
 
   useIsomorphicLayoutEffect(() => {
-    if (isEmpty) return;
+    // Measure only once the off-screen container is mounted; until then keep the previous pages.
+    if (isEmpty || !contentAreaRef.current) return;
     const mainHeights = measureBlocks(mainMeasureRef.current, mainBlocks);
     const railHeights = measureBlocks(railMeasureRef.current, railBlocks);
     const headerHeight = headerMeasureRef.current?.offsetHeight ?? 0;
     const railIntroHeight = railIntroMeasureRef.current?.offsetHeight ?? 0;
-    const contentHeight = contentAreaRef.current?.offsetHeight ?? 1;
+    const contentHeight = contentAreaRef.current.offsetHeight;
     const mainPages = paginateBlocks(mainBlocks, mainHeights, headerHeight + (isSidebar ? COLUMN_TOP_GAP_PX : 0), contentHeight, isSidebar ? COLUMN_TOP_GAP_PX : 0);
     const railPages = isSidebar
       ? paginateBlocks(railBlocks, railHeights, headerHeight + COLUMN_TOP_GAP_PX + railIntroHeight + 24, contentHeight, COLUMN_TOP_GAP_PX + 24)
       : [[]];
     const pageCount = Math.max(mainPages.length, railPages.length);
     setPages(Array.from({ length: pageCount }, (_, index) => ({ main: mainPages[index] ?? [], rail: railPages[index] ?? [] })));
-  }, [mainBlocks, railBlocks, isEmpty, isSidebar, contactLine, links]);
+  }, [mainBlocks, railBlocks, isEmpty, isSidebar, contactLine, links, fontStack, fullName, personal.headline, headerAlign, portalTarget, fontsVersion]);
 
-  /* Off-screen measuring container — rendered once in the component that
-     first mounts (DocumentPreview). Both preview and print use the SAME
-     pagination result from this hook instance. */
-  const measuringContainer = (
-    <div aria-hidden="true" style={{ position: "fixed", top: 0, left: "-9999px", width: `${measureWidthMM}mm`, fontFamily: fontStack }}>
+  /* Off-screen measuring container — render `measuringContainer` exactly once
+     per hook instance. Both preview and print use the SAME pagination result. */
+  const measuringNode = (
+    <div aria-hidden="true" className="print:hidden" style={{ position: "fixed", top: 0, left: "-9999px", width: `${measureWidthMM}mm`, fontFamily: fontStack, color: TEXT_COLOR, visibility: "hidden", pointerEvents: "none" }}>
       <div ref={headerMeasureRef} style={{ overflow: "hidden" }}>{headerNode}</div>
       <div ref={mainMeasureRef} style={{ overflow: "hidden" }}>
         {mainBlocks.map((block) => (
@@ -172,7 +216,7 @@ export function useDocumentPages(): UseResumePagesResult {
       {isSidebar && (
         <aside style={{ width: `${railWidthMM}mm`, boxSizing: "border-box", padding: "12px" }}>
           <div ref={railIntroMeasureRef}>
-            {contactLine && <p style={{ ...contactStyle, lineHeight: "1.6" }}>{contactLine}</p>}
+            {contactLine && contactLine.split("  •  ").map((part) => <p key={part} style={{ ...contactStyle, lineHeight: "1.6" }}>{part}</p>)}
             {links.length > 0 && (
               <div style={{ marginTop: "4px" }}>
                 {links.map((link) => (
@@ -191,6 +235,7 @@ export function useDocumentPages(): UseResumePagesResult {
       <div ref={contentAreaRef} style={{ height: `${CONTENT_HEIGHT_MM}mm` }} />
     </div>
   );
+  const measuringContainer = portalTarget && !isEmpty ? createPortal(measuringNode, portalTarget) : null;
 
   return { isEmpty, headerNode, pages, isSidebar, fontStack, contactLine, links, measureWidthMM, wordCount, measuringContainer };
 }
@@ -221,7 +266,7 @@ function ResumePageContent({
         <div className="mt-3 flex" style={{ gap: `${SIDEBAR_GAP_MM}mm` }}>
           {showRail && (
             <aside style={{ width: `${CONTENT_WIDTH_MM * SIDEBAR_RAIL_WIDTH_RATIO - SIDEBAR_GAP_MM / 2}mm`, boxSizing: "border-box" }} className="shrink-0 rounded-lg bg-blue-50/60 p-3">
-              {contactLine && <p style={{ ...contactStyle, lineHeight: "1.6" }}>{contactLine}</p>}
+              {contactLine && contactLine.split("  •  ").map((part) => <p key={part} style={{ ...contactStyle, lineHeight: "1.6" }}>{part}</p>)}
               {links.length > 0 && (
                 <div style={{ marginTop: "4px" }}>
                   {links.map((link) => (
@@ -295,7 +340,8 @@ function A4Page({ children, fontStack }: { children: ReactNode; fontStack: strin
           style={{ width: `${PAGE_WIDTH_MM}mm`, height: `${PAGE_HEIGHT_MM}mm`, transform: `scale(${scale})`, transformOrigin: "top left", position: "absolute", top: 0, left: 0 }}
         >
           <div style={{ height: "100%", width: "100%", overflow: "hidden", padding: `${MARGIN_MM}mm`, fontFamily: fontStack, color: TEXT_COLOR }}>
-            {children}
+            {/* Clip at the content box: overflow on the padded element would still paint into the margins. */}
+            <div style={{ height: "100%", overflow: "hidden" }}>{children}</div>
           </div>
         </div>
       </div>
@@ -346,7 +392,7 @@ export interface DocumentPreviewProps {
 }
 
 export function DocumentPreview({ resumePages, pageIndex, onPageIndexChange, maxHeight = "70vh", hideFooter, footerOnly, className }: DocumentPreviewProps) {
-  const { isEmpty, headerNode, pages, isSidebar, fontStack, contactLine, links, measureWidthMM, wordCount, measuringContainer } = resumePages;
+  const { isEmpty, headerNode, pages, isSidebar, fontStack, contactLine, links, measureWidthMM, wordCount } = resumePages;
 
   useEffect(() => {
     if (pageIndex > pages.length - 1) onPageIndexChange(Math.max(0, pages.length - 1));
@@ -383,8 +429,6 @@ export function DocumentPreview({ resumePages, pageIndex, onPageIndexChange, max
 
   return (
     <div className={className ? `${className} flex flex-col` : "flex flex-col"}>
-      {measuringContainer}
-
       <div 
         className={`w-full flex items-center justify-center ${maxHeight !== "none" ? "flex-1 min-h-0" : ""}`} 
         style={{ maxHeight: maxHeight === "none" ? undefined : maxHeight }}
@@ -445,21 +489,24 @@ export function DocumentAllPages({ resumePages }: { resumePages: UseResumePagesR
             width: `${PAGE_WIDTH_MM}mm`,
             padding: `${MARGIN_MM}mm`,
             boxSizing: "border-box",
+            overflow: "hidden",
             color: TEXT_COLOR,
             fontFamily: fontStack,
             breakAfter: pageIndex < pages.length - 1 ? "page" : "auto",
             pageBreakAfter: pageIndex < pages.length - 1 ? "always" : "auto",
           }}
         >
-          <ResumePageContent
-            pageIndex={pageIndex}
-            page={page}
-            headerNode={headerNode}
-            isSidebar={isSidebar}
-            contactLine={contactLine}
-            links={links}
-            measureWidthMM={measureWidthMM}
-          />
+          <div style={{ height: "100%", overflow: "hidden" }}>
+            <ResumePageContent
+              pageIndex={pageIndex}
+              page={page}
+              headerNode={headerNode}
+              isSidebar={isSidebar}
+              contactLine={contactLine}
+              links={links}
+              measureWidthMM={measureWidthMM}
+            />
+          </div>
         </div>
       ))}
     </div>
