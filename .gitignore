@@ -25,3 +25,6 @@ tsconfig.tsbuildinfo
 # OS
 .DS_Store
 Thumbs.db
+
+# Playwright MCP session logs
+.playwright-mcp/
